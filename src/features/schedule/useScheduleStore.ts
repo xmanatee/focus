@@ -11,6 +11,10 @@ export type Schedule = Doc<'schedules'>;
 
 interface ScheduleActions {
   addSchedule: (input: CreateScheduleInput) => Promise<void>;
+  updateSchedule: (
+    id: Id<'schedules'>,
+    input: CreateScheduleInput,
+  ) => Promise<void>;
   toggleSchedule: (id: Id<'schedules'>, isEnabled: boolean) => Promise<void>;
   deleteSchedule: (id: Id<'schedules'>) => Promise<void>;
   reconcile: (
@@ -37,6 +41,22 @@ function refuseWhileActive(schedule: Schedule, message: string): void {
 export const useScheduleStore = create<ScheduleActions>(() => ({
   addSchedule: async (input) => {
     await convex.mutation(api.schedules.create, input);
+  },
+
+  updateSchedule: async (id, input) => {
+    const schedule = await requireSchedule(id);
+    refuseWhileActive(
+      schedule,
+      'Cannot change a schedule while its window is active.',
+    );
+    await convex.mutation(api.schedules.update, {
+      id,
+      name: input.name,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      days: input.days,
+      profileId: input.profileId,
+    });
   },
 
   toggleSchedule: async (id, isEnabled) => {

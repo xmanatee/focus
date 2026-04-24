@@ -1,4 +1,5 @@
 import { useQuery } from 'convex/react';
+import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
 import { api } from '../../convex/_generated/api';
@@ -33,9 +34,10 @@ function formatRelative(at: Date, now: Date): string {
 export default function DashboardScreen(): JSX.Element {
   const router = useRouter();
 
-  const hasPermissions = useBlockerStore((s) => s.hasPermissions);
+  const authorizationStatus = useBlockerStore((s) => s.authorizationStatus);
   const busyState = useBlockerStore((s) => s.busyState);
   const requestPermissions = useBlockerStore((s) => s.requestPermissions);
+  const hasPermissions = authorizationStatus === 'authorized';
 
   const schedules = useQuery(api.schedules.get);
   const { active, next, now } = useActiveSchedule(schedules);
@@ -56,6 +58,36 @@ export default function DashboardScreen(): JSX.Element {
     void haptic.select();
     router.push('/settings');
   };
+
+  if (authorizationStatus === 'denied') {
+    return (
+      <Screen>
+        <TopBar onOpenSettings={openSettings} />
+        <View className="flex-1 justify-center gap-5">
+          <Typography variant="label" tone="danger">
+            Permission denied
+          </Typography>
+          <Typography variant="display-md" tone="ink">
+            Open iOS Settings.
+          </Typography>
+          <Typography variant="body" tone="muted" className="max-w-[340px]">
+            Go to Settings → Screen Time → Family Controls and allow Fucus. iOS
+            won&apos;t show the prompt again from inside the app.
+          </Typography>
+          <View className="mt-4">
+            <Button
+              title="Open Settings"
+              variant="commit"
+              onPress={() => {
+                void haptic.select();
+                void Linking.openSettings();
+              }}
+            />
+          </View>
+        </View>
+      </Screen>
+    );
+  }
 
   if (!hasPermissions) {
     return (

@@ -23,7 +23,7 @@ export function useAdminState(): AdminStateView {
   return useMemo<AdminStateView>(() => {
     if (settings === undefined) {
       return {
-        state: { kind: 'locked', nextUnlock: null },
+        state: { kind: 'unlocked', reason: 'always' },
         now,
         isSettled: false,
       };

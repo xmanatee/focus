@@ -2,10 +2,11 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useQuery } from 'convex/react';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { api } from '../convex/_generated/api';
+import type { Id } from '../convex/_generated/dataModel';
 import { selectionHasBlockedTargets } from '../src/features/blocker/types';
 import type {
   CreateScheduleInput,
@@ -56,37 +57,65 @@ export default function AddScheduleScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
   const isDark = useIsDark();
+  const params = useLocalSearchParams<{ id?: string }>();
+  const editId = params.id as Id<'schedules'> | undefined;
+  const isEditing = Boolean(editId);
+
   const addSchedule = useScheduleStore((s) => s.addSchedule);
+  const updateSchedule = useScheduleStore((s) => s.updateSchedule);
   const profiles = useQuery(api.profiles.list);
   const profile = profiles?.[0] ?? null;
-  const { state: adminState } = useAdminState();
+  const schedules = useQuery(api.schedules.get);
+  const existing = editId
+    ? schedules?.find((s) => s._id === editId) ?? null
+    : null;
+  const { state: adminState, isSettled } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
 
-  useEffect(() => {
-    if (isAdminLocked) {
-      router.back();
-    }
-  }, [isAdminLocked, router]);
-
-  const [name, setName] = useState('Focus window');
-  const [startDate, setStartDate] = useState(() => timeStringToDate('09:00'));
-  const [endDate, setEndDate] = useState(() => timeStringToDate('17:00'));
-  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([
-    'mon',
-    'tue',
-    'wed',
-    'thu',
-    'fri',
-  ]);
-
+  const [name, setName] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[] | null>(null);
   const { error, isPending, run } = useAsyncAction();
 
-  const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
-  const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
+  useEffect(() => {
+    if (isSettled && isAdminLocked) {
+      router.back();
+    }
+  }, [isAdminLocked, isSettled, router]);
+
+  useEffect(() => {
+    if (name !== null) {
+      return;
+    }
+    if (isEditing) {
+      if (existing) {
+        setName(existing.name);
+        setStartDate(timeStringToDate(existing.startTime));
+        setEndDate(timeStringToDate(existing.endTime));
+        setSelectedDays([...existing.days]);
+      }
+      return;
+    }
+    setName('Focus window');
+    setStartDate(timeStringToDate('09:00'));
+    setEndDate(timeStringToDate('17:00'));
+    setSelectedDays(['mon', 'tue', 'wed', 'thu', 'fri']);
+  }, [existing, isEditing, name]);
+
+  const startTime = useMemo(
+    () => (startDate ? dateToTimeString(startDate) : ''),
+    [startDate],
+  );
+  const endTime = useMemo(
+    () => (endDate ? dateToTimeString(endDate) : ''),
+    [endDate],
+  );
 
   const toggleDay = (day: DayOfWeek): void => {
     void haptic.select();
     setSelectedDays((current) => {
+      if (current === null) return current;
       if (current.includes(day)) {
         return current.filter((d) => d !== day);
       }
@@ -98,19 +127,32 @@ export default function AddScheduleScreen(): JSX.Element {
     _: DateTimePickerEvent,
     next: Date | undefined,
   ): void => {
-    if (next) {
-      setStartDate(next);
-    }
+    if (next) setStartDate(next);
   };
 
   const handleEndChange = (
     _: DateTimePickerEvent,
     next: Date | undefined,
   ): void => {
-    if (next) {
-      setEndDate(next);
-    }
+    if (next) setEndDate(next);
   };
+
+  if (
+    name === null ||
+    startDate === null ||
+    endDate === null ||
+    selectedDays === null
+  ) {
+    return (
+      <Screen>
+        <View className="flex-1 items-center justify-center">
+          <Typography variant="body" tone="muted">
+            Loading...
+          </Typography>
+        </View>
+      </Screen>
+    );
+  }
 
   const handleSave = async (): Promise<void> => {
     if (!profile) {
@@ -132,15 +174,20 @@ export default function AddScheduleScreen(): JSX.Element {
       startTime,
       endTime,
       days: selectedDays,
-      isEnabled: true,
+      isEnabled: existing?.isEnabled ?? true,
       profileId: profile._id,
     };
 
     const success = await run(async () => {
       validateScheduleInput(input);
       void haptic.commit();
-      await addSchedule({ ...input, name: input.name.trim() });
-    }, 'Could not create schedule.');
+      const trimmed = { ...input, name: input.name.trim() };
+      if (editId) {
+        await updateSchedule(editId, trimmed);
+      } else {
+        await addSchedule(trimmed);
+      }
+    }, 'Could not save schedule.');
 
     if (success) {
       router.back();
@@ -156,7 +203,7 @@ export default function AddScheduleScreen(): JSX.Element {
       >
         <View className="gap-2">
           <Typography variant="label" tone="muted">
-            New schedule
+            {isEditing ? 'Edit schedule' : 'New schedule'}
           </Typography>
           <Typography variant="display-md" tone="ink">
             When to block.
@@ -241,7 +288,7 @@ export default function AddScheduleScreen(): JSX.Element {
 
         <View className="gap-3 pt-2">
           <Button
-            title="Create schedule"
+            title={isEditing ? 'Save changes' : 'Create schedule'}
             variant="commit"
             onPress={() => void handleSave()}
             isLoading={isPending}

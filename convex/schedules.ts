@@ -76,6 +76,35 @@ export const create = mutation({
   },
 });
 
+export const update = mutation({
+  args: {
+    id: v.id('schedules'),
+    name: v.string(),
+    startTime: v.string(),
+    endTime: v.string(),
+    days: v.array(dayOfWeekValidator),
+    profileId: v.id('blockProfiles'),
+  },
+  handler: async (ctx, args) => {
+    const schedule = await requireOwnedSchedule(ctx, args.id);
+    await requireOwnedProfile(ctx, args.profileId);
+    validateScheduleInput({
+      name: args.name,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      days: args.days,
+      isEnabled: schedule.isEnabled,
+    });
+    await ctx.db.patch(args.id, {
+      name: args.name.trim(),
+      startTime: args.startTime,
+      endTime: args.endTime,
+      days: args.days,
+      profileId: args.profileId,
+    });
+  },
+});
+
 export const toggle = mutation({
   args: { id: v.id('schedules'), isEnabled: v.boolean() },
   handler: async (ctx, args) => {

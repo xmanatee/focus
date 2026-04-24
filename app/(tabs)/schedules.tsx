@@ -123,7 +123,19 @@ export default function SchedulesScreen(): JSX.Element {
                 }`}
               >
                 <View className="flex-row items-center justify-between">
-                  <View className="flex-1 pr-4">
+                  <Pressable
+                    onPress={() => {
+                      if (isRowLocked) return;
+                      void haptic.select();
+                      router.push({
+                        pathname: '/add-schedule',
+                        params: { id: schedule._id },
+                      });
+                    }}
+                    disabled={isRowLocked}
+                    className="flex-1 pr-4"
+                    accessibilityLabel={`Edit ${schedule.name}`}
+                  >
                     <View className="flex-row items-center gap-2">
                       <Typography variant="body-md" tone="ink">
                         {schedule.name}
@@ -140,7 +152,7 @@ export default function SchedulesScreen(): JSX.Element {
                       {schedule.days.join(' · ').toUpperCase()}{' '}
                       {schedule.startTime}–{schedule.endTime}
                     </Typography>
-                  </View>
+                  </Pressable>
                   <View className="flex-row items-center gap-3">
                     <Switch
                       value={schedule.isEnabled}
