@@ -7,7 +7,7 @@ import { Alert, Pressable, ScrollView, View } from 'react-native';
 import type { DayOfWeek } from '../src/features/schedule/types';
 import type {
   AdminState,
-  SetupWindow,
+  SetupBlock,
 } from '../src/features/settings/adminState';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
@@ -30,7 +30,7 @@ function nextUnlockLabel(state: AdminState, now: Date): string {
     return '';
   }
   if (!state.nextUnlock) {
-    return 'Setup hours need to be configured.';
+    return 'Setup block needs to be configured.';
   }
   return `Next unlock ${formatRelative(state.nextUnlock.at, now)}.`;
 }
@@ -39,9 +39,9 @@ export default function SettingsScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
   const isDark = useIsDark();
-  const existing = useSettingsStore((s) => s.setupWindow);
-  const setSetupWindow = useSettingsStore((s) => s.setSetupWindow);
-  const clearSetupWindow = useSettingsStore((s) => s.clearSetupWindow);
+  const existing = useSettingsStore((s) => s.setupBlock);
+  const setSetupBlock = useSettingsStore((s) => s.setSetupBlock);
+  const clearSetupBlock = useSettingsStore((s) => s.clearSetupBlock);
   const { state, now } = useAdminState();
 
   const isUnlocked = state.kind === 'unlocked';
@@ -95,15 +95,15 @@ export default function SettingsScreen(): JSX.Element {
   };
 
   const handleSave = async (): Promise<void> => {
-    const nextWindow: SetupWindow = {
+    const nextBlock: SetupBlock = {
       days: selectedDays,
       startTime,
       endTime,
     };
     const success = await run(async () => {
       void haptic.commit();
-      setSetupWindow(nextWindow);
-    }, 'Could not save setup hours.');
+      setSetupBlock(nextBlock);
+    }, 'Could not save setup block.');
     if (success) {
       router.back();
     }
@@ -111,8 +111,8 @@ export default function SettingsScreen(): JSX.Element {
 
   const confirmClear = (): void => {
     Alert.alert(
-      'Remove setup hours?',
-      'Blocklist and schedules will be editable any time after this.',
+      'Remove setup block?',
+      'All your focus blocks will be editable any time after this.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -121,8 +121,8 @@ export default function SettingsScreen(): JSX.Element {
           onPress: () => {
             void haptic.abandon();
             void run(async () => {
-              clearSetupWindow();
-            }, 'Could not remove setup hours.');
+              clearSetupBlock();
+            }, 'Could not remove setup block.');
           },
         },
       ],
@@ -143,22 +143,21 @@ export default function SettingsScreen(): JSX.Element {
       >
         <View className="gap-2">
           <Typography variant="label" tone="muted">
-            Settings
+            Restriction Settings
           </Typography>
           <Typography variant="display-md" tone="ink">
-            Lock yourself in.
+            Configure Lock-in.
           </Typography>
           <Typography variant="body" tone="muted" className="mt-2">
-            Pick a narrow weekly window for making changes. Outside it, nothing
-            about your blocking can be paused, cancelled, or edited — including
-            this screen.
+            The Lock-in mechanism prevents you from disabling or editing your
+            focus blocks when you are most likely to be distracted.
           </Typography>
         </View>
 
-        <View className="gap-4 bg-surface-raised rounded-2xl p-5">
+        <View className="gap-6 bg-surface-raised rounded-3xl p-6 shadow-sm border border-divider/10">
           <View className="flex-row items-center justify-between">
             <Typography variant="h3" tone="ink">
-              Setup hours
+              Setup Block
             </Typography>
             <View
               className={`rounded-full px-3 py-1 ${
@@ -169,7 +168,7 @@ export default function SettingsScreen(): JSX.Element {
                 variant="caption"
                 tone={isUnlocked ? 'surface' : 'muted'}
               >
-                {isUnlocked ? 'Unlocked' : 'Locked'}
+                {isUnlocked ? 'Editable' : 'Locked'}
               </Typography>
             </View>
           </View>
@@ -182,9 +181,9 @@ export default function SettingsScreen(): JSX.Element {
 
           <View className="gap-3">
             <Typography variant="label" tone="faint">
-              Days
+              Active Days
             </Typography>
-            <View className="flex-row flex-wrap gap-2">
+            <View className="flex-row justify-between">
               {DAYS.map((day) => {
                 const active = selectedDays.includes(day.value);
                 return (
@@ -192,15 +191,15 @@ export default function SettingsScreen(): JSX.Element {
                     key={day.value}
                     onPress={() => toggleDay(day.value)}
                     disabled={!isUnlocked}
-                    className={`px-4 py-2 rounded-full ${
+                    className={`h-10 w-10 items-center justify-center rounded-full ${
                       active ? 'bg-signal' : 'bg-surface-sunken'
                     } ${!isUnlocked ? 'opacity-50' : ''}`}
                   >
                     <Typography
-                      variant="body-md"
+                      variant="caption"
                       tone={active ? 'surface' : 'muted'}
                     >
-                      {day.label}
+                      {day.label.charAt(0)}
                     </Typography>
                   </Pressable>
                 );
@@ -208,7 +207,7 @@ export default function SettingsScreen(): JSX.Element {
             </View>
           </View>
 
-          <View className="flex-row gap-4 justify-between bg-surface-sunken rounded-2xl px-6 py-4 items-center">
+          <View className="flex-row gap-4 justify-between bg-surface-sunken/60 rounded-2xl px-6 py-5 items-center">
             <View className="items-start gap-1">
               <Typography variant="label" tone="faint">
                 Starts
@@ -223,7 +222,7 @@ export default function SettingsScreen(): JSX.Element {
                 textColor={colors.ink}
               />
             </View>
-            <View className="w-[1px] h-10 bg-divider" />
+            <View className="w-[1px] h-10 bg-divider/20" />
             <View className="items-end gap-1">
               <Typography variant="label" tone="faint">
                 Ends
@@ -248,7 +247,7 @@ export default function SettingsScreen(): JSX.Element {
 
           <View className="gap-2">
             <Button
-              title={existing ? 'Update setup hours' : 'Save setup hours'}
+              title={existing ? 'Update setup block' : 'Save setup block'}
               variant="commit"
               onPress={() => void handleSave()}
               isLoading={isPending}
@@ -256,7 +255,7 @@ export default function SettingsScreen(): JSX.Element {
             />
             {existing ? (
               <Button
-                title="Remove setup hours"
+                title="Remove setup block"
                 variant="abandon"
                 onPress={confirmClear}
                 disabled={isPending || !isUnlocked}

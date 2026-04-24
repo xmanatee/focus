@@ -1,6 +1,6 @@
 import type { DayOfWeek } from './types';
 
-interface ScheduleWindow {
+interface FocusBlockInternal {
   readonly days: readonly DayOfWeek[];
   readonly startTime: string;
   readonly endTime: string;
@@ -30,11 +30,11 @@ function spansMidnight(startTime: string, endTime: string): boolean {
   return minutesOf(endTime) <= minutesOf(startTime);
 }
 
-export function isScheduleActiveAt(
-  schedule: ScheduleWindow,
+export function isFocusBlockActiveAt(
+  block: FocusBlockInternal,
   at: Date,
 ): boolean {
-  if (!schedule.isEnabled) {
+  if (!block.isEnabled) {
     return false;
   }
 
@@ -42,43 +42,43 @@ export function isScheduleActiveAt(
   const todayKey = DAY_BY_INDEX[todayIndex];
   const yesterdayKey = DAY_BY_INDEX[(todayIndex + 6) % 7];
   const current = minuteOfDay(at);
-  const start = minutesOf(schedule.startTime);
-  const end = minutesOf(schedule.endTime);
+  const start = minutesOf(block.startTime);
+  const end = minutesOf(block.endTime);
 
-  if (spansMidnight(schedule.startTime, schedule.endTime)) {
-    if (schedule.days.includes(todayKey) && current >= start) {
+  if (spansMidnight(block.startTime, block.endTime)) {
+    if (block.days.includes(todayKey) && current >= start) {
       return true;
     }
-    if (schedule.days.includes(yesterdayKey) && current < end) {
+    if (block.days.includes(yesterdayKey) && current < end) {
       return true;
     }
     return false;
   }
 
-  return schedule.days.includes(todayKey) && current >= start && current < end;
+  return block.days.includes(todayKey) && current >= start && current < end;
 }
 
-interface NextWindow {
+interface NextBlock {
   readonly day: DayOfWeek;
   readonly at: Date;
 }
 
 export function nextStartAfter(
-  schedule: ScheduleWindow,
+  block: FocusBlockInternal,
   at: Date,
-): NextWindow | null {
-  if (!schedule.isEnabled || schedule.days.length === 0) {
+): NextBlock | null {
+  if (!block.isEnabled || block.days.length === 0) {
     return null;
   }
 
-  const start = minutesOf(schedule.startTime);
+  const start = minutesOf(block.startTime);
   const current = minuteOfDay(at);
   const todayIndex = at.getDay();
 
   for (let offset = 0; offset < 7; offset++) {
     const idx = (todayIndex + offset) % 7;
     const dayKey = DAY_BY_INDEX[idx];
-    if (!schedule.days.includes(dayKey)) {
+    if (!block.days.includes(dayKey)) {
       continue;
     }
     if (offset === 0 && current >= start) {

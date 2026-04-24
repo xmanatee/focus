@@ -19,26 +19,26 @@ function minutesOf(time: string): number {
   return h * 60 + m;
 }
 
-function windowMinutes(startTime: string, endTime: string): number {
+function blockMinutes(startTime: string, endTime: string): number {
   const start = minutesOf(startTime);
   const end = minutesOf(endTime);
   const minutesInDay = 24 * 60;
   return end > start ? end - start : minutesInDay - start + end;
 }
 
-interface SetupWindowInput {
+export interface SetupBlockInput {
   readonly days: readonly string[];
   readonly startTime: string;
   readonly endTime: string;
 }
 
-export function validateSetupWindow(input: SetupWindowInput): void {
+export function validateSetupBlock(input: SetupBlockInput): void {
   if (input.days.length === 0) {
-    throw new Error('Pick at least one day for the setup window.');
+    throw new Error('Pick at least one day for the setup block.');
   }
 
   if (new Set(input.days).size !== input.days.length) {
-    throw new Error('Setup window days must be unique.');
+    throw new Error('Setup block days must be unique.');
   }
 
   for (const day of input.days) {
@@ -55,14 +55,14 @@ export function validateSetupWindow(input: SetupWindowInput): void {
   }
 
   if (minutesOf(input.startTime) === minutesOf(input.endTime)) {
-    throw new Error('Setup window start and end must differ.');
+    throw new Error('Setup block start and end must differ.');
   }
 
   const totalWeekMinutes =
-    windowMinutes(input.startTime, input.endTime) * input.days.length;
+    blockMinutes(input.startTime, input.endTime) * input.days.length;
   if (totalWeekMinutes < MIN_SETUP_MINUTES_PER_WEEK) {
     throw new Error(
-      `Setup window must allow at least ${MIN_SETUP_MINUTES_PER_WEEK} minutes per week.`,
+      `Setup block must allow at least ${MIN_SETUP_MINUTES_PER_WEEK} minutes per week.`,
     );
   }
 }

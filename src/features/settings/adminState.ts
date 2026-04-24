@@ -1,14 +1,14 @@
-import { isScheduleActiveAt, nextStartAfter } from '../schedule/activeness';
+import { isFocusBlockActiveAt, nextStartAfter } from '../schedule/activeness';
 import type { DayOfWeek } from '../schedule/types';
 
-export interface SetupWindow {
+export interface SetupBlock {
   readonly days: readonly DayOfWeek[];
   readonly startTime: string;
   readonly endTime: string;
 }
 
 export type AdminState =
-  | { readonly kind: 'unlocked'; readonly reason: 'always' | 'inside-window' }
+  | { readonly kind: 'unlocked'; readonly reason: 'always' | 'inside-block' }
   | {
       readonly kind: 'locked';
       readonly nextUnlock: {
@@ -18,20 +18,20 @@ export type AdminState =
     };
 
 export function resolveAdminState(
-  setupWindow: SetupWindow | null,
+  setupBlock: SetupBlock | null,
   now: Date,
 ): AdminState {
-  if (!setupWindow) {
+  if (!setupBlock) {
     return { kind: 'unlocked', reason: 'always' };
   }
 
-  const asScheduleWindow = { ...setupWindow, isEnabled: true };
+  const asFocusBlock = { ...setupBlock, isEnabled: true };
 
-  if (isScheduleActiveAt(asScheduleWindow, now)) {
-    return { kind: 'unlocked', reason: 'inside-window' };
+  if (isFocusBlockActiveAt(asFocusBlock, now)) {
+    return { kind: 'unlocked', reason: 'inside-block' };
   }
 
-  const next = nextStartAfter(asScheduleWindow, now);
+  const next = nextStartAfter(asFocusBlock, now);
   return {
     kind: 'locked',
     nextUnlock: next,

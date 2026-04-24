@@ -2,7 +2,7 @@ import type { BlockSelection } from '../blocker/types';
 
 export type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
-export interface Schedule {
+export interface FocusBlock {
   id: string;
   name: string;
   startTime: string;
@@ -12,7 +12,7 @@ export interface Schedule {
   selection: BlockSelection;
 }
 
-export interface ScheduleInput {
+export interface FocusBlockInput {
   name: string;
   startTime: string;
   endTime: string;

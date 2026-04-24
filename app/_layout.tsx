@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useBlocklistStore } from '../src/features/blocker/useBlocklistStore';
-import { useScheduleStore } from '../src/features/schedule/useScheduleStore';
+import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 import { attachCloudSync } from '../src/shared/storage';
@@ -19,7 +19,7 @@ export default function RootLayout(): JSX.Element {
     void (async () => {
       // 1. Initial rehydration (sequential to avoid storage races)
       await useBlocklistStore.persist.rehydrate();
-      await useScheduleStore.persist.rehydrate();
+      await useFocusBlockStore.persist.rehydrate();
       await useSettingsStore.persist.rehydrate();
       await useBlockerStore.persist.rehydrate();
       setIsHydrated(true);
@@ -29,7 +29,7 @@ export default function RootLayout(): JSX.Element {
     const cleanup = attachCloudSync(() => {
       void (async () => {
         await useBlocklistStore.persist.rehydrate();
-        await useScheduleStore.persist.rehydrate();
+        await useFocusBlockStore.persist.rehydrate();
         await useSettingsStore.persist.rehydrate();
         await useBlockerStore.persist.rehydrate();
       })();
@@ -58,7 +58,7 @@ export default function RootLayout(): JSX.Element {
         >
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen
-            name="add-schedule"
+            name="add-focus-block"
             options={{
               presentation: 'formSheet',
               sheetGrabberVisible: true,

@@ -1,6 +1,5 @@
 import {
   type Action,
-  type DeviceActivitySchedule,
   cleanUpAfterActivity,
   configureActions,
   getActivities,
@@ -8,87 +7,60 @@ import {
   stopMonitoring,
 } from 'react-native-device-activity';
 import type { BlockSelection } from '../blocker/types';
-import { hasSavedActivitySelection } from '../blocker/types';
 import type { DayOfWeek } from './types';
 
-const DAY_WEEKDAY_INDEX: Record<DayOfWeek, number> = {
-  sun: 1,
-  mon: 2,
-  tue: 3,
-  wed: 4,
-  thu: 5,
-  fri: 6,
-  sat: 7,
-};
-
-const ACTIVITY_PREFIX = 'fucus_s_';
-
-interface ScheduleSpec {
-  readonly id: string;
-  readonly days: readonly DayOfWeek[];
-  readonly startTime: string;
-  readonly endTime: string;
-  readonly isEnabled: boolean;
-  readonly profileSelection: BlockSelection;
+export interface FocusBlockSpec {
+  id: string;
+  days: DayOfWeek[];
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  isEnabled: boolean;
+  profileSelection: BlockSelection;
 }
+
+const ACTIVITY_PREFIX = 'fucus.block.';
 
 interface MonitorPlan {
-  readonly activityName: string;
-  readonly schedule: DeviceActivitySchedule;
-  readonly startActions: Action[];
-  readonly endActions: Action[];
+  activityName: string;
+  schedule: {
+    intervalStart: { hour: number; minute: number };
+    intervalEnd: { hour: number; minute: number };
+    repeats: boolean;
+    warningThreshold?: { minute: number };
+  };
+  startActions: Action[];
+  endActions: Action[];
 }
 
-function parseHHMM(value: string): { hour: number; minute: number } {
-  const [hour, minute] = value.split(':').map(Number);
-  return { hour, minute };
-}
-
-function activityName(scheduleId: string, day: DayOfWeek): string {
-  return `${ACTIVITY_PREFIX}${scheduleId}_${day}`;
-}
-
-function actionsForSelection(
-  selection: BlockSelection,
-  phase: 'start' | 'end',
-): Action[] {
-  const actions: Action[] = [];
-  if (hasSavedActivitySelection(selection.activitySelection)) {
-    const selectionId = selection.activitySelection.selectionId;
-    actions.push(
-      phase === 'start'
-        ? { type: 'blockSelection', familyActivitySelectionId: selectionId }
-        : { type: 'unblockSelection', familyActivitySelectionId: selectionId },
-    );
-  }
-  if (selection.webDomains.length > 0) {
-    actions.push(
-      phase === 'start'
-        ? {
-            type: 'setWebContentFilterPolicy',
-            policy: { type: 'specific', domains: [...selection.webDomains] },
-          }
-        : { type: 'clearWebContentFilterPolicy' },
-    );
-  }
-  return actions;
-}
-
-function materializeSchedule(spec: ScheduleSpec): MonitorPlan[] {
-  if (!spec.isEnabled) {
+function materializeFocusBlock(spec: FocusBlockSpec): MonitorPlan[] {
+  if (!spec.isEnabled || spec.days.length === 0) {
     return [];
   }
 
-  const { hour: sh, minute: sm } = parseHHMM(spec.startTime);
-  const { hour: eh, minute: em } = parseHHMM(spec.endTime);
-  const startActions = actionsForSelection(spec.profileSelection, 'start');
-  const endActions = actionsForSelection(spec.profileSelection, 'end');
+  const [startH, startM] = spec.startTime.split(':').map(Number);
+  const [endH, endM] = spec.endTime.split(':').map(Number);
+
+  const startActions: Action[] = [
+    {
+      type: 'shield',
+      selection: spec.profileSelection.activitySelection,
+      webDomains: spec.profileSelection.webDomains,
+    },
+  ];
+
+  const endActions: Action[] = [
+    {
+      type: 'unshield',
+      selection: spec.profileSelection.activitySelection,
+      webDomains: spec.profileSelection.webDomains,
+    },
+  ];
 
   return spec.days.map((day) => ({
-    activityName: activityName(spec.id, day),
+    activityName: `${ACTIVITY_PREFIX}${spec.id}.${day}`,
     schedule: {
-      intervalStart: { weekday: DAY_WEEKDAY_INDEX[day], hour: sh, minute: sm },
-      intervalEnd: { weekday: DAY_WEEKDAY_INDEX[day], hour: eh, minute: em },
+      intervalStart: { hour: startH ?? 0, minute: startM ?? 0 },
+      intervalEnd: { hour: endH ?? 0, minute: endM ?? 0 },
       repeats: true,
     },
     startActions,
@@ -114,12 +86,12 @@ async function applyPlan(plan: MonitorPlan): Promise<void> {
   }
 }
 
-export async function reconcileSchedules(
-  specs: readonly ScheduleSpec[],
+export async function reconcileFocusBlocks(
+  specs: readonly FocusBlockSpec[],
 ): Promise<void> {
   const desired = new Map<string, MonitorPlan>();
   for (const spec of specs) {
-    for (const plan of materializeSchedule(spec)) {
+    for (const plan of materializeFocusBlock(spec)) {
       desired.set(plan.activityName, plan);
     }
   }

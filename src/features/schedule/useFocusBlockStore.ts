@@ -2,33 +2,33 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { newId, persistedStorage } from '../../shared/storage';
 import { EMPTY_BLOCK_SELECTION } from '../blocker/types';
-import { isScheduleActiveAt } from './activeness';
-import type { Schedule, ScheduleInput } from './types';
+import { isFocusBlockActiveAt } from './activeness';
+import type { FocusBlock, FocusBlockInput } from './types';
 
-interface ScheduleState {
-  schedules: Schedule[];
-  addSchedule: (input: ScheduleInput) => void;
-  updateSchedule: (id: string, input: ScheduleInput) => void;
-  toggleSchedule: (id: string, isEnabled: boolean) => void;
-  deleteSchedule: (id: string) => void;
+interface FocusBlockState {
+  focusBlocks: FocusBlock[];
+  addFocusBlock: (input: FocusBlockInput) => void;
+  updateFocusBlock: (id: string, input: FocusBlockInput) => void;
+  toggleFocusBlock: (id: string, isEnabled: boolean) => void;
+  deleteFocusBlock: (id: string) => void;
   addPreset: (preset: 'deep-work' | 'evening' | 'weekend') => void;
 }
 
-function assertNotActive(schedule: Schedule, message: string): void {
-  if (isScheduleActiveAt(schedule, new Date())) {
+function assertNotActive(block: FocusBlock, message: string): void {
+  if (isFocusBlockActiveAt(block, new Date())) {
     throw new Error(message);
   }
 }
 
-export const useScheduleStore = create<ScheduleState>()(
+export const useFocusBlockStore = create<FocusBlockState>()(
   persist(
     (set, get) => ({
-      schedules: [],
+      focusBlocks: [],
 
-      addSchedule: (input) =>
+      addFocusBlock: (input) =>
         set((state) => ({
-          schedules: [
-            ...state.schedules,
+          focusBlocks: [
+            ...state.focusBlocks,
             {
               id: newId(),
               name: input.name.trim(),
@@ -41,62 +41,53 @@ export const useScheduleStore = create<ScheduleState>()(
           ],
         })),
 
-      updateSchedule: (id, input) => {
-        const existing = get().schedules.find((s) => s.id === id);
+      updateFocusBlock: (id, input) => {
+        const existing = get().focusBlocks.find((b) => b.id === id);
         if (!existing) {
-          throw new Error('Schedule not found.');
+          throw new Error('Focus block not found.');
         }
-        assertNotActive(
-          existing,
-          'Cannot change a schedule while its window is active.',
-        );
+        assertNotActive(existing, 'Cannot change a block while it is active.');
         set((state) => ({
-          schedules: state.schedules.map((s) =>
-            s.id === id
+          focusBlocks: state.focusBlocks.map((b) =>
+            b.id === id
               ? {
-                  ...s,
+                  ...b,
                   name: input.name.trim(),
                   startTime: input.startTime,
                   endTime: input.endTime,
                   days: input.days,
                   selection: input.selection,
                 }
-              : s,
+              : b,
           ),
         }));
       },
 
-      toggleSchedule: (id, isEnabled) => {
-        const existing = get().schedules.find((s) => s.id === id);
+      toggleFocusBlock: (id, isEnabled) => {
+        const existing = get().focusBlocks.find((b) => b.id === id);
         if (!existing) {
-          throw new Error('Schedule not found.');
+          throw new Error('Focus block not found.');
         }
-        assertNotActive(
-          existing,
-          'Cannot change a schedule while its window is active.',
-        );
+        assertNotActive(existing, 'Cannot change a block while it is active.');
         set((state) => ({
-          schedules: state.schedules.map((s) =>
-            s.id === id ? { ...s, isEnabled } : s,
+          focusBlocks: state.focusBlocks.map((b) =>
+            b.id === id ? { ...b, isEnabled } : b,
           ),
         }));
       },
 
-      deleteSchedule: (id) => {
-        const existing = get().schedules.find((s) => s.id === id);
+      deleteFocusBlock: (id) => {
+        const existing = get().focusBlocks.find((b) => b.id === id);
         if (existing) {
-          assertNotActive(
-            existing,
-            'Cannot delete a schedule while its window is active.',
-          );
+          assertNotActive(existing, 'Cannot delete a block while it is active.');
         }
         set((state) => ({
-          schedules: state.schedules.filter((s) => s.id !== id),
+          focusBlocks: state.focusBlocks.filter((b) => b.id !== id),
         }));
       },
 
       addPreset: (kind) => {
-        const presets: Record<string, ScheduleInput> = {
+        const presets: Record<string, FocusBlockInput> = {
           'deep-work': {
             name: 'Deep Work',
             startTime: '09:00',
@@ -163,12 +154,12 @@ export const useScheduleStore = create<ScheduleState>()(
 
         const input = presets[kind];
         if (input) {
-          get().addSchedule(input);
+          get().addFocusBlock(input);
         }
       },
     }),
     {
-      name: 'fucus.schedules',
+      name: 'fucus.focus-blocks',
       storage: persistedStorage,
     },
   ),

@@ -10,20 +10,20 @@
 ### 2. @fucus/blocker-core (`src/features/blocker`)
 - **App Picker**: Interaction with `FamilyActivityPicker`.
 - **Logic**: Rule validation (can we block this?).
-- **Sync Engine**: Periodically checks schedules and updates the native bridge.
+- **Sync Engine**: Periodically checks focus blocks and updates the native bridge.
 
-### 3. @fucus/scheduler (`src/features/schedule`)
-- **Logic**: Recurring days/hours calculation.
-- **Persistence**: Supabase sync.
+### 3. @fucus/sync-engine (`src/features/schedule`)
+- **Block Logic**: Pure functions for determining if a block is currently active.
+- **Materializer**: Converts high-level block definitions into atomic native monitoring plans.
 
-### 4. @fucus/auth (`src/features/auth`)
-- **Providers**: Apple & Google.
-- **Logic**: Session token management with Supabase.
+### 4. @fucus/lock-in (`src/features/settings`)
+- **Policy**: Weekly "Setup Blocks" where changes are permitted.
+- **Enforcement**: State machine for global read-only mode.
 
-## Project Roadmap
+## Implementation Roadmap
 
-- **Step 1: Scaffolding** (Current Status)
-- **Step 2: Native Bridge Development** (Screen Time basics)
-- **Step 3: Core UI Development** (Auth & Dashboard)
-- **Step 4: Scheduling & Background Sync**
-- **Step 5: Testing & Release**
+- **Step 1: Scaffolding** (Complete)
+- **Step 2: Native Bridge Development** (Complete)
+- **Step 3: Core UI Development** (Complete)
+- **Step 4: Focus Blocks & Lock-in Engine** (Complete)
+- **Step 5: Testing & Production Hardening** (In Progress)

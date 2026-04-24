@@ -13,8 +13,8 @@ import {
   View,
 } from 'react-native';
 import {
-  type ActivitySelectionMetadata,
   DeviceActivitySelectionSheetViewPersisted,
+  type ActivitySelectionMetadata,
 } from 'react-native-device-activity';
 import { BLOCK_ACTIVITY_SELECTION_ID } from '../src/features/blocker/constants';
 import {
@@ -23,9 +23,9 @@ import {
   selectionHasBlockedTargets,
 } from '../src/features/blocker/types';
 import { useBlocklistStore } from '../src/features/blocker/useBlocklistStore';
-import type { DayOfWeek, ScheduleInput } from '../src/features/schedule/types';
-import { useScheduleStore } from '../src/features/schedule/useScheduleStore';
-import { validateScheduleInput } from '../src/features/schedule/validation';
+import type { DayOfWeek, FocusBlockInput } from '../src/features/schedule/types';
+import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
+import { validateFocusBlockInput } from '../src/features/schedule/validation';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { Button } from '../src/shared/components/Button';
 import { Icon } from '../src/shared/components/Icon';
@@ -41,7 +41,7 @@ import { haptic } from '../src/shared/design/haptics';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
-export default function AddScheduleScreen(): JSX.Element {
+export default function AddFocusBlockScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
   const isDark = useIsDark();
@@ -49,17 +49,17 @@ export default function AddScheduleScreen(): JSX.Element {
   const editId = params.id ?? null;
   const isEditing = editId !== null;
 
-  const addSchedule = useScheduleStore((s) => s.addSchedule);
-  const updateSchedule = useScheduleStore((s) => s.updateSchedule);
-  const deleteSchedule = useScheduleStore((s) => s.deleteSchedule);
-  const existing = useScheduleStore((s) =>
-    editId ? s.schedules.find((item) => item.id === editId) ?? null : null,
+  const addFocusBlock = useFocusBlockStore((s) => s.addFocusBlock);
+  const updateFocusBlock = useFocusBlockStore((s) => s.updateFocusBlock);
+  const deleteFocusBlock = useFocusBlockStore((s) => s.deleteFocusBlock);
+  const existing = useFocusBlockStore((s) =>
+    editId ? s.focusBlocks.find((item) => item.id === editId) ?? null : null,
   );
 
   const { state: adminState, isSettled } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
 
-  const [name, setName] = useState<string>(existing?.name ?? 'Focus window');
+  const [name, setName] = useState<string>(existing?.name ?? 'Focus block');
   const [startDate, setStartDate] = useState<Date>(() =>
     timeStringToDate(existing?.startTime ?? '09:00'),
   );
@@ -80,9 +80,9 @@ export default function AddScheduleScreen(): JSX.Element {
 
   useEffect(() => {
     if (existing) {
-      const scheduleSelection = existing.selection ?? EMPTY_BLOCK_SELECTION;
-      setSelection(scheduleSelection.activitySelection);
-      setWebDomains(scheduleSelection.webDomains);
+      const blockSelection = existing.selection ?? EMPTY_BLOCK_SELECTION;
+      setSelection(blockSelection.activitySelection);
+      setWebDomains(blockSelection.webDomains);
     } else {
       setSelection(EMPTY_BLOCK_SELECTION.activitySelection);
       setWebDomains(EMPTY_BLOCK_SELECTION.webDomains);
@@ -200,7 +200,7 @@ export default function AddScheduleScreen(): JSX.Element {
       return;
     }
 
-    const input: ScheduleInput = {
+    const input: FocusBlockInput = {
       name,
       startTime,
       endTime,
@@ -210,14 +210,14 @@ export default function AddScheduleScreen(): JSX.Element {
     };
 
     const success = await run(async () => {
-      validateScheduleInput(input);
+      validateFocusBlockInput(input);
       void haptic.commit();
       if (editId) {
-        updateSchedule(editId, input);
+        updateFocusBlock(editId, input);
       } else {
-        addSchedule(input);
+        addFocusBlock(input);
       }
-    }, 'Could not save schedule.');
+    }, 'Could not save block.');
 
     if (success) {
       router.back();
@@ -227,8 +227,8 @@ export default function AddScheduleScreen(): JSX.Element {
   const handleDelete = (): void => {
     if (!editId) return;
     Alert.alert(
-      'Delete Schedule?',
-      'This will permanently remove this blocking window.',
+      'Delete Focus Block?',
+      'This will permanently remove this focus block.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -236,7 +236,7 @@ export default function AddScheduleScreen(): JSX.Element {
           style: 'destructive',
           onPress: () => {
             void haptic.abandon();
-            deleteSchedule(editId);
+            deleteFocusBlock(editId);
             router.back();
           },
         },
@@ -272,20 +272,23 @@ export default function AddScheduleScreen(): JSX.Element {
         >
           <View className="gap-2">
             <Typography variant="label" tone="muted">
-              {isEditing ? 'Edit window' : 'New window'}
+              {isEditing ? 'Modify Block' : 'New Focus Block'}
             </Typography>
             <Typography variant="display-md" tone="ink">
-              Set your focus.
+              Set your rules.
             </Typography>
           </View>
 
           {!isEditing && (
             <View className="gap-3">
               <Typography variant="label" tone="faint">
-                Quick presets
+                Presets
               </Typography>
               <View className="flex-row gap-2">
-                <PresetChip label="Work" onPress={() => applyPreset('work')} />
+                <PresetChip
+                  label="Deep Work"
+                  onPress={() => applyPreset('work')}
+                />
                 <PresetChip
                   label="Evening"
                   onPress={() => applyPreset('evening')}
@@ -298,15 +301,15 @@ export default function AddScheduleScreen(): JSX.Element {
             </View>
           )}
 
-          <View className="gap-6 bg-surface-raised rounded-3xl p-6">
+          <View className="gap-6 bg-surface-raised rounded-3xl p-6 shadow-sm border border-divider/10">
             <View className="gap-3">
               <Typography variant="label" tone="faint">
-                Name
+                Block Name
               </Typography>
               <TextInput
                 value={name}
                 onChangeText={setName}
-                placeholder="Focus window"
+                placeholder="e.g. Morning Deep Work"
                 placeholderTextColor={colors.inkFaint}
                 className="text-[22px] font-semibold"
                 style={{ color: colors.ink }}
@@ -315,7 +318,7 @@ export default function AddScheduleScreen(): JSX.Element {
 
             <View className="h-[1px] bg-divider" />
 
-            <View className="flex-row justify-between items-center">
+            <View className="flex-row gap-4 justify-between bg-surface-sunken/60 rounded-2xl px-6 py-5 items-center">
               <View className="items-start gap-1">
                 <Typography variant="label" tone="faint">
                   Starts
@@ -329,7 +332,7 @@ export default function AddScheduleScreen(): JSX.Element {
                   textColor={colors.ink}
                 />
               </View>
-              <View className="w-[1px] h-10 bg-divider" />
+              <View className="w-[1px] h-10 bg-divider/20" />
               <View className="items-end gap-1">
                 <Typography variant="label" tone="faint">
                   Ends
@@ -403,11 +406,11 @@ export default function AddScheduleScreen(): JSX.Element {
                 <Icon name="chevron.right" size={18} tone="faint" />
               </Pressable>
 
-              <View className="bg-surface-raised rounded-3xl p-6 gap-4">
+              <View className="bg-surface-raised rounded-3xl p-6 gap-6 shadow-sm border border-divider/10">
                 <View className="flex-row items-center gap-4">
                   <Icon name="globe" size={24} tone="muted" />
                   <Typography variant="body-md" tone="ink" className="flex-1">
-                    Websites
+                    Blocked Websites
                   </Typography>
                 </View>
 
@@ -420,31 +423,31 @@ export default function AddScheduleScreen(): JSX.Element {
                     autoCapitalize="none"
                     autoCorrect={false}
                     keyboardType="url"
-                    className="flex-1 bg-surface-sunken rounded-xl px-4 py-2"
+                    className="flex-1 bg-surface-sunken rounded-xl px-4 py-3"
                     style={{ color: colors.ink }}
                   />
                   <Pressable
                     onPress={() => void handleAddDomain()}
-                    className="bg-signal w-10 h-10 items-center justify-center rounded-xl"
+                    className="bg-signal w-12 h-12 items-center justify-center rounded-xl"
                   >
                     <Icon name="plus" size={20} tone="surface" />
                   </Pressable>
                 </View>
 
                 {selection.webDomains.length > 0 && (
-                  <View className="gap-2 mt-2">
+                  <View className="gap-3">
                     {selection.webDomains.map((domain) => (
                       <View
                         key={domain}
-                        className="flex-row justify-between items-center bg-surface-sunken/50 px-4 py-2 rounded-lg"
+                        className="flex-row justify-between items-center bg-surface-sunken/40 px-5 py-4 rounded-xl border border-divider/5"
                       >
-                        <Typography variant="body" tone="muted">
+                        <Typography variant="body" tone="ink">
                           {domain}
                         </Typography>
                         <Pressable onPress={() => handleRemoveDomain(domain)}>
                           <Icon
                             name="xmark.circle.fill"
-                            size={16}
+                            size={18}
                             tone="faint"
                           />
                         </Pressable>
@@ -464,7 +467,7 @@ export default function AddScheduleScreen(): JSX.Element {
 
           <View className="gap-3 pt-2 pb-10">
             <Button
-              title={isEditing ? 'Save changes' : 'Create schedule'}
+              title={isEditing ? 'Save changes' : 'Create block'}
               variant="commit"
               onPress={() => void handleSave()}
               isLoading={isPending}
@@ -472,7 +475,7 @@ export default function AddScheduleScreen(): JSX.Element {
             />
             {isEditing && (
               <Button
-                title="Delete schedule"
+                title="Delete block"
                 variant="abandon"
                 onPress={handleDelete}
                 disabled={isPending}

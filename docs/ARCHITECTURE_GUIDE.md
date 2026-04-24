@@ -15,16 +15,15 @@ is limited to `ShieldAction` + `ShieldConfiguration` extensions wired in
 
 Three JS stores are the single source of truth:
 
-- `useBlocklistStore` (`src/features/blocker/useBlocklistStore.ts`) — one
-  `BlockSelection` (apps + categories via Apple's picker tokens + web
-  domains).
-- `useScheduleStore` (`src/features/schedule/useScheduleStore.ts`) — the
-  user's recurring windows.
+- `useBlocklistStore` (`src/features/blocker/useBlocklistStore.ts`) — temporary
+  buffer for `BlockSelection` during creation/editing.
+- `useFocusBlockStore` (`src/features/schedule/useFocusBlockStore.ts`) — the
+  user's recurring **Focus Blocks**.
 - `useSettingsStore` (`src/features/settings/useSettingsStore.ts`) — the
-  weekly admin (setup) window.
+  weekly **Setup Block**.
 
-`useBlockerStore` tracks Screen Time authorization status (not persisted;
-re-read on launch via `BlockerBridge.checkAuthorizationStatus`).
+`useBlockerStore` tracks Screen Time authorization status (re-read on launch
+via `BlockerBridge.checkAuthorizationStatus`).
 
 ## 3. Persistence + sync
 
@@ -38,19 +37,19 @@ handles quota, offline queuing, and encryption.
 Entitlement injection is handled by the `@nauverse/expo-cloud-settings`
 Expo config plugin at prebuild time.
 
-## 4. Scheduler
+## 4. Sync Engine
 
-`src/features/schedule/scheduler.ts` is pure JS. Each enabled schedule is
+`src/features/schedule/scheduler.ts` is pure JS. Each enabled focus block is
 expanded into N `DeviceActivity` monitors (one per weekday) via
 `DateComponents.weekday`. For each monitor we persist
 `configureActions('intervalDidStart', ...)` and
 `configureActions('intervalDidEnd', ...)` to apply / remove the shield
-using the current blocklist. `reconcileSchedules()` is idempotent and
-runs in a `useEffect` in `app/index.tsx` whenever schedules change.
+using the blocklist assigned to that focus block. `reconcileFocusBlocks()`
+is idempotent and runs in a `useEffect` in `app/index.tsx` whenever blocks change.
 
 ## 5. No server, no auth
 
 There is no backend. Apple `FamilyActivitySelection` tokens are
 device-bound anyway — the only useful cross-device state is metadata and
-schedules, both of which ride iCloud KV for free. Sign-in, user records,
+focus blocks, both of which ride iCloud KV for free. Sign-in, user records,
 and any concept of "online" are absent by design.

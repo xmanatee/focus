@@ -8,23 +8,24 @@ interface AdminStateView {
   readonly state: AdminState;
   readonly now: Date;
   readonly isSettled: boolean;
-}
-
 export function useAdminState(): AdminStateView {
-  const setupWindow = useSettingsStore((s) => s.setupWindow);
+  const setupBlock = useSettingsStore((s) => s.setupBlock);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), TICK_MS);
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, TICK_MS);
     return () => clearInterval(interval);
   }, []);
 
   return useMemo<AdminStateView>(
     () => ({
-      state: resolveAdminState(setupWindow, now),
+      state: resolveAdminState(setupBlock, now),
       now,
       isSettled: true,
     }),
-    [now, setupWindow],
+    [now, setupBlock],
   );
 }
+

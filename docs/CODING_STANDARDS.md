@@ -22,7 +22,7 @@ validation, and store co-located.
   iCloud KV fan-out).
 - **Selector Pattern**: always use selectors to prevent re-renders.
   ```typescript
-  const schedules = useScheduleStore((s) => s.schedules);
+  const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   ```
 
 ## 5. Portability Layer

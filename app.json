@@ -10,7 +10,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourbound.fucus",
-      "appleTeamId": "569HBLNQPC"
+      "appleTeamId": "569HBLNQPC",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSFamilyControlsUsageDescription": "Fucus uses Screen Time to block the apps you choose during the focus blocks you create.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "splash": {
       "backgroundColor": "#F8F2E8",

@@ -7,10 +7,10 @@ import {
   selectionHasBlockedTargets,
 } from '../src/features/blocker/types';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
-import { isScheduleActiveAt } from '../src/features/schedule/activeness';
-import { reconcileSchedules } from '../src/features/schedule/scheduler';
-import { useActiveSchedule } from '../src/features/schedule/useActiveSchedule';
-import { useScheduleStore } from '../src/features/schedule/useScheduleStore';
+import { isFocusBlockActiveAt } from '../src/features/schedule/activeness';
+import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
+import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
+import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { Button } from '../src/shared/components/Button';
@@ -31,13 +31,13 @@ export default function MainFeedScreen(): JSX.Element {
   const requestPermissions = useBlockerStore((s) => s.requestPermissions);
   const hasPermissions = authorizationStatus === 'authorized';
 
-  const schedules = useScheduleStore((s) => s.schedules);
-  const toggleSchedule = useScheduleStore((s) => s.toggleSchedule);
-  const { active, now } = useActiveSchedule(schedules);
+  const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
+  const toggleFocusBlock = useFocusBlockStore((s) => s.toggleFocusBlock);
+  const { active, now } = useActiveBlock(focusBlocks);
 
   const { state: adminState } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
-  const setupWindow = useSettingsStore((s) => s.setupWindow);
+  const setupBlock = useSettingsStore((s) => s.setupBlock);
 
   const { run } = useAsyncAction();
 
@@ -54,21 +54,21 @@ export default function MainFeedScreen(): JSX.Element {
   useEffect(() => {
     void (async () => {
       try {
-        await reconcileSchedules(
-          schedules.map((s) => ({
-            id: s.id,
-            days: s.days,
-            startTime: s.startTime,
-            endTime: s.endTime,
-            isEnabled: s.isEnabled,
-            profileSelection: s.selection ?? EMPTY_BLOCK_SELECTION,
+        await reconcileFocusBlocks(
+          focusBlocks.map((b) => ({
+            id: b.id,
+            days: b.days,
+            startTime: b.startTime,
+            endTime: b.endTime,
+            isEnabled: b.isEnabled,
+            profileSelection: b.selection ?? EMPTY_BLOCK_SELECTION,
           })),
         );
       } catch {
         // Prevent background sync from crashing the app
       }
     })();
-  }, [schedules]);
+  }, [focusBlocks]);
 
   const handleGrant = (): Promise<boolean> =>
     run(async () => {
@@ -80,13 +80,13 @@ export default function MainFeedScreen(): JSX.Element {
     }, 'Could not request Screen Time permission.');
 
   const handleToggle = (
-    scheduleId: string,
+    blockId: string,
     nextIsEnabled: boolean,
   ): Promise<boolean> => {
     void haptic.select();
     return run(async () => {
-      toggleSchedule(scheduleId, nextIsEnabled);
-    }, 'Could not update schedule.');
+      toggleFocusBlock(blockId, nextIsEnabled);
+    }, 'Could not update focus block.');
   };
 
   if (authorizationStatus === 'denied') {
@@ -167,13 +167,13 @@ export default function MainFeedScreen(): JSX.Element {
         {/* Active Session Card */}
         {active && (
           <View className="bg-ink rounded-[32px] p-7 gap-3 shadow-xl">
-            <Typography variant="label" tone="surface" className="opacity-50">
-              In session
+            <Typography variant="label" tone="surface" className="opacity-70">
+              Active Session
             </Typography>
             <Typography variant="display-md" tone="surface">
               {active.name}
             </Typography>
-            <Typography variant="body" tone="surface" className="opacity-50">
+            <Typography variant="body" tone="surface" className="opacity-70">
               Ends at {active.endTime} ·{' '}
               {formatRelative(
                 (() => {
@@ -189,10 +189,10 @@ export default function MainFeedScreen(): JSX.Element {
           </View>
         )}
 
-        {/* Lock-in (Setup Hours) Section */}
+        {/* Lock-in Section */}
         <View className="gap-4">
           <Typography variant="label" tone="faint" className="px-2">
-            Lock-in
+            Configuration
           </Typography>
           <Pressable
             onPress={() => router.push('/settings')}
@@ -201,35 +201,41 @@ export default function MainFeedScreen(): JSX.Element {
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-3">
                 <Icon
-                  name={setupWindow ? 'lock.fill' : 'lock.open.fill'}
+                  name={isAdminLocked ? 'lock.fill' : 'lock.open.fill'}
                   size={20}
                   tone={isAdminLocked ? 'signal' : 'muted'}
                 />
                 <Typography variant="h3" tone="ink">
-                  {setupWindow ? 'Locked Down' : 'Stay Focused'}
+                  {isAdminLocked
+                    ? 'Locked Down'
+                    : setupBlock
+                      ? 'Setup Block Active'
+                      : 'Stay Focused'}
                 </Typography>
               </View>
               <Icon name="chevron.right" size={16} tone="faint" />
             </View>
             <Typography variant="body" tone="muted">
-              {setupWindow
-                ? `Changes only allowed during ${setupWindow.startTime}–${setupWindow.endTime}.`
-                : 'Set a weekly setup window to lock your schedules and prevent yourself from disabling Fucus.'}
+              {setupBlock
+                ? isAdminLocked
+                  ? `Focus blocks are locked. Changes only allowed during your setup block (${setupBlock.startTime}–${setupBlock.endTime}).`
+                  : 'Focus blocks are unlocked. You can now edit your focus blocks.'
+                : 'Set a weekly setup block to lock your focus blocks and prevent yourself from disabling Fucus.'}
             </Typography>
           </Pressable>
         </View>
 
-        {/* Schedules Section */}
+        {/* Focus Blocks Section */}
         <View className="gap-6">
           <View className="flex-row items-center justify-between px-2">
-            <Typography variant="h2" tone="ink">
-              Schedules
+            <Typography variant="label" tone="faint">
+              Focus Blocks
             </Typography>
             <Pressable
               onPress={() => {
                 if (isAdminLocked) return;
                 void haptic.select();
-                router.push('/add-schedule');
+                router.push('/add-focus-block');
               }}
               disabled={isAdminLocked}
               className={`h-10 w-10 items-center justify-center rounded-full bg-signal ${
@@ -240,27 +246,27 @@ export default function MainFeedScreen(): JSX.Element {
             </Pressable>
           </View>
 
-          {schedules.length === 0 ? (
+          {focusBlocks.length === 0 ? (
             <View className="bg-surface-raised/50 rounded-[32px] py-12 items-center gap-4 border border-divider/30 border-dashed">
               <Typography variant="body" tone="muted" align="center">
                 Your focus calendar is empty.
               </Typography>
               <Button
-                title="Add a window"
+                title="Add a block"
                 variant="commit"
-                onPress={() => router.push('/add-schedule')}
+                onPress={() => router.push('/add-focus-block')}
                 disabled={isAdminLocked}
               />
             </View>
           ) : (
             <View className="gap-4">
-              {schedules.map((schedule) => {
-                const isActive = isScheduleActiveAt(schedule, now);
+              {focusBlocks.map((block) => {
+                const isActive = isFocusBlockActiveAt(block, now);
                 const isRowLocked = isActive || isAdminLocked;
-                const selection = schedule.selection ?? EMPTY_BLOCK_SELECTION;
+                const selection = block.selection ?? EMPTY_BLOCK_SELECTION;
                 return (
                   <View
-                    key={schedule.id}
+                    key={block.id}
                     className="bg-surface-raised rounded-[32px] p-6 gap-4"
                   >
                     <View className="flex-row justify-between items-start">
@@ -269,8 +275,8 @@ export default function MainFeedScreen(): JSX.Element {
                           if (isRowLocked) return;
                           void haptic.select();
                           router.push({
-                            pathname: '/add-schedule',
-                            params: { id: schedule.id },
+                            pathname: '/add-focus-block',
+                            params: { id: block.id },
                           });
                         }}
                         disabled={isRowLocked}
@@ -278,7 +284,7 @@ export default function MainFeedScreen(): JSX.Element {
                       >
                         <View className="flex-row items-center gap-2">
                           <Typography variant="h3" tone="ink">
-                            {schedule.name}
+                            {block.name}
                           </Typography>
                           {isActive && (
                             <View className="bg-signal/20 px-2 py-0.5 rounded-md">
@@ -293,8 +299,8 @@ export default function MainFeedScreen(): JSX.Element {
                           tone="muted"
                           className="mt-1"
                         >
-                          {schedule.days.join(' · ').toUpperCase()} ·{' '}
-                          {schedule.startTime}–{schedule.endTime}
+                          {block.days.join(' · ').toUpperCase()} ·{' '}
+                          {block.startTime}–{block.endTime}
                         </Typography>
                         <View className="flex-row items-center gap-3 mt-3">
                           <View className="bg-surface-sunken px-3 py-1.5 rounded-full flex-row items-center gap-2">
@@ -317,9 +323,9 @@ export default function MainFeedScreen(): JSX.Element {
                       </Pressable>
                       <View className="flex-row items-center gap-3">
                         <Switch
-                          value={schedule.isEnabled}
+                          value={block.isEnabled}
                           onValueChange={(nextValue) =>
-                            void handleToggle(schedule.id, nextValue)
+                            void handleToggle(block.id, nextValue)
                           }
                           disabled={isRowLocked}
                           trackColor={{

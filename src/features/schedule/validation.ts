@@ -1,6 +1,6 @@
-import type { DayOfWeek, ScheduleInput } from './types';
+import type { DayOfWeek, FocusBlockInput } from './types';
 
-const DAY_OF_WEEK_VALUES: DayOfWeek[] = [
+const DAY_OF_WEEK_VALUES: readonly DayOfWeek[] = [
   'mon',
   'tue',
   'wed',
@@ -8,47 +8,49 @@ const DAY_OF_WEEK_VALUES: DayOfWeek[] = [
   'fri',
   'sat',
   'sun',
-];
+] as const;
 
 const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-function isTimeOfDay(value: string): boolean {
-  return TIME_OF_DAY_PATTERN.test(value);
+function minutesOf(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
 }
 
-function timeOfDayToMinutes(value: string): number {
-  const [hours, minutes] = value.split(':').map(Number);
-  return hours * 60 + minutes;
-}
-
-export function validateScheduleInput(
-  input: Omit<ScheduleInput, 'profileId'>,
+export function validateFocusBlockInput(
+  input: FocusBlockInput,
 ): void {
-  if (input.name.trim().length === 0) {
-    throw new Error('Schedule name is required.');
+  const name = input.name.trim();
+  if (name.length === 0) {
+    throw new Error('Block name is required.');
   }
 
-  if (!isTimeOfDay(input.startTime) || !isTimeOfDay(input.endTime)) {
-    throw new Error('Times must use 24-hour HH:mm format.');
-  }
-
-  if (
-    timeOfDayToMinutes(input.startTime) === timeOfDayToMinutes(input.endTime)
-  ) {
-    throw new Error('Start and end time must differ.');
+  if (name.length > 50) {
+    throw new Error('Block name is too long.');
   }
 
   if (input.days.length === 0) {
-    throw new Error('Select at least one day.');
+    throw new Error('Pick at least one day for this block.');
   }
 
   if (new Set(input.days).size !== input.days.length) {
-    throw new Error('Schedule days must be unique.');
+    throw new Error('Block days must be unique.');
   }
 
   for (const day of input.days) {
     if (!DAY_OF_WEEK_VALUES.includes(day)) {
       throw new Error(`Invalid day: ${day}`);
     }
+  }
+
+  if (
+    !TIME_OF_DAY_PATTERN.test(input.startTime) ||
+    !TIME_OF_DAY_PATTERN.test(input.endTime)
+  ) {
+    throw new Error('Times must use 24-hour HH:mm format.');
+  }
+
+  if (minutesOf(input.startTime) === minutesOf(input.endTime)) {
+    throw new Error('Start and end must differ.');
   }
 }
