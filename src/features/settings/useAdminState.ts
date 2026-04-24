@@ -8,6 +8,8 @@ interface AdminStateView {
   readonly state: AdminState;
   readonly now: Date;
   readonly isSettled: boolean;
+}
+
 export function useAdminState(): AdminStateView {
   const setupBlock = useSettingsStore((s) => s.setupBlock);
   const [now, setNow] = useState(() => new Date());
@@ -28,4 +30,3 @@ export function useAdminState(): AdminStateView {
     [now, setupBlock],
   );
 }
-

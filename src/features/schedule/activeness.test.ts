@@ -25,15 +25,21 @@ describe('isFocusBlockActiveAt', () => {
   });
 
   it('inactive before block', () => {
-    expect(isFocusBlockActiveAt(weekday, at('2026-04-27T08:00:00'))).toBe(false);
+    expect(isFocusBlockActiveAt(weekday, at('2026-04-27T08:00:00'))).toBe(
+      false,
+    );
   });
 
   it('inactive at exact end (exclusive)', () => {
-    expect(isFocusBlockActiveAt(weekday, at('2026-04-27T17:00:00'))).toBe(false);
+    expect(isFocusBlockActiveAt(weekday, at('2026-04-27T17:00:00'))).toBe(
+      false,
+    );
   });
 
   it('inactive on weekend', () => {
-    expect(isFocusBlockActiveAt(weekday, at('2026-04-25T10:00:00'))).toBe(false);
+    expect(isFocusBlockActiveAt(weekday, at('2026-04-25T10:00:00'))).toBe(
+      false,
+    );
   });
 
   it('ignores when disabled', () => {
@@ -46,11 +52,15 @@ describe('isFocusBlockActiveAt', () => {
   });
 
   it('overnight block active late on the start day', () => {
-    expect(isFocusBlockActiveAt(overnight, at('2026-04-27T23:30:00'))).toBe(true);
+    expect(isFocusBlockActiveAt(overnight, at('2026-04-27T23:30:00'))).toBe(
+      true,
+    );
   });
 
   it('overnight block active early the next day', () => {
-    expect(isFocusBlockActiveAt(overnight, at('2026-04-28T05:00:00'))).toBe(true);
+    expect(isFocusBlockActiveAt(overnight, at('2026-04-28T05:00:00'))).toBe(
+      true,
+    );
   });
 
   it('overnight block inactive after wake on non-start day', () => {

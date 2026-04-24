@@ -37,6 +37,8 @@ export const useFocusBlockStore = create<FocusBlockState>()(
               days: input.days,
               isEnabled: input.isEnabled,
               selection: input.selection,
+              notifyOnStart: input.notifyOnStart,
+              notifyOnEnd: input.notifyOnEnd,
             },
           ],
         })),
@@ -57,6 +59,8 @@ export const useFocusBlockStore = create<FocusBlockState>()(
                   endTime: input.endTime,
                   days: input.days,
                   selection: input.selection,
+                  notifyOnStart: input.notifyOnStart,
+                  notifyOnEnd: input.notifyOnEnd,
                 }
               : b,
           ),
@@ -79,7 +83,10 @@ export const useFocusBlockStore = create<FocusBlockState>()(
       deleteFocusBlock: (id) => {
         const existing = get().focusBlocks.find((b) => b.id === id);
         if (existing) {
-          assertNotActive(existing, 'Cannot delete a block while it is active.');
+          assertNotActive(
+            existing,
+            'Cannot delete a block while it is active.',
+          );
         }
         set((state) => ({
           focusBlocks: state.focusBlocks.filter((b) => b.id !== id),
@@ -94,6 +101,8 @@ export const useFocusBlockStore = create<FocusBlockState>()(
             endTime: '12:00',
             days: ['mon', 'tue', 'wed', 'thu', 'fri'],
             isEnabled: true,
+            notifyOnStart: true,
+            notifyOnEnd: true,
             selection: {
               ...EMPTY_BLOCK_SELECTION,
               webDomains: [
@@ -116,6 +125,8 @@ export const useFocusBlockStore = create<FocusBlockState>()(
             endTime: '23:30',
             days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
             isEnabled: true,
+            notifyOnStart: true,
+            notifyOnEnd: true,
             selection: {
               ...EMPTY_BLOCK_SELECTION,
               webDomains: [
@@ -136,6 +147,8 @@ export const useFocusBlockStore = create<FocusBlockState>()(
             endTime: '20:00',
             days: ['sat', 'sun'],
             isEnabled: true,
+            notifyOnStart: true,
+            notifyOnEnd: true,
             selection: {
               ...EMPTY_BLOCK_SELECTION,
               webDomains: [

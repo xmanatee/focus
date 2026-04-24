@@ -25,6 +25,12 @@ module.exports = function withFucusICloud(config) {
     // Enable CloudKit services as required for modern syncing.
     mod.modResults['com.apple.developer.icloud-services'] = ['CloudKit'];
 
+    // 4. Force Remove Push Notifications
+    // Some libraries (like expo-notifications) automatically add this.
+    // For this project, we ONLY use local notifications, so we MUST remove
+    // this to avoid build errors with profiles that lack Push capabilities.
+    delete mod.modResults['aps-environment'];
+
     return mod;
   });
 };

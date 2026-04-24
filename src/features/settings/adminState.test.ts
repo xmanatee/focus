@@ -5,12 +5,14 @@ const monFri9to17: SetupBlock = {
   days: ['mon', 'tue', 'wed', 'thu', 'fri'],
   startTime: '09:00',
   endTime: '17:00',
+  notifyOnStart: true,
 };
 
 const sundayNight: SetupBlock = {
   days: ['sun'],
   startTime: '20:00',
   endTime: '22:00',
+  notifyOnStart: true,
 };
 
 function at(iso: string): Date {

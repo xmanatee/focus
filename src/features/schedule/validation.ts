@@ -17,9 +17,7 @@ function minutesOf(time: string): number {
   return h * 60 + m;
 }
 
-export function validateFocusBlockInput(
-  input: FocusBlockInput,
-): void {
+export function validateFocusBlockInput(input: FocusBlockInput): void {
   const name = input.name.trim();
   if (name.length === 0) {
     throw new Error('Block name is required.');

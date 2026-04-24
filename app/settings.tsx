@@ -3,7 +3,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
 import type { DayOfWeek } from '../src/features/schedule/types';
 import type {
   AdminState,
@@ -24,6 +24,7 @@ import {
 import { haptic } from '../src/shared/design/haptics';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
+import { requestNotificationPermissions } from '../src/shared/notifications';
 
 function nextUnlockLabel(state: AdminState, now: Date): string {
   if (state.kind === 'unlocked') {
@@ -55,6 +56,9 @@ export default function SettingsScreen(): JSX.Element {
   const [endDate, setEndDate] = useState(() =>
     timeStringToDate(existing?.endTime ?? '21:00'),
   );
+  const [notifyOnStart, setNotifyOnStart] = useState(
+    existing?.notifyOnStart ?? true,
+  );
   const { error, isPending, run } = useAsyncAction();
 
   useEffect(() => {
@@ -64,6 +68,7 @@ export default function SettingsScreen(): JSX.Element {
     setSelectedDays([...existing.days]);
     setStartDate(timeStringToDate(existing.startTime));
     setEndDate(timeStringToDate(existing.endTime));
+    setNotifyOnStart(existing.notifyOnStart);
   }, [existing]);
 
   const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
@@ -94,11 +99,22 @@ export default function SettingsScreen(): JSX.Element {
     if (next) setEndDate(next);
   };
 
+  const handleToggleNotify = async (value: boolean) => {
+    if (!isUnlocked) return;
+    void haptic.select();
+    if (value) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) return;
+    }
+    setNotifyOnStart(value);
+  };
+
   const handleSave = async (): Promise<void> => {
     const nextBlock: SetupBlock = {
       days: selectedDays,
       startTime,
       endTime,
+      notifyOnStart,
     };
     const success = await run(async () => {
       void haptic.commit();
@@ -239,13 +255,37 @@ export default function SettingsScreen(): JSX.Element {
             </View>
           </View>
 
+          <View className="gap-4 mt-2">
+            <Typography variant="label" tone="faint">
+              Notifications
+            </Typography>
+            <View className="bg-surface-sunken/40 rounded-2xl p-5 border border-divider/5">
+              <View className="flex-row items-center justify-between">
+                <View className="gap-1 flex-1 mr-4">
+                  <Typography variant="body-md" tone="ink">
+                    Setup Reminder
+                  </Typography>
+                  <Typography variant="caption" tone="muted">
+                    Alert when this setup block begins.
+                  </Typography>
+                </View>
+                <Switch
+                  value={notifyOnStart}
+                  onValueChange={(v) => void handleToggleNotify(v)}
+                  disabled={!isUnlocked}
+                  trackColor={{ true: colors.signal, false: colors.divider }}
+                />
+              </View>
+            </View>
+          </View>
+
           {error ? (
             <Typography variant="caption" tone="danger">
               {error}
             </Typography>
           ) : null}
 
-          <View className="gap-2">
+          <View className="gap-2 mt-2">
             <Button
               title={existing ? 'Update setup block' : 'Save setup block'}
               variant="commit"

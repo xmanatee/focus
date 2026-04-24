@@ -12,6 +12,8 @@ function baseInput(overrides: Partial<FocusBlockInput> = {}): FocusBlockInput {
     days: weekdays,
     isEnabled: true,
     selection: EMPTY_BLOCK_SELECTION,
+    notifyOnStart: true,
+    notifyOnEnd: true,
     ...overrides,
   };
 }

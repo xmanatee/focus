@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Switch,
   TextInput,
   View,
 } from 'react-native';
@@ -40,6 +41,7 @@ import {
 import { haptic } from '../src/shared/design/haptics';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
+import { requestNotificationPermissions } from '../src/shared/notifications';
 
 export default function AddFocusBlockScreen(): JSX.Element {
   const router = useRouter();
@@ -71,6 +73,12 @@ export default function AddFocusBlockScreen(): JSX.Element {
   );
   const [newDomain, setNewDomain] = useState('');
   const [isPickerVisible, setIsPickerVisible] = useState(false);
+  const [notifyOnStart, setNotifyOnStart] = useState(
+    existing?.notifyOnStart ?? true,
+  );
+  const [notifyOnEnd, setNotifyOnEnd] = useState(
+    existing?.notifyOnEnd ?? false,
+  );
 
   const selection = useBlocklistStore((s) => s.selection);
   const setSelection = useBlocklistStore((s) => s.setActivitySelection);
@@ -107,6 +115,8 @@ export default function AddFocusBlockScreen(): JSX.Element {
       setStartDate(timeStringToDate('09:00'));
       setEndDate(timeStringToDate('12:00'));
       setSelectedDays(['mon', 'tue', 'wed', 'thu', 'fri']);
+      setNotifyOnStart(true);
+      setNotifyOnEnd(true);
       setWebDomains([
         'instagram.com',
         'facebook.com',
@@ -124,6 +134,8 @@ export default function AddFocusBlockScreen(): JSX.Element {
       setStartDate(timeStringToDate('21:00'));
       setEndDate(timeStringToDate('23:30'));
       setSelectedDays(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+      setNotifyOnStart(true);
+      setNotifyOnEnd(false);
       setWebDomains([
         'youtube.com',
         'netflix.com',
@@ -139,6 +151,8 @@ export default function AddFocusBlockScreen(): JSX.Element {
       setStartDate(timeStringToDate('08:00'));
       setEndDate(timeStringToDate('20:00'));
       setSelectedDays(['sat', 'sun']);
+      setNotifyOnStart(true);
+      setNotifyOnEnd(true);
       setWebDomains([
         'instagram.com',
         'tiktok.com',
@@ -176,6 +190,24 @@ export default function AddFocusBlockScreen(): JSX.Element {
     if (next) setEndDate(next);
   };
 
+  const handleToggleNotifyStart = async (value: boolean) => {
+    void haptic.select();
+    if (value) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) return;
+    }
+    setNotifyOnStart(value);
+  };
+
+  const handleToggleNotifyEnd = async (value: boolean) => {
+    void haptic.select();
+    if (value) {
+      const granted = await requestNotificationPermissions();
+      if (!granted) return;
+    }
+    setNotifyOnEnd(value);
+  };
+
   const handleAddDomain = async (): Promise<void> => {
     if (!newDomain.trim()) return;
     const success = await run(async () => {
@@ -207,6 +239,8 @@ export default function AddFocusBlockScreen(): JSX.Element {
       days: selectedDays,
       isEnabled: existing?.isEnabled ?? true,
       selection,
+      notifyOnStart,
+      notifyOnEnd,
     };
 
     const success = await run(async () => {
@@ -455,6 +489,45 @@ export default function AddFocusBlockScreen(): JSX.Element {
                     ))}
                   </View>
                 )}
+              </View>
+            </View>
+          </View>
+
+          <View className="gap-4">
+            <Typography variant="label" tone="faint">
+              Notifications
+            </Typography>
+            <View className="bg-surface-raised rounded-3xl p-6 gap-6 shadow-sm border border-divider/10">
+              <View className="flex-row items-center justify-between">
+                <View className="gap-1 flex-1 mr-4">
+                  <Typography variant="body-md" tone="ink">
+                    Start Notification
+                  </Typography>
+                  <Typography variant="caption" tone="muted">
+                    Alert when this block begins.
+                  </Typography>
+                </View>
+                <Switch
+                  value={notifyOnStart}
+                  onValueChange={(v) => void handleToggleNotifyStart(v)}
+                  trackColor={{ true: colors.signal, false: colors.divider }}
+                />
+              </View>
+              <View className="h-[1px] bg-divider/10" />
+              <View className="flex-row items-center justify-between">
+                <View className="gap-1 flex-1 mr-4">
+                  <Typography variant="body-md" tone="ink">
+                    End Notification
+                  </Typography>
+                  <Typography variant="caption" tone="muted">
+                    Alert when this block finishes.
+                  </Typography>
+                </View>
+                <Switch
+                  value={notifyOnEnd}
+                  onValueChange={(v) => void handleToggleNotifyEnd(v)}
+                  trackColor={{ true: colors.signal, false: colors.divider }}
+                />
               </View>
             </View>
           </View>

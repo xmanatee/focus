@@ -5,6 +5,7 @@ export interface SetupBlock {
   readonly days: readonly DayOfWeek[];
   readonly startTime: string;
   readonly endTime: string;
+  readonly notifyOnStart: boolean;
 }
 
 export type AdminState =

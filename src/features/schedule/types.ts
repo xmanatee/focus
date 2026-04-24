@@ -10,6 +10,8 @@ export interface FocusBlock {
   days: DayOfWeek[];
   isEnabled: boolean;
   selection: BlockSelection;
+  notifyOnStart: boolean;
+  notifyOnEnd: boolean;
 }
 
 export interface FocusBlockInput {
@@ -19,4 +21,6 @@ export interface FocusBlockInput {
   days: DayOfWeek[];
   isEnabled: boolean;
   selection: BlockSelection;
+  notifyOnStart: boolean;
+  notifyOnEnd: boolean;
 }

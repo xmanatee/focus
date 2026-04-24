@@ -57,18 +57,22 @@ export default function MainFeedScreen(): JSX.Element {
         await reconcileFocusBlocks(
           focusBlocks.map((b) => ({
             id: b.id,
+            name: b.name,
             days: b.days,
             startTime: b.startTime,
             endTime: b.endTime,
             isEnabled: b.isEnabled,
             profileSelection: b.selection ?? EMPTY_BLOCK_SELECTION,
+            notifyOnStart: b.notifyOnStart ?? false,
+            notifyOnEnd: b.notifyOnEnd ?? false,
           })),
+          setupBlock,
         );
       } catch {
         // Prevent background sync from crashing the app
       }
     })();
-  }, [focusBlocks]);
+  }, [focusBlocks, setupBlock]);
 
   const handleGrant = (): Promise<boolean> =>
     run(async () => {
@@ -235,7 +239,7 @@ export default function MainFeedScreen(): JSX.Element {
               onPress={() => {
                 if (isAdminLocked) return;
                 void haptic.select();
-                router.push('/add-focus-block');
+                router.push({ pathname: '/add-focus-block' } as any);
               }}
               disabled={isAdminLocked}
               className={`h-10 w-10 items-center justify-center rounded-full bg-signal ${
@@ -254,7 +258,9 @@ export default function MainFeedScreen(): JSX.Element {
               <Button
                 title="Add a block"
                 variant="commit"
-                onPress={() => router.push('/add-focus-block')}
+                onPress={() =>
+                  router.push({ pathname: '/add-focus-block' } as any)
+                }
                 disabled={isAdminLocked}
               />
             </View>
@@ -275,7 +281,7 @@ export default function MainFeedScreen(): JSX.Element {
                           if (isRowLocked) return;
                           void haptic.select();
                           router.push({
-                            pathname: '/add-focus-block',
+                            pathname: '/add-focus-block' as any,
                             params: { id: block.id },
                           });
                         }}
