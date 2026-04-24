@@ -1,8 +1,3 @@
-import { BLOCK_ACTIVITY_SELECTION_ID } from '../blocker/constants';
-import {
-  hasSavedActivitySelection,
-  selectionHasBlockedTargets,
-} from '../blocker/types';
 import type { CreateScheduleInput, DayOfWeek } from './types';
 
 const DAY_OF_WEEK_VALUES: DayOfWeek[] = [
@@ -21,7 +16,14 @@ function isTimeOfDay(value: string): boolean {
   return TIME_OF_DAY_PATTERN.test(value);
 }
 
-export function validateScheduleInput(input: CreateScheduleInput): void {
+function timeOfDayToMinutes(value: string): number {
+  const [hours, minutes] = value.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+export function validateScheduleInput(
+  input: Omit<CreateScheduleInput, 'profileId'>,
+): void {
   if (input.name.trim().length === 0) {
     throw new Error('Schedule name is required.');
   }
@@ -30,12 +32,17 @@ export function validateScheduleInput(input: CreateScheduleInput): void {
     throw new Error('Times must use 24-hour HH:mm format.');
   }
 
+  if (
+    timeOfDayToMinutes(input.startTime) === timeOfDayToMinutes(input.endTime)
+  ) {
+    throw new Error('Start and end time must differ.');
+  }
+
   if (input.days.length === 0) {
     throw new Error('Select at least one day.');
   }
 
-  const uniqueDays = new Set(input.days);
-  if (uniqueDays.size !== input.days.length) {
+  if (new Set(input.days).size !== input.days.length) {
     throw new Error('Schedule days must be unique.');
   }
 
@@ -43,17 +50,5 @@ export function validateScheduleInput(input: CreateScheduleInput): void {
     if (!DAY_OF_WEEK_VALUES.includes(day)) {
       throw new Error(`Invalid day: ${day}`);
     }
-  }
-
-  if (
-    hasSavedActivitySelection(input.selection.activitySelection) &&
-    input.selection.activitySelection.selectionId !==
-      BLOCK_ACTIVITY_SELECTION_ID
-  ) {
-    throw new Error('Unsupported activity selection.');
-  }
-
-  if (!selectionHasBlockedTargets(input.selection)) {
-    throw new Error('Pick at least one app or blocked website first.');
   }
 }

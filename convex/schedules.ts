@@ -4,9 +4,11 @@ import { validateScheduleInput } from '../src/features/schedule/validation';
 import type { Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { mutation, query } from './_generated/server';
-import { blockSelectionValidator, dayOfWeekValidator } from './validators';
+import { dayOfWeekValidator } from './validators';
 
-async function requireAuthUserId(ctx: QueryCtx | MutationCtx) {
+async function requireAuthUserId(
+  ctx: QueryCtx | MutationCtx,
+): Promise<Id<'users'>> {
   const userId = await getAuthUserId(ctx);
   if (!userId) {
     throw new Error('Not authenticated');
@@ -17,19 +19,28 @@ async function requireAuthUserId(ctx: QueryCtx | MutationCtx) {
 async function requireOwnedSchedule(ctx: MutationCtx, id: Id<'schedules'>) {
   const userId = await requireAuthUserId(ctx);
   const schedule = await ctx.db.get(id);
-
   if (!schedule || schedule.userId !== userId) {
     throw new Error('Unauthorized');
   }
-
   return schedule;
+}
+
+async function requireOwnedProfile(
+  ctx: MutationCtx,
+  profileId: Id<'blockProfiles'>,
+) {
+  const userId = await requireAuthUserId(ctx);
+  const profile = await ctx.db.get(profileId);
+  if (!profile || profile.userId !== userId) {
+    throw new Error('Profile not found.');
+  }
+  return profile;
 }
 
 export const get = query({
   args: {},
   handler: async (ctx) => {
     const userId = await requireAuthUserId(ctx);
-
     return ctx.db
       .query('schedules')
       .withIndex('by_user', (q) => q.eq('userId', userId))
@@ -44,11 +55,18 @@ export const create = mutation({
     endTime: v.string(),
     days: v.array(dayOfWeekValidator),
     isEnabled: v.boolean(),
-    selection: blockSelectionValidator,
+    profileId: v.id('blockProfiles'),
   },
   handler: async (ctx, args) => {
     const userId = await requireAuthUserId(ctx);
-    validateScheduleInput(args);
+    await requireOwnedProfile(ctx, args.profileId);
+    validateScheduleInput({
+      name: args.name,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      days: args.days,
+      isEnabled: args.isEnabled,
+    });
 
     return ctx.db.insert('schedules', {
       ...args,

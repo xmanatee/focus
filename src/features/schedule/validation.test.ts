@@ -1,34 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { BLOCK_ACTIVITY_SELECTION_ID } from '../blocker/constants';
-import type { BlockSelection } from '../blocker/types';
 import type { CreateScheduleInput, DayOfWeek } from './types';
 import { validateScheduleInput } from './validation';
 
-const selectionWithApps: BlockSelection = {
-  activitySelection: {
-    status: 'saved',
-    selectionId: BLOCK_ACTIVITY_SELECTION_ID,
-    applicationCount: 3,
-    categoryCount: 0,
-    webDomainCount: 0,
-    includeEntireCategory: false,
-  },
-  webDomains: [],
-};
-
-const selectionWithDomains: BlockSelection = {
-  activitySelection: { status: 'empty' },
-  webDomains: ['example.com'],
-};
-
-const emptySelection: BlockSelection = {
-  activitySelection: { status: 'empty' },
-  webDomains: [],
-};
-
 function baseInput(
-  overrides: Partial<CreateScheduleInput> = {},
-): CreateScheduleInput {
+  overrides: Partial<Omit<CreateScheduleInput, 'profileId'>> = {},
+): Omit<CreateScheduleInput, 'profileId'> {
   const weekdays: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri'];
   return {
     name: 'Work',
@@ -36,19 +12,26 @@ function baseInput(
     endTime: '17:00',
     days: weekdays,
     isEnabled: true,
-    selection: selectionWithApps,
     ...overrides,
   };
 }
 
 describe('validateScheduleInput', () => {
-  it('accepts a valid weekday schedule with an app selection', () => {
+  it('accepts a valid weekday schedule', () => {
     expect(() => validateScheduleInput(baseInput())).not.toThrow();
   });
 
-  it('accepts a schedule whose only targets are web domains', () => {
+  it('accepts a single-day schedule', () => {
     expect(() =>
-      validateScheduleInput(baseInput({ selection: selectionWithDomains })),
+      validateScheduleInput(baseInput({ days: ['sun'] })),
+    ).not.toThrow();
+  });
+
+  it('accepts a cross-midnight window (start later than end)', () => {
+    expect(() =>
+      validateScheduleInput(
+        baseInput({ startTime: '22:00', endTime: '06:00' }),
+      ),
     ).not.toThrow();
   });
 
@@ -69,6 +52,14 @@ describe('validateScheduleInput', () => {
     ).toThrow(/HH:mm/i);
   });
 
+  it('rejects identical start and end time', () => {
+    expect(() =>
+      validateScheduleInput(
+        baseInput({ startTime: '09:00', endTime: '09:00' }),
+      ),
+    ).toThrow(/must differ/i);
+  });
+
   it('rejects an empty day list', () => {
     expect(() => validateScheduleInput(baseInput({ days: [] }))).toThrow(
       /at least one day/i,
@@ -79,30 +70,5 @@ describe('validateScheduleInput', () => {
     expect(() =>
       validateScheduleInput(baseInput({ days: ['mon', 'mon'] })),
     ).toThrow(/unique/i);
-  });
-
-  it('rejects a selection with no blocked apps or domains', () => {
-    expect(() =>
-      validateScheduleInput(baseInput({ selection: emptySelection })),
-    ).toThrow(/at least one app or blocked website/i);
-  });
-
-  it('rejects a saved selection with an unexpected selectionId', () => {
-    const input = baseInput({
-      selection: {
-        activitySelection: {
-          status: 'saved',
-          selectionId: 'some-other-id',
-          applicationCount: 1,
-          categoryCount: 0,
-          webDomainCount: 0,
-          includeEntireCategory: false,
-        },
-        webDomains: [],
-      },
-    });
-    expect(() => validateScheduleInput(input)).toThrow(
-      /unsupported activity selection/i,
-    );
   });
 });

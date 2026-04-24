@@ -5,6 +5,11 @@ import { blockSelectionValidator, dayOfWeekValidator } from './validators';
 
 export default defineSchema({
   ...authTables,
+  blockProfiles: defineTable({
+    userId: v.id('users'),
+    name: v.string(),
+    selection: blockSelectionValidator,
+  }).index('by_user', ['userId']),
   schedules: defineTable({
     userId: v.id('users'),
     name: v.string(),
@@ -12,6 +17,8 @@ export default defineSchema({
     endTime: v.string(),
     days: v.array(dayOfWeekValidator),
     isEnabled: v.boolean(),
-    selection: blockSelectionValidator,
-  }).index('by_user', ['userId']),
+    profileId: v.id('blockProfiles'),
+  })
+    .index('by_user', ['userId'])
+    .index('by_user_profile', ['userId', 'profileId']),
 });

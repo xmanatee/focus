@@ -1,53 +1,47 @@
 import { useAuthActions } from '@convex-dev/auth/react';
+import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { api } from '../../convex/_generated/api';
 import { useBlockerStore } from '../../src/features/blocker/useBlockerStore';
+import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
+import type { Schedule } from '../../src/features/schedule/useScheduleStore';
 import { Button } from '../../src/shared/components/Button';
-import { HairlineBar } from '../../src/shared/components/HairlineBar';
 import { Icon } from '../../src/shared/components/Icon';
 import { Screen } from '../../src/shared/components/Screen';
 import { Typography } from '../../src/shared/components/Typography';
 import { haptic } from '../../src/shared/design/haptics';
 import { useAsyncAction } from '../../src/shared/hooks/useAsyncAction';
-import {
-  formatCountdown,
-  useSessionCountdown,
-} from '../../src/shared/hooks/useSessionCountdown';
 
-const DURATION_PRESETS: readonly { label: string; seconds: number }[] = [
-  { label: '10m', seconds: 10 * 60 },
-  { label: '25m', seconds: 25 * 60 },
-  { label: '50m', seconds: 50 * 60 },
-  { label: '90m', seconds: 90 * 60 },
-];
+function formatDayShort(day: string): string {
+  return day.charAt(0).toUpperCase() + day.slice(1);
+}
+
+function formatRelative(at: Date, now: Date): string {
+  const deltaMin = Math.round((at.getTime() - now.getTime()) / 60_000);
+  if (deltaMin < 60) {
+    return `in ${Math.max(1, deltaMin)} min`;
+  }
+  const hours = Math.round(deltaMin / 60);
+  if (hours < 24) {
+    return `in ${hours} hr`;
+  }
+  const days = Math.round(hours / 24);
+  return `in ${days} day${days === 1 ? '' : 's'}`;
+}
 
 export default function DashboardScreen(): JSX.Element {
   const { signOut } = useAuthActions();
   const router = useRouter();
 
-  const isActive = useBlockerStore((s) => s.isActive);
   const hasPermissions = useBlockerStore((s) => s.hasPermissions);
   const busyState = useBlockerStore((s) => s.busyState);
-  const activitySelection = useBlockerStore(
-    (s) => s.selection.activitySelection,
-  );
-  const hasApps = useBlockerStore(
-    (s) =>
-      s.selection.activitySelection.status === 'saved' ||
-      s.selection.webDomains.length > 0,
-  );
-  const sessionStartedAt = useBlockerStore((s) => s.sessionStartedAt);
-  const sessionDurationSec = useBlockerStore((s) => s.sessionDurationSec);
-  const setBlockerEnabled = useBlockerStore((s) => s.setBlockerEnabled);
-  const setSessionDuration = useBlockerStore((s) => s.setSessionDuration);
   const requestPermissions = useBlockerStore((s) => s.requestPermissions);
 
+  const schedules = useQuery(api.schedules.get);
+  const { active, next, now } = useActiveSchedule(schedules);
+
   const { error, run } = useAsyncAction();
-  const { secondsRemaining, progress } = useSessionCountdown(
-    sessionStartedAt,
-    sessionDurationSec,
-  );
 
   const handleGrant = (): Promise<boolean> =>
     run(async () => {
@@ -57,26 +51,6 @@ export default function DashboardScreen(): JSX.Element {
         throw new Error('Screen Time permission was not granted.');
       }
     }, 'Could not request Screen Time permission.');
-
-  const handleBegin = (): Promise<boolean> =>
-    run(async () => {
-      void haptic.commit();
-      await setBlockerEnabled(true);
-    }, 'Could not begin session.');
-
-  const handleAbandon = (): Promise<boolean> =>
-    run(async () => {
-      void haptic.abandon();
-      await setBlockerEnabled(false);
-    }, 'Could not end session.');
-
-  const handlePickDuration = (seconds: number): void => {
-    if (seconds === sessionDurationSec) {
-      return;
-    }
-    void haptic.select();
-    setSessionDuration(seconds);
-  };
 
   if (!hasPermissions) {
     return (
@@ -102,129 +76,129 @@ export default function DashboardScreen(): JSX.Element {
               disabled={busyState !== 'idle'}
             />
           </View>
-          {error ? <ErrorLine text={error} /> : null}
+          {error ? (
+            <Typography variant="caption" tone="danger" align="center">
+              {error}
+            </Typography>
+          ) : null}
         </View>
       </Screen>
     );
   }
 
-  if (isActive) {
+  if (schedules === undefined) {
     return (
-      <Screen tone="sunken">
-        <Animated.View
-          entering={FadeIn.duration(420)}
-          exiting={FadeOut.duration(280)}
-          className="flex-1 justify-between py-10"
-        >
-          <Typography variant="label" tone="signal" align="center">
-            In session
+      <Screen>
+        <TopBar onSignOut={() => void signOut()} />
+        <View className="flex-1 items-center justify-center">
+          <Typography variant="body" tone="muted">
+            Loading...
           </Typography>
-
-          <View className="items-center gap-8">
-            <Typography variant="display-xl" tone="ink" align="center" numeric>
-              {formatCountdown(secondsRemaining)}
-            </Typography>
-            <View className="w-full px-4">
-              <HairlineBar progress={1 - progress} />
-            </View>
-          </View>
-
-          <View className="gap-3">
-            <Button
-              title="Abandon"
-              variant="abandon"
-              onPress={() => void handleAbandon()}
-              isLoading={busyState === 'syncing'}
-              disabled={busyState !== 'idle'}
-            />
-            {error ? <ErrorLine text={error} /> : null}
-          </View>
-        </Animated.View>
+        </View>
       </Screen>
     );
   }
 
-  const activeLabel =
-    activitySelection.status === 'saved'
-      ? `${
-          activitySelection.applicationCount + activitySelection.categoryCount
-        } picked`
-      : 'Nothing picked';
+  if (schedules.length === 0) {
+    return (
+      <Screen>
+        <TopBar onSignOut={() => void signOut()} />
+        <View className="flex-1 justify-center gap-5">
+          <Typography variant="label" tone="muted">
+            Empty calendar
+          </Typography>
+          <Typography variant="display-md" tone="ink">
+            Create your first window.
+          </Typography>
+          <Typography variant="body" tone="muted" className="max-w-[340px]">
+            Schedules decide what Fucus blocks and when. Add a window for
+            weekday deep work, an evening cut-off, or Sunday rest.
+          </Typography>
+          <View className="mt-4">
+            <Button
+              title="Add schedule"
+              variant="commit"
+              onPress={() => router.push('/add-schedule')}
+            />
+          </View>
+        </View>
+      </Screen>
+    );
+  }
+
+  if (active) {
+    return <ActiveView schedule={active} now={now} onSignOut={signOut} />;
+  }
 
   return (
     <Screen>
       <TopBar onSignOut={() => void signOut()} />
-      <View className="flex-1 justify-between py-6">
-        <View className="gap-2">
-          <Typography variant="label" tone="muted">
-            Ready when you are
+      <View className="flex-1 justify-center gap-5">
+        <Typography variant="label" tone="muted">
+          Idle
+        </Typography>
+        <Typography variant="display-md" tone="ink">
+          {next ? next.schedule.name : 'No upcoming schedule.'}
+        </Typography>
+        {next ? (
+          <Typography variant="body" tone="muted">
+            Starts {formatRelative(next.at, now)} · {next.schedule.startTime}–
+            {next.schedule.endTime}
           </Typography>
-          <Typography variant="display-md" tone="ink">
-            Pick a window.
+        ) : (
+          <Typography variant="body" tone="muted">
+            All your schedules are off. Turn one on from the Schedules tab.
           </Typography>
-        </View>
+        )}
+      </View>
+    </Screen>
+  );
+}
 
-        <View className="items-center gap-8">
-          <Typography variant="display-xl" tone="ink" align="center" numeric>
-            {formatCountdown(sessionDurationSec)}
-          </Typography>
-          <View className="flex-row gap-2">
-            {DURATION_PRESETS.map((preset) => {
-              const selected = preset.seconds === sessionDurationSec;
-              return (
-                <Pressable
-                  key={preset.label}
-                  onPress={() => handlePickDuration(preset.seconds)}
-                  className={`px-5 py-3 rounded-full ${
-                    selected ? 'bg-signal' : 'bg-surface-raised'
-                  }`}
-                >
-                  <Typography
-                    variant="body-md"
-                    tone={selected ? 'surface' : 'muted'}
-                  >
-                    {preset.label}
-                  </Typography>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
+function ActiveView({
+  schedule,
+  now,
+  onSignOut,
+}: {
+  schedule: Schedule;
+  now: Date;
+  onSignOut: () => void;
+}): JSX.Element {
+  const endParts = schedule.endTime.split(':').map(Number);
+  const endOfWindow = new Date(now);
+  endOfWindow.setHours(endParts[0], endParts[1], 0, 0);
+  if (endOfWindow <= now) {
+    endOfWindow.setDate(endOfWindow.getDate() + 1);
+  }
 
-        <View className="gap-3">
-          <View className="flex-row items-center justify-between px-2">
-            <Typography variant="caption" tone="muted">
-              Blocking {activeLabel}
+  return (
+    <Screen tone="sunken">
+      <TopBar onSignOut={onSignOut} />
+      <View className="flex-1 items-center justify-center gap-4 py-10">
+        <Typography variant="label" tone="signal">
+          In session
+        </Typography>
+        <Typography variant="display-lg" tone="ink" align="center">
+          {schedule.name}
+        </Typography>
+        <Typography variant="body" tone="muted" align="center">
+          Ends at {schedule.endTime} · {formatRelative(endOfWindow, now)}
+        </Typography>
+        <View className="mt-6 flex-row flex-wrap gap-2 justify-center max-w-[300px]">
+          {schedule.days.map((day) => (
+            <Typography key={day} variant="caption" tone="faint">
+              {formatDayShort(day)}
             </Typography>
-            <Pressable
-              onPress={() => router.push('/select-apps')}
-              className="flex-row items-center gap-1"
-            >
-              <Typography variant="caption" tone="ink">
-                Edit
-              </Typography>
-              <Icon name="chevron.right" size={12} tone="ink" />
-            </Pressable>
-          </View>
-          <Button
-            title="Begin"
-            variant="commit"
-            onPress={() => void handleBegin()}
-            isLoading={busyState === 'syncing'}
-            disabled={busyState !== 'idle' || !hasApps}
-          />
-          {!hasApps ? (
-            <Typography
-              variant="caption"
-              tone="faint"
-              align="center"
-              className="mt-1"
-            >
-              Pick at least one app or site to block first.
-            </Typography>
-          ) : null}
-          {error ? <ErrorLine text={error} /> : null}
+          ))}
         </View>
+        <Typography
+          variant="caption"
+          tone="faint"
+          align="center"
+          className="mt-8 max-w-[280px]"
+        >
+          While active, this schedule cannot be changed or cancelled.
+        </Typography>
       </View>
     </Screen>
   );
@@ -244,13 +218,5 @@ function TopBar({ onSignOut }: { onSignOut: () => void }): JSX.Element {
         <Icon name="person.crop.circle" size={22} tone="muted" />
       </Pressable>
     </View>
-  );
-}
-
-function ErrorLine({ text }: { text: string }): JSX.Element {
-  return (
-    <Typography variant="caption" tone="danger" align="center" className="mt-1">
-      {text}
-    </Typography>
   );
 }

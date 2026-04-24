@@ -1,12 +1,14 @@
+import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { View } from 'react-native';
 import {
   type ActivitySelectionMetadata,
   DeviceActivitySelectionSheetViewPersisted,
 } from 'react-native-device-activity';
+import { api } from '../convex/_generated/api';
 import { BLOCK_ACTIVITY_SELECTION_ID } from '../src/features/blocker/constants';
 import { createActivitySelectionFromMetadata } from '../src/features/blocker/types';
-import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
+import { useProfileStore } from '../src/features/profile/useProfileStore';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
@@ -14,17 +16,25 @@ import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
 export default function SelectAppsScreen(): JSX.Element {
   const router = useRouter();
-  const setActivitySelection = useBlockerStore((s) => s.setActivitySelection);
+  const profiles = useQuery(api.profiles.list);
+  const profile = profiles?.[0] ?? null;
+  const setSelection = useProfileStore((s) => s.setSelection);
   const { error, run } = useAsyncAction();
 
   const handleSelectionChange = (event: {
     nativeEvent: ActivitySelectionMetadata;
   }): Promise<boolean> =>
     run(async () => {
+      if (!profile) {
+        throw new Error('Blocklist is still loading.');
+      }
       void haptic.select();
-      await setActivitySelection(
-        createActivitySelectionFromMetadata(event.nativeEvent),
-      );
+      await setSelection(profile._id, profile.name, {
+        activitySelection: createActivitySelectionFromMetadata(
+          event.nativeEvent,
+        ),
+        webDomains: profile.selection.webDomains,
+      });
     }, 'Could not save selection.');
 
   return (

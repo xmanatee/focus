@@ -1,7 +1,12 @@
+import { useQuery } from 'convex/react';
 import { Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { api } from '../../convex/_generated/api';
 import { useBlockerStore } from '../../src/features/blocker/useBlockerStore';
+import { useProfileStore } from '../../src/features/profile/useProfileStore';
+import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
+import { useScheduleStore } from '../../src/features/schedule/useScheduleStore';
 import { Icon } from '../../src/shared/components/Icon';
 import { useThemeColors } from '../../src/shared/design/theme';
 
@@ -9,26 +14,40 @@ export default function TabLayout(): JSX.Element {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const initialize = useBlockerStore((s) => s.initialize);
-  const isActive = useBlockerStore((s) => s.isActive);
+  const ensureDefault = useProfileStore((s) => s.ensureDefault);
+  const reconcile = useScheduleStore((s) => s.reconcile);
+
+  const schedules = useQuery(api.schedules.get);
+  const profiles = useQuery(api.profiles.list);
+  const { active } = useActiveSchedule(schedules);
 
   useEffect(() => {
     void initialize();
-  }, [initialize]);
+    void ensureDefault();
+  }, [ensureDefault, initialize]);
+
+  useEffect(() => {
+    if (!schedules || !profiles) {
+      return;
+    }
+    const selectionsById = Object.fromEntries(
+      profiles.map((profile) => [profile._id, profile.selection]),
+    );
+    void reconcile(schedules, selectionsById);
+  }, [profiles, reconcile, schedules]);
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: isActive
-          ? { display: 'none' }
-          : {
-              backgroundColor: colors.surface,
-              borderTopWidth: 1,
-              borderTopColor: colors.divider,
-              paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
-              height: insets.bottom > 0 ? 72 + insets.bottom : 72,
-            },
-        tabBarActiveTintColor: colors.signal,
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopWidth: 1,
+          borderTopColor: colors.divider,
+          paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
+          height: insets.bottom > 0 ? 72 + insets.bottom : 72,
+        },
+        tabBarActiveTintColor: active ? colors.signal : colors.ink,
         tabBarInactiveTintColor: colors.inkMuted,
         tabBarLabelStyle: {
           fontSize: 11,
@@ -54,7 +73,7 @@ export default function TabLayout(): JSX.Element {
       <Tabs.Screen
         name="library"
         options={{
-          title: 'Library',
+          title: 'Blocklist',
           tabBarIcon: ({ focused, size }) => (
             <Icon
               name="square.stack.3d.up.fill"

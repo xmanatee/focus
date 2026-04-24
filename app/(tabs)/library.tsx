@@ -1,7 +1,15 @@
+import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
-import { useBlockerStore } from '../../src/features/blocker/useBlockerStore';
+import { api } from '../../convex/_generated/api';
+import { parseBlockedDomain } from '../../src/features/blocker/domain';
+import {
+  type BlockSelection,
+  selectionHasBlockedTargets,
+} from '../../src/features/blocker/types';
+import { useProfileStore } from '../../src/features/profile/useProfileStore';
+import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
 import { Button } from '../../src/shared/components/Button';
 import { Icon } from '../../src/shared/components/Icon';
 import { Screen } from '../../src/shared/components/Screen';
@@ -15,40 +23,81 @@ type Segment = 'apps' | 'sites';
 export default function LibraryScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
-  const selection = useBlockerStore((s) => s.selection);
-  const addWebDomain = useBlockerStore((s) => s.addWebDomain);
-  const removeWebDomain = useBlockerStore((s) => s.removeWebDomain);
+  const profiles = useQuery(api.profiles.list);
+  const schedules = useQuery(api.schedules.get);
+  const setSelection = useProfileStore((s) => s.setSelection);
+
+  const { active } = useActiveSchedule(schedules);
+  const profile = profiles?.[0] ?? null;
 
   const [segment, setSegment] = useState<Segment>('apps');
   const [newDomain, setNewDomain] = useState('');
   const { error, run } = useAsyncAction();
 
-  const handleAdd = async (): Promise<void> => {
-    const success = await run(
-      () => addWebDomain(newDomain),
-      'Could not add site.',
+  if (!profile) {
+    return (
+      <Screen>
+        <View className="flex-1 items-center justify-center">
+          <Typography variant="body" tone="muted">
+            Preparing your blocklist...
+          </Typography>
+        </View>
+      </Screen>
     );
-    if (success) {
+  }
+
+  const isLocked = active !== null;
+
+  const updateSelection = (
+    nextSelection: BlockSelection,
+    fallback: string,
+  ): Promise<boolean> =>
+    run(() => setSelection(profile._id, profile.name, nextSelection), fallback);
+
+  const handleAddDomain = async (): Promise<void> => {
+    const parsed = parseBlockedDomain(newDomain);
+    if (!parsed) {
+      void run(async () => {
+        throw new Error('Enter a valid domain like example.com.');
+      }, 'Invalid domain.');
+      return;
+    }
+    if (profile.selection.webDomains.includes(parsed)) {
+      setNewDomain('');
+      return;
+    }
+    const nextSelection: BlockSelection = {
+      ...profile.selection,
+      webDomains: [...profile.selection.webDomains, parsed],
+    };
+    const ok = await updateSelection(nextSelection, 'Could not add site.');
+    if (ok) {
       void haptic.select();
       setNewDomain('');
     }
   };
 
-  const handleRemove = (domain: string): Promise<boolean> => {
+  const handleRemoveDomain = (domain: string): Promise<boolean> => {
     void haptic.select();
-    return run(() => removeWebDomain(domain), 'Could not remove site.');
+    const nextSelection: BlockSelection = {
+      ...profile.selection,
+      webDomains: profile.selection.webDomains.filter((d) => d !== domain),
+    };
+    return updateSelection(nextSelection, 'Could not remove site.');
   };
 
-  const pickedSummary =
-    selection.activitySelection.status === 'saved'
-      ? `${selection.activitySelection.applicationCount} apps · ${selection.activitySelection.categoryCount} categories · ${selection.activitySelection.webDomainCount} Apple picks`
-      : 'No selection saved.';
+  const hasTargets = selectionHasBlockedTargets(profile.selection);
+
+  const appsSummary =
+    profile.selection.activitySelection.status === 'saved'
+      ? `${profile.selection.activitySelection.applicationCount} apps · ${profile.selection.activitySelection.categoryCount} categories`
+      : 'No apps picked.';
 
   return (
     <Screen>
       <View className="pt-4 pb-6">
         <Typography variant="label" tone="muted">
-          Library
+          {isLocked ? 'Locked while a schedule is active' : 'Blocklist'}
         </Typography>
         <Typography variant="display-md" tone="ink">
           What to block.
@@ -77,13 +126,19 @@ export default function LibraryScreen(): JSX.Element {
       {segment === 'apps' ? (
         <View className="gap-6">
           <Typography variant="body" tone="muted">
-            {pickedSummary}
+            {appsSummary}
           </Typography>
           <Button
             title="Open Apple picker"
             variant="ghost"
             onPress={() => router.push('/select-apps')}
+            disabled={isLocked}
           />
+          {isLocked ? (
+            <Typography variant="caption" tone="faint">
+              End the active schedule to edit.
+            </Typography>
+          ) : null}
         </View>
       ) : (
         <View className="flex-1">
@@ -96,12 +151,16 @@ export default function LibraryScreen(): JSX.Element {
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="url"
+              editable={!isLocked}
               className="flex-1 bg-surface-raised rounded-full px-5 py-3 text-[16px]"
               style={{ color: colors.ink }}
             />
             <Pressable
-              onPress={() => void handleAdd()}
-              className="bg-signal rounded-full h-12 w-12 items-center justify-center"
+              onPress={() => void handleAddDomain()}
+              disabled={isLocked}
+              className={`bg-signal rounded-full h-12 w-12 items-center justify-center ${
+                isLocked ? 'opacity-40' : ''
+              }`}
               accessibilityLabel="Add site"
             >
               <Icon name="plus" size={20} tone="surface" />
@@ -114,19 +173,22 @@ export default function LibraryScreen(): JSX.Element {
             </Typography>
           ) : null}
 
-          {selection.webDomains.length === 0 ? (
-            <View className="py-8">
-              <Typography variant="body" tone="muted" align="center">
-                No sites blocked. Add one above.
-              </Typography>
-            </View>
+          {profile.selection.webDomains.length === 0 ? (
+            <Typography
+              variant="body"
+              tone="muted"
+              align="center"
+              className="mt-8"
+            >
+              No sites blocked. Add one above.
+            </Typography>
           ) : (
             <ScrollView showsVerticalScrollIndicator={false}>
-              {selection.webDomains.map((domain, index) => (
+              {profile.selection.webDomains.map((domain, index) => (
                 <View
                   key={domain}
                   className={`flex-row justify-between items-center py-4 ${
-                    index !== selection.webDomains.length - 1
+                    index !== profile.selection.webDomains.length - 1
                       ? 'border-b border-divider'
                       : ''
                   }`}
@@ -135,11 +197,16 @@ export default function LibraryScreen(): JSX.Element {
                     {domain}
                   </Typography>
                   <Pressable
-                    onPress={() => void handleRemove(domain)}
+                    onPress={() => void handleRemoveDomain(domain)}
+                    disabled={isLocked}
                     hitSlop={12}
                     accessibilityLabel={`Remove ${domain}`}
                   >
-                    <Icon name="minus.circle" size={22} tone="muted" />
+                    <Icon
+                      name="minus.circle"
+                      size={22}
+                      tone={isLocked ? 'faint' : 'muted'}
+                    />
                   </Pressable>
                 </View>
               ))}
@@ -147,6 +214,17 @@ export default function LibraryScreen(): JSX.Element {
           )}
         </View>
       )}
+
+      {!hasTargets ? (
+        <Typography
+          variant="caption"
+          tone="faint"
+          align="center"
+          className="mt-6"
+        >
+          Pick apps or add sites before creating schedules.
+        </Typography>
+      ) : null}
     </Screen>
   );
 }

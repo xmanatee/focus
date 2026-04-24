@@ -3,6 +3,8 @@ import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, Switch, View } from 'react-native';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
+import { isScheduleActiveAt } from '../../src/features/schedule/activeness';
+import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
 import { useScheduleStore } from '../../src/features/schedule/useScheduleStore';
 import { Icon } from '../../src/shared/components/Icon';
 import { Screen } from '../../src/shared/components/Screen';
@@ -17,6 +19,7 @@ export default function SchedulesScreen(): JSX.Element {
   const schedules = useQuery(api.schedules.get);
   const toggleSchedule = useScheduleStore((s) => s.toggleSchedule);
   const { error, run } = useAsyncAction();
+  const { now } = useActiveSchedule(schedules);
 
   const handleToggle = (
     scheduleId: Id<'schedules'>,
@@ -78,31 +81,55 @@ export default function SchedulesScreen(): JSX.Element {
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
-          {schedules.map((schedule, index) => (
-            <View
-              key={schedule._id}
-              className={`flex-row items-center justify-between py-5 ${
-                index !== schedules.length - 1 ? 'border-b border-divider' : ''
-              }`}
-            >
-              <View className="flex-1 pr-4">
-                <Typography variant="body-md" tone="ink">
-                  {schedule.name}
-                </Typography>
-                <Typography variant="caption" tone="muted" className="mt-1">
-                  {schedule.days.join(' · ').toUpperCase()} {schedule.startTime}
-                  –{schedule.endTime}
-                </Typography>
+          {schedules.map((schedule, index) => {
+            const isActive = isScheduleActiveAt(schedule, now);
+            return (
+              <View
+                key={schedule._id}
+                className={`py-5 ${
+                  index !== schedules.length - 1
+                    ? 'border-b border-divider'
+                    : ''
+                }`}
+              >
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-1 pr-4">
+                    <View className="flex-row items-center gap-2">
+                      <Typography variant="body-md" tone="ink">
+                        {schedule.name}
+                      </Typography>
+                      {isActive ? (
+                        <View className="rounded-full bg-signal px-2 py-[2px]">
+                          <Typography variant="caption" tone="surface">
+                            Active
+                          </Typography>
+                        </View>
+                      ) : null}
+                    </View>
+                    <Typography variant="caption" tone="muted" className="mt-1">
+                      {schedule.days.join(' · ').toUpperCase()}{' '}
+                      {schedule.startTime}–{schedule.endTime}
+                    </Typography>
+                  </View>
+                  <Switch
+                    value={schedule.isEnabled}
+                    onValueChange={(next) =>
+                      void handleToggle(schedule._id, next)
+                    }
+                    disabled={isActive}
+                    trackColor={{ true: colors.signal, false: colors.divider }}
+                    thumbColor={colors.ink}
+                    ios_backgroundColor={colors.divider}
+                  />
+                </View>
+                {isActive ? (
+                  <Typography variant="caption" tone="faint" className="mt-2">
+                    Locked while in session. Ends at {schedule.endTime}.
+                  </Typography>
+                ) : null}
               </View>
-              <Switch
-                value={schedule.isEnabled}
-                onValueChange={(next) => void handleToggle(schedule._id, next)}
-                trackColor={{ true: colors.signal, false: colors.divider }}
-                thumbColor={colors.ink}
-                ios_backgroundColor={colors.divider}
-              />
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
     </Screen>

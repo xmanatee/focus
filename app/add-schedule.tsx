@@ -1,10 +1,12 @@
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
+import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
-import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
+import { api } from '../convex/_generated/api';
+import { selectionHasBlockedTargets } from '../src/features/blocker/types';
 import type {
   CreateScheduleInput,
   DayOfWeek,
@@ -37,7 +39,7 @@ const ORDER: Record<DayOfWeek, number> = DAYS.reduce(
 );
 
 function timeStringToDate(value: string): Date {
-  const [hours, minutes] = value.split(':').map((part) => Number(part));
+  const [hours, minutes] = value.split(':').map(Number);
   const date = new Date();
   date.setHours(hours ?? 9, minutes ?? 0, 0, 0);
   return date;
@@ -54,7 +56,8 @@ export default function AddScheduleScreen(): JSX.Element {
   const colors = useThemeColors();
   const isDark = useIsDark();
   const addSchedule = useScheduleStore((s) => s.addSchedule);
-  const selection = useBlockerStore((s) => s.selection);
+  const profiles = useQuery(api.profiles.list);
+  const profile = profiles?.[0] ?? null;
 
   const [name, setName] = useState('Focus window');
   const [startDate, setStartDate] = useState(() => timeStringToDate('09:00'));
@@ -101,13 +104,27 @@ export default function AddScheduleScreen(): JSX.Element {
   };
 
   const handleSave = async (): Promise<void> => {
+    if (!profile) {
+      void run(async () => {
+        throw new Error('Blocklist is still loading.');
+      }, 'Blocklist is still loading.');
+      return;
+    }
+
+    if (!selectionHasBlockedTargets(profile.selection)) {
+      void run(async () => {
+        throw new Error('Pick at least one app or site on the Blocklist tab.');
+      }, 'Blocklist is empty.');
+      return;
+    }
+
     const input: CreateScheduleInput = {
       name,
       startTime,
       endTime,
       days: selectedDays,
       isEnabled: true,
-      selection,
+      profileId: profile._id,
     };
 
     const success = await run(async () => {
@@ -219,7 +236,7 @@ export default function AddScheduleScreen(): JSX.Element {
             variant="commit"
             onPress={() => void handleSave()}
             isLoading={isPending}
-            disabled={isPending}
+            disabled={isPending || !profile}
           />
           <Button
             title="Cancel"

@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
+import type * as profiles from "../profiles.js";
 import type * as schedules from "../schedules.js";
 import type * as validators from "../validators.js";
 
@@ -22,6 +23,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   http: typeof http;
+  profiles: typeof profiles;
   schedules: typeof schedules;
   validators: typeof validators;
 }>;
