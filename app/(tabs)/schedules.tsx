@@ -1,115 +1,109 @@
 import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ScrollView, Switch, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, ScrollView, Switch, View } from 'react-native';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useScheduleStore } from '../../src/features/schedule/useScheduleStore';
-import { Button } from '../../src/shared/components/Button';
+import { Icon } from '../../src/shared/components/Icon';
+import { Screen } from '../../src/shared/components/Screen';
 import { Typography } from '../../src/shared/components/Typography';
+import { haptic } from '../../src/shared/design/haptics';
+import { color } from '../../src/shared/design/theme';
+import { useAsyncAction } from '../../src/shared/hooks/useAsyncAction';
 
 export default function SchedulesScreen(): JSX.Element {
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const schedules = useQuery(api.schedules.get);
-  const toggleSchedule = useScheduleStore((state) => state.toggleSchedule);
-  const [busyScheduleId, setBusyScheduleId] = useState<Id<'schedules'> | null>(
-    null,
-  );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const toggleSchedule = useScheduleStore((s) => s.toggleSchedule);
+  const { error, run } = useAsyncAction();
 
-  const handleToggle = async (
+  const handleToggle = (
     scheduleId: Id<'schedules'>,
     nextIsEnabled: boolean,
-  ): Promise<void> => {
-    setBusyScheduleId(scheduleId);
-    setErrorMessage(null);
-    try {
-      await toggleSchedule(scheduleId, nextIsEnabled);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Could not update schedule.',
-      );
-    } finally {
-      setBusyScheduleId(null);
-    }
+  ): Promise<boolean> => {
+    void haptic.select();
+    return run(
+      () => toggleSchedule(scheduleId, nextIsEnabled),
+      'Could not update schedule.',
+    );
   };
 
   return (
-    <View
-      className="flex-1 bg-background px-6"
-      style={{ paddingTop: insets.top }}
-    >
-      <View className="flex-row justify-between items-center mt-8 mb-8">
+    <Screen>
+      <View className="flex-row items-start justify-between pt-4 pb-6">
         <View>
-          <Typography variant="h2">Schedules</Typography>
-          <Typography variant="caption" className="mt-1">
-            Automate your focus times.
+          <Typography variant="label" tone="muted">
+            Schedules
+          </Typography>
+          <Typography variant="display-md" tone="ink">
+            Set a window.
           </Typography>
         </View>
-        <Button
-          title="Add"
-          variant="secondary"
-          onPress={() => router.push('/add-schedule')}
-        />
+        <Pressable
+          onPress={() => {
+            void haptic.select();
+            router.push('/add-schedule');
+          }}
+          className="h-10 w-10 items-center justify-center rounded-full bg-signal"
+          accessibilityLabel="Add schedule"
+        >
+          <Icon name="plus" size={18} tone="surface" />
+        </Pressable>
       </View>
 
-      {errorMessage ? (
-        <Typography variant="caption" className="mb-4 text-red-600">
-          {errorMessage}
+      {error ? (
+        <Typography variant="caption" tone="danger" className="mb-4">
+          {error}
         </Typography>
       ) : null}
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        {schedules === undefined ? (
-          <View className="items-center mt-12">
-            <Typography
-              variant="body"
-              align="center"
-              className="text-textMuted px-4"
-            >
-              Loading schedules...
-            </Typography>
-          </View>
-        ) : schedules.length === 0 ? (
-          <View className="items-center mt-12">
-            <Typography
-              variant="body"
-              align="center"
-              className="text-textMuted px-4"
-            >
-              No schedules created yet. Create one to automatically block apps
-              during specific times.
-            </Typography>
-          </View>
-        ) : (
-          schedules.map((schedule) => (
+      {schedules === undefined ? (
+        <Typography
+          variant="body"
+          tone="muted"
+          className="mt-12"
+          align="center"
+        >
+          Loading...
+        </Typography>
+      ) : schedules.length === 0 ? (
+        <View className="mt-12 items-center gap-3">
+          <Typography variant="body" tone="muted" align="center">
+            No schedules yet.
+          </Typography>
+          <Typography variant="caption" tone="faint" align="center">
+            Recurring blocks trigger automatically.
+          </Typography>
+        </View>
+      ) : (
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {schedules.map((schedule, index) => (
             <View
               key={schedule._id}
-              className="bg-surface p-5 rounded-2xl mb-4 border border-gray-200"
+              className={`flex-row items-center justify-between py-5 ${
+                index !== schedules.length - 1 ? 'border-b border-divider' : ''
+              }`}
             >
-              <View className="flex-row justify-between items-center">
-                <View>
-                  <Typography variant="h3">{schedule.name}</Typography>
-                  <Typography variant="caption">
-                    {schedule.days.join(', ')} • {schedule.startTime} -{' '}
-                    {schedule.endTime}
-                  </Typography>
-                </View>
-                <Switch
-                  value={schedule.isEnabled}
-                  onValueChange={() =>
-                    void handleToggle(schedule._id, !schedule.isEnabled)
-                  }
-                  disabled={busyScheduleId === schedule._id}
-                  trackColor={{ true: '#1E40AF' }}
-                />
+              <View className="flex-1 pr-4">
+                <Typography variant="body-md" tone="ink">
+                  {schedule.name}
+                </Typography>
+                <Typography variant="caption" tone="muted" className="mt-1">
+                  {schedule.days.join(' · ').toUpperCase()} {schedule.startTime}
+                  –{schedule.endTime}
+                </Typography>
               </View>
+              <Switch
+                value={schedule.isEnabled}
+                onValueChange={(next) => void handleToggle(schedule._id, next)}
+                trackColor={{ true: color.signal, false: color.divider }}
+                thumbColor={color.ink}
+                ios_backgroundColor={color.divider}
+              />
             </View>
-          ))
-        )}
-      </ScrollView>
-    </View>
+          ))}
+        </ScrollView>
+      )}
+    </Screen>
   );
 }

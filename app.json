@@ -12,6 +12,10 @@
       "bundleIdentifier": "com.yourbound.fucus",
       "appleTeamId": "569HBLNQPC"
     },
+    "splash": {
+      "backgroundColor": "#1F1B17",
+      "resizeMode": "contain"
+    },
     "scheme": "fucus",
     "plugins": [
       "expo-router",
@@ -30,7 +34,8 @@
           "appGroup": "group.com.yourbound.fucus"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

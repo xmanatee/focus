@@ -12,13 +12,18 @@ import {
 
 type BusyState = 'idle' | 'authorizing' | 'syncing';
 
+export const DEFAULT_SESSION_DURATION_SEC = 25 * 60;
+
 interface BlockerState {
   busyState: BusyState;
   isActive: boolean;
   hasPermissions: boolean;
   selection: BlockSelection;
+  sessionStartedAt: number | null;
+  sessionDurationSec: number;
   initialize: () => Promise<void>;
   requestPermissions: () => Promise<boolean>;
+  setSessionDuration: (durationSec: number) => void;
   setActivitySelection: (
     activitySelection: PersistedActivitySelection,
   ) => Promise<void>;
@@ -31,9 +36,10 @@ interface PersistedBlockerState {
   selection: {
     webDomains: string[];
   };
+  sessionDurationSec: number;
 }
 
-function dedupeDomains(domains: string[]) {
+function dedupeDomains(domains: string[]): string[] {
   return [...new Set(domains)];
 }
 
@@ -44,37 +50,40 @@ function parsePersistedBlockerState(
     return null;
   }
 
-  const { selection } = persistedState as {
+  const state = persistedState as {
     selection?: unknown;
+    sessionDurationSec?: unknown;
   };
 
-  if (typeof selection !== 'object' || selection === null) {
+  if (typeof state.selection !== 'object' || state.selection === null) {
     return null;
   }
 
-  const { webDomains } = selection as {
-    webDomains?: unknown;
-  };
-
-  if (!Array.isArray(webDomains)) {
+  const { webDomains } = state.selection as { webDomains?: unknown };
+  if (
+    !Array.isArray(webDomains) ||
+    webDomains.some((d) => typeof d !== 'string')
+  ) {
     return null;
   }
 
-  if (webDomains.some((domain) => typeof domain !== 'string')) {
-    return null;
-  }
+  const sessionDurationSec =
+    typeof state.sessionDurationSec === 'number' && state.sessionDurationSec > 0
+      ? state.sessionDurationSec
+      : DEFAULT_SESSION_DURATION_SEC;
 
   return {
-    selection: {
-      webDomains: dedupeDomains(webDomains),
-    },
+    selection: { webDomains: dedupeDomains(webDomains) },
+    sessionDurationSec,
   };
 }
 
 export const useBlockerStore = create<BlockerState>()(
   persist(
     (set, get) => {
-      const syncSelectionIfActive = async (selection: BlockSelection) => {
+      const syncSelectionIfActive = async (
+        selection: BlockSelection,
+      ): Promise<void> => {
         if (!get().isActive) {
           return;
         }
@@ -82,10 +91,7 @@ export const useBlockerStore = create<BlockerState>()(
         const nextIsActive = selectionHasBlockedTargets(selection);
         set({ busyState: 'syncing' });
         try {
-          await BlockerBridge.syncState({
-            isActive: nextIsActive,
-            selection,
-          });
+          await BlockerBridge.syncState({ isActive: nextIsActive, selection });
           set({ isActive: nextIsActive });
         } finally {
           set({ busyState: 'idle' });
@@ -97,6 +103,8 @@ export const useBlockerStore = create<BlockerState>()(
         isActive: false,
         hasPermissions: false,
         selection: EMPTY_BLOCK_SELECTION,
+        sessionStartedAt: null,
+        sessionDurationSec: DEFAULT_SESSION_DURATION_SEC,
 
         initialize: async () => {
           const authorizationStatus =
@@ -107,10 +115,7 @@ export const useBlockerStore = create<BlockerState>()(
           set((state) => ({
             hasPermissions: authorizationStatus === 'authorized',
             isActive,
-            selection: {
-              ...state.selection,
-              activitySelection,
-            },
+            selection: { ...state.selection, activitySelection },
           }));
         },
 
@@ -125,12 +130,18 @@ export const useBlockerStore = create<BlockerState>()(
           }
         },
 
+        setSessionDuration: (durationSec) => {
+          if (durationSec <= 0) {
+            throw new Error('Session duration must be positive.');
+          }
+          set({ sessionDurationSec: durationSec });
+        },
+
         setActivitySelection: async (activitySelection) => {
           const nextSelection = {
             ...get().selection,
             activitySelection,
           };
-
           set({ selection: nextSelection });
           await syncSelectionIfActive(nextSelection);
         },
@@ -140,12 +151,10 @@ export const useBlockerStore = create<BlockerState>()(
           if (domain === null) {
             throw new Error('Enter a valid domain like example.com.');
           }
-
           const nextSelection = {
             ...get().selection,
             webDomains: dedupeDomains([...get().selection.webDomains, domain]),
           };
-
           set({ selection: nextSelection });
           await syncSelectionIfActive(nextSelection);
         },
@@ -153,11 +162,8 @@ export const useBlockerStore = create<BlockerState>()(
         removeWebDomain: async (domain) => {
           const nextSelection = {
             ...get().selection,
-            webDomains: get().selection.webDomains.filter(
-              (currentDomain) => currentDomain !== domain,
-            ),
+            webDomains: get().selection.webDomains.filter((d) => d !== domain),
           };
-
           set({ selection: nextSelection });
           await syncSelectionIfActive(nextSelection);
         },
@@ -178,7 +184,10 @@ export const useBlockerStore = create<BlockerState>()(
               isActive: nextIsActive,
               selection,
             });
-            set({ isActive: nextIsActive });
+            set({
+              isActive: nextIsActive,
+              sessionStartedAt: nextIsActive ? Date.now() : null,
+            });
           } finally {
             set({ busyState: 'idle' });
           }
@@ -192,18 +201,20 @@ export const useBlockerStore = create<BlockerState>()(
         selection: {
           webDomains: state.selection.webDomains,
         },
+        sessionDurationSec: state.sessionDurationSec,
       }),
       merge: (persistedState, currentState) => {
         const persisted = parsePersistedBlockerState(persistedState);
+        if (persisted === null) {
+          return currentState;
+        }
         return {
           ...currentState,
           selection: {
             ...currentState.selection,
-            webDomains:
-              persisted === null
-                ? currentState.selection.webDomains
-                : persisted.selection.webDomains,
+            webDomains: persisted.selection.webDomains,
           },
+          sessionDurationSec: persisted.sessionDurationSec,
         };
       },
     },

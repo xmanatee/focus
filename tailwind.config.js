@@ -5,11 +5,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#1E40AF',
-        background: '#F9FAFB',
-        surface: '#FFFFFF',
-        text: '#111827',
-        textMuted: '#6B7280',
+        surface: '#1F1B17',
+        'surface-raised': '#2A2521',
+        'surface-sunken': '#16130F',
+        ink: '#F4EEE3',
+        'ink-muted': '#A8A095',
+        'ink-faint': '#635B52',
+        signal: '#E8884A',
+        'signal-soft': '#C57B4C',
+        divider: '#3A342D',
+        danger: '#D94B2F',
+      },
+      fontFamily: {
+        display: ['System'],
+        body: ['System'],
       },
     },
   },

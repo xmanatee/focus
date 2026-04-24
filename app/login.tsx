@@ -3,12 +3,14 @@ import * as Linking from 'expo-linking';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import { Button } from '../src/shared/components/Button';
+import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
+import { haptic } from '../src/shared/design/haptics';
 
 type OAuthProvider = 'apple' | 'google';
 type PendingProvider = OAuthProvider | 'callback';
 
-export default function LoginScreen() {
+export default function LoginScreen(): JSX.Element {
   const { signIn } = useAuthActions();
   const [pendingProvider, setPendingProvider] =
     useState<PendingProvider | null>(null);
@@ -55,10 +57,11 @@ export default function LoginScreen() {
     })();
   }, [signIn, url]);
 
-  const handleSignIn = async (provider: OAuthProvider) => {
+  const handleSignIn = async (provider: OAuthProvider): Promise<void> => {
     lastInvokedProvider.current = provider;
     setPendingProvider(provider);
     setErrorMessage(null);
+    void haptic.commit();
     try {
       const result = await signIn(provider);
       if (result.redirect) {
@@ -74,54 +77,77 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background px-8 justify-center">
-      <View className="mb-12 items-center">
-        <Typography variant="h1">Fucus.</Typography>
-        <Typography
-          variant="body"
-          align="center"
-          className="mt-2 text-textMuted"
-        >
-          Sign in to sync your focus schedules across all your devices.
-        </Typography>
-      </View>
-
-      <View className="gap-4">
-        <Button
-          title="Continue with Apple"
-          onPress={() => void handleSignIn('apple')}
-          isLoading={pendingProvider === 'apple'}
-          disabled={pendingProvider !== null}
-        />
-
-        <Button
-          title="Continue with Google"
-          variant="secondary"
-          onPress={() => void handleSignIn('google')}
-          isLoading={pendingProvider === 'google'}
-          disabled={pendingProvider !== null}
-        />
-
-        {errorMessage ? (
-          <Typography variant="caption" align="center" className="text-red-600">
-            {errorMessage}
+    <Screen>
+      <View className="flex-1 justify-between py-8">
+        <View>
+          <Typography variant="label" tone="signal">
+            Fucus
           </Typography>
-        ) : pendingProvider === 'callback' ? (
+        </View>
+
+        <View className="gap-3">
+          <Typography variant="display-lg" tone="ink">
+            Reclaim
+          </Typography>
+          <Typography variant="display-lg" tone="ink">
+            the hour.
+          </Typography>
+          <Typography
+            variant="body"
+            tone="muted"
+            className="mt-4 max-w-[320px]"
+          >
+            A verdict against distraction. Pick what blocks, pick the window,
+            and commit.
+          </Typography>
+        </View>
+
+        <View className="gap-3">
+          <Button
+            title="Continue with Apple"
+            variant="primary"
+            onPress={() => void handleSignIn('apple')}
+            isLoading={pendingProvider === 'apple'}
+            disabled={pendingProvider !== null}
+          />
+          <Button
+            title="Continue with Google"
+            variant="ghost"
+            onPress={() => void handleSignIn('google')}
+            isLoading={pendingProvider === 'google'}
+            disabled={pendingProvider !== null}
+          />
+
+          {errorMessage ? (
+            <Typography
+              variant="caption"
+              tone="danger"
+              align="center"
+              className="mt-1"
+            >
+              {errorMessage}
+            </Typography>
+          ) : pendingProvider === 'callback' ? (
+            <Typography
+              variant="caption"
+              tone="muted"
+              align="center"
+              className="mt-1"
+            >
+              Finishing sign-in...
+            </Typography>
+          ) : null}
+
           <Typography
             variant="caption"
+            tone="faint"
             align="center"
-            className="text-textMuted"
+            className="mt-4"
           >
-            Finishing sign-in...
-          </Typography>
-        ) : null}
-
-        <View className="mt-8">
-          <Typography variant="caption" align="center">
-            By continuing, you agree to our Terms of Service and Privacy Policy.
+            By continuing, you accept the Terms and Privacy Policy.
           </Typography>
         </View>
       </View>
-    </View>
+    </Screen>
   );
 }

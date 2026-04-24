@@ -1,5 +1,8 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import type {
@@ -9,37 +12,51 @@ import type {
 import { useScheduleStore } from '../src/features/schedule/useScheduleStore';
 import { validateScheduleInput } from '../src/features/schedule/validation';
 import { Button } from '../src/shared/components/Button';
+import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
+import { haptic } from '../src/shared/design/haptics';
+import { color } from '../src/shared/design/theme';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
-const DAYS: { label: string; value: DayOfWeek }[] = [
-  { label: 'M', value: 'mon' },
-  { label: 'T', value: 'tue' },
-  { label: 'W', value: 'wed' },
-  { label: 'T', value: 'thu' },
-  { label: 'F', value: 'fri' },
-  { label: 'S', value: 'sat' },
-  { label: 'S', value: 'sun' },
-];
+const DAYS: readonly { label: string; value: DayOfWeek; order: number }[] = [
+  { label: 'Mon', value: 'mon', order: 0 },
+  { label: 'Tue', value: 'tue', order: 1 },
+  { label: 'Wed', value: 'wed', order: 2 },
+  { label: 'Thu', value: 'thu', order: 3 },
+  { label: 'Fri', value: 'fri', order: 4 },
+  { label: 'Sat', value: 'sat', order: 5 },
+  { label: 'Sun', value: 'sun', order: 6 },
+] as const;
 
-const DAY_ORDER: Record<DayOfWeek, number> = {
-  mon: 0,
-  tue: 1,
-  wed: 2,
-  thu: 3,
-  fri: 4,
-  sat: 5,
-  sun: 6,
-};
+const ORDER: Record<DayOfWeek, number> = DAYS.reduce(
+  (acc, day) => {
+    acc[day.value] = day.order;
+    return acc;
+  },
+  {} as Record<DayOfWeek, number>,
+);
+
+function timeStringToDate(value: string): Date {
+  const [hours, minutes] = value.split(':').map((part) => Number(part));
+  const date = new Date();
+  date.setHours(hours ?? 9, minutes ?? 0, 0, 0);
+  return date;
+}
+
+function dateToTimeString(date: Date): string {
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return `${h}:${m}`;
+}
 
 export default function AddScheduleScreen(): JSX.Element {
   const router = useRouter();
-  const addSchedule = useScheduleStore((state) => state.addSchedule);
-  const selection = useBlockerStore((state) => state.selection);
+  const addSchedule = useScheduleStore((s) => s.addSchedule);
+  const selection = useBlockerStore((s) => s.selection);
 
-  const [name, setName] = useState('My Focus Session');
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('17:00');
+  const [name, setName] = useState('Focus window');
+  const [startDate, setStartDate] = useState(() => timeStringToDate('09:00'));
+  const [endDate, setEndDate] = useState(() => timeStringToDate('17:00'));
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([
     'mon',
     'tue',
@@ -50,15 +67,35 @@ export default function AddScheduleScreen(): JSX.Element {
 
   const { error, isPending, run } = useAsyncAction();
 
+  const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
+  const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
+
   const toggleDay = (day: DayOfWeek): void => {
-    setSelectedDays((currentDays) => {
-      if (currentDays.includes(day)) {
-        return currentDays.filter((currentDay) => currentDay !== day);
+    void haptic.select();
+    setSelectedDays((current) => {
+      if (current.includes(day)) {
+        return current.filter((d) => d !== day);
       }
-      return [...currentDays, day].sort(
-        (left, right) => DAY_ORDER[left] - DAY_ORDER[right],
-      );
+      return [...current, day].sort((a, b) => ORDER[a] - ORDER[b]);
     });
+  };
+
+  const handleStartChange = (
+    _: DateTimePickerEvent,
+    next: Date | undefined,
+  ): void => {
+    if (next) {
+      setStartDate(next);
+    }
+  };
+
+  const handleEndChange = (
+    _: DateTimePickerEvent,
+    next: Date | undefined,
+  ): void => {
+    if (next) {
+      setEndDate(next);
+    }
   };
 
   const handleSave = async (): Promise<void> => {
@@ -73,6 +110,7 @@ export default function AddScheduleScreen(): JSX.Element {
 
     const success = await run(async () => {
       validateScheduleInput(input);
+      void haptic.commit();
       await addSchedule({ ...input, name: input.name.trim() });
     }, 'Could not create schedule.');
 
@@ -82,117 +120,116 @@ export default function AddScheduleScreen(): JSX.Element {
   };
 
   return (
-    <View className="flex-1 bg-background p-6">
-      <Typography variant="h2" className="mb-6">
-        New Schedule
-      </Typography>
+    <Screen>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingVertical: 16, gap: 32 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="gap-2">
+          <Typography variant="label" tone="muted">
+            New schedule
+          </Typography>
+          <Typography variant="display-md" tone="ink">
+            When to block.
+          </Typography>
+        </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View className="mb-6">
-          <Typography
-            variant="caption"
-            className="mb-2 uppercase font-bold tracking-wider"
-          >
+        <View className="gap-3">
+          <Typography variant="label" tone="faint">
             Name
           </Typography>
           <TextInput
-            className="bg-surface p-4 rounded-xl border border-gray-200 text-lg"
             value={name}
             onChangeText={setName}
-            placeholder="e.g. Work Focus"
+            placeholder="Focus window"
+            placeholderTextColor={color.inkFaint}
+            className="border-b border-divider pb-3 text-ink text-[22px] font-semibold"
+            style={{ color: color.ink }}
           />
         </View>
 
-        <View className="flex-row gap-4 mb-6">
-          <View className="flex-1">
-            <Typography
-              variant="caption"
-              className="mb-2 uppercase font-bold tracking-wider"
-            >
-              Start Time
+        <View className="flex-row gap-12 justify-center">
+          <View className="items-center gap-2">
+            <Typography variant="label" tone="faint">
+              Start
             </Typography>
-            <TextInput
-              className="bg-surface p-4 rounded-xl border border-gray-200 text-lg"
-              value={startTime}
-              onChangeText={setStartTime}
-              placeholder="09:00"
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="numbers-and-punctuation"
+            <DateTimePicker
+              value={startDate}
+              mode="time"
+              display="spinner"
+              themeVariant="dark"
+              onChange={handleStartChange}
+              textColor={color.ink}
             />
           </View>
-          <View className="flex-1">
-            <Typography
-              variant="caption"
-              className="mb-2 uppercase font-bold tracking-wider"
-            >
-              End Time
+          <View className="items-center gap-2">
+            <Typography variant="label" tone="faint">
+              End
             </Typography>
-            <TextInput
-              className="bg-surface p-4 rounded-xl border border-gray-200 text-lg"
-              value={endTime}
-              onChangeText={setEndTime}
-              placeholder="17:00"
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="numbers-and-punctuation"
+            <DateTimePicker
+              value={endDate}
+              mode="time"
+              display="spinner"
+              themeVariant="dark"
+              onChange={handleEndChange}
+              textColor={color.ink}
             />
           </View>
         </View>
 
-        <View className="mb-8">
-          <Typography
-            variant="caption"
-            className="mb-3 uppercase font-bold tracking-wider"
-          >
-            Repeat Days
+        <View className="gap-3">
+          <Typography variant="label" tone="faint">
+            Repeat
           </Typography>
-          <View className="flex-row justify-between">
-            {DAYS.map((day) => (
-              <Pressable
-                key={day.value}
-                onPress={() => toggleDay(day.value)}
-                className={`w-10 h-10 rounded-full items-center justify-center ${
-                  selectedDays.includes(day.value)
-                    ? 'bg-primary'
-                    : 'bg-gray-200'
-                }`}
-              >
-                <Typography
-                  className={
-                    selectedDays.includes(day.value)
-                      ? 'text-white font-bold'
-                      : 'text-text'
-                  }
+          <View className="flex-row flex-wrap gap-2">
+            {DAYS.map((day) => {
+              const active = selectedDays.includes(day.value);
+              return (
+                <Pressable
+                  key={day.value}
+                  onPress={() => toggleDay(day.value)}
+                  className={`px-4 py-2 rounded-lg border ${
+                    active
+                      ? 'bg-signal border-signal'
+                      : 'bg-transparent border-divider'
+                  }`}
                 >
-                  {day.label}
-                </Typography>
-              </Pressable>
-            ))}
+                  <Typography
+                    variant="body-md"
+                    tone={active ? 'ink' : 'muted'}
+                    className={active ? 'text-surface' : ''}
+                  >
+                    {day.label}
+                  </Typography>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
 
         {error ? (
-          <Typography variant="caption" className="mb-4 text-red-600">
+          <Typography variant="caption" tone="danger">
             {error}
           </Typography>
         ) : null}
 
-        <View className="gap-4">
+        <View className="gap-3 pt-2">
           <Button
-            title="Create Schedule"
+            title="Create schedule"
+            variant="commit"
             onPress={() => void handleSave()}
             isLoading={isPending}
             disabled={isPending}
           />
           <Button
             title="Cancel"
-            variant="secondary"
+            variant="abandon"
             onPress={() => router.back()}
             disabled={isPending}
           />
         </View>
       </ScrollView>
-    </View>
+    </Screen>
   );
 }

@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { convex } from '../src/api/convex';
+import { color } from '../src/shared/design/theme';
 
 const storage = {
   getItem: SecureStore.getItemAsync,
@@ -14,7 +15,7 @@ const storage = {
   removeItem: SecureStore.deleteItemAsync,
 };
 
-export default function RootLayout() {
+export default function RootLayout(): JSX.Element {
   return (
     <SafeAreaProvider>
       <ConvexAuthProvider
@@ -28,7 +29,7 @@ export default function RootLayout() {
   );
 }
 
-function AuthGate() {
+function AuthGate(): JSX.Element {
   const segments = useSegments();
   const router = useRouter();
   const { isAuthenticated, isLoading } = useConvexAuth();
@@ -52,14 +53,22 @@ function AuthGate() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
-        <ActivityIndicator size="large" color="#1E40AF" />
+      <View
+        style={{ backgroundColor: color.surface }}
+        className="flex-1 items-center justify-center"
+      >
+        <ActivityIndicator size="small" color={color.signal} />
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: color.surface },
+      }}
+    >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="add-schedule" options={{ presentation: 'modal' }} />
