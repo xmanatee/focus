@@ -1,6 +1,6 @@
 import { Text, type TextProps } from 'react-native';
 
-export type TypographyVariant =
+type TypographyVariant =
   | 'display-xl'
   | 'display-lg'
   | 'display-md'
@@ -12,7 +12,14 @@ export type TypographyVariant =
   | 'caption'
   | 'label';
 
-type TypographyTone = 'ink' | 'muted' | 'faint' | 'signal' | 'danger';
+type TypographyTone =
+  | 'ink'
+  | 'muted'
+  | 'faint'
+  | 'signal'
+  | 'danger'
+  | 'surface';
+
 type TypographyAlign = 'left' | 'center' | 'right';
 
 interface TypographyProps {
@@ -33,9 +40,9 @@ const variantClasses: Record<TypographyVariant, string> = {
   h2: 'text-[22px] leading-[28px] font-semibold',
   h3: 'text-[18px] leading-[24px] font-semibold',
   body: 'text-[16px] leading-[22px]',
-  'body-md': 'text-[16px] leading-[22px] font-medium',
+  'body-md': 'text-[17px] leading-[22px] font-semibold',
   caption: 'text-[14px] leading-[20px]',
-  label: 'text-[12px] leading-[16px] font-medium uppercase tracking-[0.12em]',
+  label: 'text-[12px] leading-[16px] font-semibold uppercase tracking-[0.14em]',
 };
 
 const toneClasses: Record<TypographyTone, string> = {
@@ -44,6 +51,7 @@ const toneClasses: Record<TypographyTone, string> = {
   faint: 'text-ink-faint',
   signal: 'text-signal',
   danger: 'text-danger',
+  surface: 'text-surface',
 };
 
 const alignClasses: Record<TypographyAlign, string> = {

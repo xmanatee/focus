@@ -17,47 +17,95 @@ const rules = [
     id: 'no-root-navigation-state',
     pattern: /\buseRootNavigationState\b/,
     message:
-      'useRootNavigationState creates render-time chicken-and-egg deadlocks: ' +
-      "the navigator's state only becomes defined after it mounts, so gating " +
-      'rendering on it prevents the state from ever becoming defined. ' +
-      'router.replace inside useEffect is already safe — no gate needed.',
+      'useRootNavigationState creates render-time chicken-and-egg deadlocks. ' +
+      'router.replace inside useEffect is already safe.',
   },
   {
     id: 'no-double-cast',
     pattern: /\bas\s+unknown\s+as\b/,
     message:
-      '`as unknown as T` bypasses the type system. Fix the real signature or ' +
-      'use a typed adapter. Banned by CODING_STANDARDS.md #3 ("No any").',
+      '`as unknown as T` bypasses the type system. Fix the real signature.',
   },
   {
     id: 'no-any-cast',
     pattern: /\bas\s+any\b/,
-    message: '`as any` is banned by CODING_STANDARDS.md #3 ("No any").',
+    message: '`as any` is banned by CODING_STANDARDS.md #3.',
   },
   {
     id: 'no-relative-router-path',
     pattern: /router\.(push|replace|navigate)\(\s*['"`]\.\.?\//,
     message:
-      'Expo Router paths must be absolute. Relative paths like "../select-apps" ' +
-      'are fragile across route group nesting. Use "/select-apps" instead.',
+      'Expo Router paths must be absolute. Use "/select-apps" not "../select-apps".',
   },
   {
     id: 'no-legacy-store-path',
     pattern: /from\s+['"][^'"]*src\/store\/useBlockerStore['"]/,
-    message:
-      'useBlockerStore moved to src/features/blocker/useBlockerStore. ' +
-      'Update the import to the feature-based path.',
+    message: 'useBlockerStore moved to src/features/blocker/useBlockerStore.',
   },
   {
     id: 'no-initialization-error-state',
     pattern: /\binitializationError\b/,
+    message: 'initializationError was a swallowed-error anti-pattern.',
+  },
+  {
+    id: 'no-console-in-runtime',
+    pattern: /\bconsole\.(log|warn|error|info|debug)\s*\(/,
     message:
-      'initializationError was a swallowed-error anti-pattern. Let initialize() ' +
-      'throw; the "Grant Permissions" flow is the real recovery path.',
+      'No console.* in runtime code. Errors surface via useAsyncAction; ' +
+      'unhandled rejections in non-critical paths are intentional.',
+    exceptions: new Set(['scripts/']),
+  },
+  {
+    id: 'no-bare-haptics',
+    pattern: /\bHaptics\.\w+/,
+    message:
+      'Call haptics through the `haptic` vocabulary in src/shared/design/haptics.ts. ' +
+      'Never touch expo-haptics directly in app/src.',
+    exceptions: new Set(['src/shared/design/haptics.ts']),
+  },
+  {
+    id: 'no-bare-symbolview',
+    pattern: /\bSymbolView\b/,
+    message:
+      'Use the <Icon /> wrapper from src/shared/components/Icon.tsx. ' +
+      'Never use SymbolView directly outside the wrapper.',
+    exceptions: new Set(['src/shared/components/Icon.tsx']),
+  },
+  {
+    id: 'no-swallow-catch',
+    pattern: /\.catch\s*\(\s*\(\s*\)\s*=>\s*\{?\s*\}?\s*\)/,
+    message:
+      'Empty .catch(() => {}) silently swallows errors. ' +
+      'Either let it throw (void promise) or handle explicitly via useAsyncAction.',
+  },
+  {
+    id: 'no-catch-console',
+    pattern: /\.catch\s*\(\s*console\.(log|warn|error)\b/,
+    message:
+      '.catch(console.error) is a swallow pattern. ' +
+      'Use useAsyncAction for user-facing errors; fire-and-forget (`void promise`) otherwise.',
+  },
+  {
+    id: 'no-empty-catch',
+    pattern: /catch\s*(?:\([^)]*\))?\s*\{\s*\}/,
+    message: 'Empty catch block silently swallows errors.',
   },
 ];
 
 const violations = [];
+
+function fileAllowedForRule(fullPath, rule) {
+  if (!rule.exceptions) {
+    return true;
+  }
+  const normalized = fullPath.replace(/^\.\//, '');
+  for (const prefix of rule.exceptions) {
+    if (normalized.startsWith(prefix) || normalized === prefix) {
+      return false;
+    }
+  }
+  return true;
+}
 
 function scan(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -78,6 +126,9 @@ function scan(dir) {
     const lines = content.split('\n');
 
     for (const rule of rules) {
+      if (!fileAllowedForRule(fullPath, rule)) {
+        continue;
+      }
       lines.forEach((line, index) => {
         if (rule.pattern.test(line)) {
           violations.push({
@@ -92,7 +143,7 @@ function scan(dir) {
   }
 }
 
-console.log('🔍 Checking for banned anti-patterns...');
+console.log('Checking for banned anti-patterns...');
 
 for (const root of SCAN_ROOTS) {
   if (fs.existsSync(root)) {
@@ -102,14 +153,14 @@ for (const root of SCAN_ROOTS) {
 
 if (violations.length > 0) {
   for (const { file, line, text, rule } of violations) {
-    console.error(`\n❌ ${rule.id} — ${file}:${line}`);
+    console.error(`\nX ${rule.id} -- ${file}:${line}`);
     console.error(`   ${text}`);
     console.error(`   ${rule.message}`);
   }
   console.error(
-    `\n${violations.length} anti-pattern violation(s) found. Fix them or justify in AGENTS.md before committing.`,
+    `\n${violations.length} anti-pattern violation(s) found. Fix them before committing.`,
   );
   process.exit(1);
 }
 
-console.log('✅ No banned anti-patterns found.');
+console.log('OK: No banned anti-patterns found.');

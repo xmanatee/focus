@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { convex } from '../src/api/convex';
-import { color } from '../src/shared/design/theme';
+import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 
 const storage = {
   getItem: SecureStore.getItemAsync,
@@ -16,16 +16,20 @@ const storage = {
 };
 
 export default function RootLayout(): JSX.Element {
+  const isDark = useIsDark();
+
   return (
-    <SafeAreaProvider>
-      <ConvexAuthProvider
-        client={convex}
-        storage={storage}
-        shouldHandleCode={false}
-      >
-        <AuthGate />
-      </ConvexAuthProvider>
-    </SafeAreaProvider>
+    <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
+      <SafeAreaProvider>
+        <ConvexAuthProvider
+          client={convex}
+          storage={storage}
+          shouldHandleCode={false}
+        >
+          <AuthGate />
+        </ConvexAuthProvider>
+      </SafeAreaProvider>
+    </View>
   );
 }
 
@@ -33,6 +37,7 @@ function AuthGate(): JSX.Element {
   const segments = useSegments();
   const router = useRouter();
   const { isAuthenticated, isLoading } = useConvexAuth();
+  const colors = useThemeColors();
 
   useEffect(() => {
     if (isLoading) {
@@ -53,11 +58,8 @@ function AuthGate(): JSX.Element {
 
   if (isLoading) {
     return (
-      <View
-        style={{ backgroundColor: color.surface }}
-        className="flex-1 items-center justify-center"
-      >
-        <ActivityIndicator size="small" color={color.signal} />
+      <View className="flex-1 items-center justify-center bg-surface">
+        <ActivityIndicator size="small" color={colors.signal} />
       </View>
     );
   }
@@ -66,7 +68,7 @@ function AuthGate(): JSX.Element {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: color.surface },
+        contentStyle: { backgroundColor: colors.surface },
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

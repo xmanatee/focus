@@ -7,13 +7,14 @@ import { Icon } from '../../src/shared/components/Icon';
 import { Screen } from '../../src/shared/components/Screen';
 import { Typography } from '../../src/shared/components/Typography';
 import { haptic } from '../../src/shared/design/haptics';
-import { color } from '../../src/shared/design/theme';
+import { useThemeColors } from '../../src/shared/design/theme';
 import { useAsyncAction } from '../../src/shared/hooks/useAsyncAction';
 
 type Segment = 'apps' | 'sites';
 
 export default function LibraryScreen(): JSX.Element {
   const router = useRouter();
+  const colors = useThemeColors();
   const selection = useBlockerStore((s) => s.selection);
   const addWebDomain = useBlockerStore((s) => s.addWebDomain);
   const removeWebDomain = useBlockerStore((s) => s.removeWebDomain);
@@ -54,7 +55,7 @@ export default function LibraryScreen(): JSX.Element {
         </Typography>
       </View>
 
-      <View className="flex-row bg-surface-sunken rounded-lg p-1 mb-6">
+      <View className="flex-row bg-surface-sunken rounded-full p-1 mb-6">
         <SegmentButton
           label="Apps"
           active={segment === 'apps'}
@@ -89,20 +90,21 @@ export default function LibraryScreen(): JSX.Element {
           <View className="flex-row gap-2 mb-6">
             <TextInput
               placeholder="example.com"
-              placeholderTextColor={color.inkFaint}
+              placeholderTextColor={colors.inkFaint}
               value={newDomain}
               onChangeText={setNewDomain}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="url"
-              className="flex-1 bg-surface-sunken rounded-lg px-4 py-3 text-ink text-[16px]"
-              style={{ color: color.ink }}
+              className="flex-1 bg-surface-raised rounded-full px-5 py-3 text-[16px]"
+              style={{ color: colors.ink }}
             />
             <Pressable
               onPress={() => void handleAdd()}
-              className="bg-signal rounded-lg px-5 items-center justify-center"
+              className="bg-signal rounded-full h-12 w-12 items-center justify-center"
+              accessibilityLabel="Add site"
             >
-              <Icon name="plus" size={18} tone="surface" />
+              <Icon name="plus" size={20} tone="surface" />
             </Pressable>
           </View>
 
@@ -163,7 +165,9 @@ function SegmentButton({
   return (
     <Pressable
       onPress={onPress}
-      className={`flex-1 py-2 rounded-md ${active ? 'bg-surface-raised' : ''}`}
+      className={`flex-1 py-2 rounded-full ${
+        active ? 'bg-surface-raised' : ''
+      }`}
     >
       <Typography
         variant="body-md"

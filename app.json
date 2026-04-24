@@ -13,8 +13,11 @@
       "appleTeamId": "569HBLNQPC"
     },
     "splash": {
-      "backgroundColor": "#1F1B17",
-      "resizeMode": "contain"
+      "backgroundColor": "#F8F2E8",
+      "resizeMode": "contain",
+      "dark": {
+        "backgroundColor": "#1A1510"
+      }
     },
     "scheme": "fucus",
     "plugins": [

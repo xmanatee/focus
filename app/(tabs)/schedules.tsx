@@ -8,11 +8,12 @@ import { Icon } from '../../src/shared/components/Icon';
 import { Screen } from '../../src/shared/components/Screen';
 import { Typography } from '../../src/shared/components/Typography';
 import { haptic } from '../../src/shared/design/haptics';
-import { color } from '../../src/shared/design/theme';
+import { useThemeColors } from '../../src/shared/design/theme';
 import { useAsyncAction } from '../../src/shared/hooks/useAsyncAction';
 
 export default function SchedulesScreen(): JSX.Element {
   const router = useRouter();
+  const colors = useThemeColors();
   const schedules = useQuery(api.schedules.get);
   const toggleSchedule = useScheduleStore((s) => s.toggleSchedule);
   const { error, run } = useAsyncAction();
@@ -44,10 +45,10 @@ export default function SchedulesScreen(): JSX.Element {
             void haptic.select();
             router.push('/add-schedule');
           }}
-          className="h-10 w-10 items-center justify-center rounded-full bg-signal"
+          className="h-11 w-11 items-center justify-center rounded-full bg-signal"
           accessibilityLabel="Add schedule"
         >
-          <Icon name="plus" size={18} tone="surface" />
+          <Icon name="plus" size={20} tone="surface" />
         </Pressable>
       </View>
 
@@ -96,9 +97,9 @@ export default function SchedulesScreen(): JSX.Element {
               <Switch
                 value={schedule.isEnabled}
                 onValueChange={(next) => void handleToggle(schedule._id, next)}
-                trackColor={{ true: color.signal, false: color.divider }}
-                thumbColor={color.ink}
-                ios_backgroundColor={color.divider}
+                trackColor={{ true: colors.signal, false: colors.divider }}
+                thumbColor={colors.ink}
+                ios_backgroundColor={colors.divider}
               />
             </View>
           ))}

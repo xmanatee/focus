@@ -1,36 +1,52 @@
+import { useColorScheme } from 'react-native';
 import { Easing } from 'react-native-reanimated';
 
-export const color = {
-  surface: '#1F1B17',
-  surfaceRaised: '#2A2521',
-  surfaceSunken: '#16130F',
-  ink: '#F4EEE3',
-  inkMuted: '#A8A095',
-  inkFaint: '#635B52',
-  signal: '#E8884A',
-  signalSoft: '#C57B4C',
-  divider: '#3A342D',
+export interface ThemeColors {
+  readonly surface: string;
+  readonly surfaceRaised: string;
+  readonly surfaceSunken: string;
+  readonly ink: string;
+  readonly inkMuted: string;
+  readonly inkFaint: string;
+  readonly signal: string;
+  readonly signalSoft: string;
+  readonly divider: string;
+  readonly danger: string;
+}
+
+const light: ThemeColors = {
+  surface: '#F8F2E8',
+  surfaceRaised: '#FFFFFF',
+  surfaceSunken: '#EDE5D6',
+  ink: '#2B221A',
+  inkMuted: '#7A6D5F',
+  inkFaint: '#B8AC9D',
+  signal: '#EA7A3A',
+  signalSoft: '#F5C39A',
+  divider: '#E4DBC9',
   danger: '#D94B2F',
-} as const;
+};
 
-export const space = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 24,
-  xxl: 32,
-  xxxl: 48,
-  huge: 64,
-  hero: 96,
-} as const;
+const dark: ThemeColors = {
+  surface: '#1A1510',
+  surfaceRaised: '#25201A',
+  surfaceSunken: '#100D08',
+  ink: '#F5EEDF',
+  inkMuted: '#A69686',
+  inkFaint: '#5F574B',
+  signal: '#F0935C',
+  signalSoft: '#B87347',
+  divider: '#352E26',
+  danger: '#E56A4D',
+};
 
-export const radius = {
-  sm: 6,
-  md: 10,
-  lg: 16,
-  pill: 999,
-} as const;
+export function useThemeColors(): ThemeColors {
+  return useColorScheme() === 'dark' ? dark : light;
+}
+
+export function useIsDark(): boolean {
+  return useColorScheme() === 'dark';
+}
 
 export const motion = {
   fast: 140,

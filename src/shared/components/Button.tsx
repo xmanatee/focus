@@ -1,24 +1,21 @@
 import { useCallback } from 'react';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { ActivityIndicator, Pressable } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { color, motion } from '../design/theme';
+import { motion, useThemeColors } from '../design/theme';
 import { Typography } from './Typography';
 
 type ButtonVariant = 'primary' | 'commit' | 'ghost' | 'abandon';
-type ButtonSize = 'md' | 'lg';
 
 interface ButtonProps {
   readonly title: string;
   readonly onPress: () => void;
   readonly variant?: ButtonVariant;
-  readonly size?: ButtonSize;
   readonly isLoading?: boolean;
   readonly disabled?: boolean;
-  readonly leading?: React.ReactNode;
 }
 
 const PressableAnimated = Animated.createAnimatedComponent(Pressable);
@@ -26,41 +23,25 @@ const PressableAnimated = Animated.createAnimatedComponent(Pressable);
 const containerClasses: Record<ButtonVariant, string> = {
   primary: 'bg-ink',
   commit: 'bg-signal',
-  ghost: 'bg-transparent border border-divider',
+  ghost: 'bg-transparent border-[1.5px] border-divider',
   abandon: 'bg-transparent',
 };
 
-const textToneByVariant: Record<
-  ButtonVariant,
-  'ink' | 'muted' | 'faint' | 'signal' | 'danger'
-> = {
-  primary: 'faint',
-  commit: 'ink',
+const textTone: Record<ButtonVariant, 'surface' | 'ink' | 'muted'> = {
+  primary: 'surface',
+  commit: 'surface',
   ghost: 'ink',
   abandon: 'muted',
-};
-
-const spinnerColor: Record<ButtonVariant, string> = {
-  primary: color.surface,
-  commit: color.ink,
-  ghost: color.ink,
-  abandon: color.inkMuted,
-};
-
-const sizeClasses: Record<ButtonSize, string> = {
-  md: 'py-3 px-5 rounded-lg',
-  lg: 'py-4 px-6 rounded-lg',
 };
 
 export function Button({
   title,
   onPress,
   variant = 'primary',
-  size = 'lg',
   isLoading = false,
   disabled = false,
-  leading,
 }: ButtonProps): JSX.Element {
+  const colors = useThemeColors();
   const scale = useSharedValue(1);
   const isDisabled = disabled || isLoading;
 
@@ -76,14 +57,8 @@ export function Button({
     transform: [{ scale: scale.value }],
   }));
 
-  const variantTextTone =
-    variant === 'primary' ? 'ink' : textToneByVariant[variant];
-  const textClassName =
-    variant === 'primary'
-      ? 'text-surface'
-      : variant === 'commit'
-        ? 'text-surface'
-        : '';
+  const spinnerColor =
+    variant === 'primary' || variant === 'commit' ? colors.surface : colors.ink;
 
   return (
     <PressableAnimated
@@ -92,27 +67,18 @@ export function Button({
       onPressOut={handlePressOut}
       disabled={isDisabled}
       style={pressableStyle}
-      className={`${containerClasses[variant]} ${
-        sizeClasses[size]
-      } items-center justify-center ${isDisabled ? 'opacity-40' : ''}`}
+      className={`${
+        containerClasses[variant]
+      } rounded-full py-4 px-6 items-center justify-center ${
+        isDisabled ? 'opacity-40' : ''
+      }`}
     >
       {isLoading ? (
-        <ActivityIndicator color={spinnerColor[variant]} />
+        <ActivityIndicator color={spinnerColor} />
       ) : (
-        <View className="flex-row items-center gap-2">
-          {leading}
-          <Typography
-            variant="body-md"
-            tone={
-              variant === 'primary' || variant === 'commit'
-                ? 'ink'
-                : variantTextTone
-            }
-            className={textClassName}
-          >
-            {title}
-          </Typography>
-        </View>
+        <Typography variant="body-md" tone={textTone[variant]}>
+          {title}
+        </Typography>
       )}
     </PressableAnimated>
   );

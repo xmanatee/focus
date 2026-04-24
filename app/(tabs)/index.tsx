@@ -16,10 +16,10 @@ import {
 } from '../../src/shared/hooks/useSessionCountdown';
 
 const DURATION_PRESETS: readonly { label: string; seconds: number }[] = [
-  { label: '10', seconds: 10 * 60 },
-  { label: '25', seconds: 25 * 60 },
-  { label: '50', seconds: 50 * 60 },
-  { label: '90', seconds: 90 * 60 },
+  { label: '10m', seconds: 10 * 60 },
+  { label: '25m', seconds: 25 * 60 },
+  { label: '50m', seconds: 50 * 60 },
+  { label: '90m', seconds: 90 * 60 },
 ];
 
 export default function DashboardScreen(): JSX.Element {
@@ -82,7 +82,7 @@ export default function DashboardScreen(): JSX.Element {
     return (
       <Screen>
         <TopBar onSignOut={() => void signOut()} />
-        <View className="flex-1 justify-center gap-4">
+        <View className="flex-1 justify-center gap-5">
           <Typography variant="label" tone="signal">
             Before you begin
           </Typography>
@@ -114,15 +114,13 @@ export default function DashboardScreen(): JSX.Element {
         <Animated.View
           entering={FadeIn.duration(420)}
           exiting={FadeOut.duration(280)}
-          className="flex-1 justify-between py-8"
+          className="flex-1 justify-between py-10"
         >
-          <View>
-            <Typography variant="label" tone="signal" align="center">
-              In session
-            </Typography>
-          </View>
+          <Typography variant="label" tone="signal" align="center">
+            In session
+          </Typography>
 
-          <View className="items-center gap-6">
+          <View className="items-center gap-8">
             <Typography variant="display-xl" tone="ink" align="center" numeric>
               {formatCountdown(secondsRemaining)}
             </Typography>
@@ -156,7 +154,7 @@ export default function DashboardScreen(): JSX.Element {
   return (
     <Screen>
       <TopBar onSignOut={() => void signOut()} />
-      <View className="flex-1 justify-between py-4">
+      <View className="flex-1 justify-between py-6">
         <View className="gap-2">
           <Typography variant="label" tone="muted">
             Ready when you are
@@ -177,18 +175,15 @@ export default function DashboardScreen(): JSX.Element {
                 <Pressable
                   key={preset.label}
                   onPress={() => handlePickDuration(preset.seconds)}
-                  className={`px-4 py-2 rounded-lg border ${
-                    selected
-                      ? 'bg-signal border-signal'
-                      : 'bg-transparent border-divider'
+                  className={`px-5 py-3 rounded-full ${
+                    selected ? 'bg-signal' : 'bg-surface-raised'
                   }`}
                 >
                   <Typography
                     variant="body-md"
-                    tone={selected ? 'ink' : 'muted'}
-                    className={selected ? 'text-surface' : ''}
+                    tone={selected ? 'surface' : 'muted'}
                   >
-                    {preset.label}m
+                    {preset.label}
                   </Typography>
                 </Pressable>
               );
@@ -197,7 +192,7 @@ export default function DashboardScreen(): JSX.Element {
         </View>
 
         <View className="gap-3">
-          <View className="flex-row items-center justify-between px-1">
+          <View className="flex-row items-center justify-between px-2">
             <Typography variant="caption" tone="muted">
               Blocking {activeLabel}
             </Typography>
@@ -243,10 +238,10 @@ function TopBar({ onSignOut }: { onSignOut: () => void }): JSX.Element {
       </Typography>
       <Pressable
         onPress={onSignOut}
-        className="h-10 w-10 items-center justify-center rounded-full"
+        className="h-11 w-11 items-center justify-center rounded-full bg-surface-raised"
         accessibilityLabel="Sign out"
       >
-        <Icon name="person.crop.circle" size={24} tone="muted" />
+        <Icon name="person.crop.circle" size={22} tone="muted" />
       </Pressable>
     </View>
   );

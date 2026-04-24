@@ -6,6 +6,7 @@ import { Button } from '../src/shared/components/Button';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
+import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
 type OAuthProvider = 'apple' | 'google';
 type PendingProvider = OAuthProvider | 'callback';
@@ -14,10 +15,10 @@ export default function LoginScreen(): JSX.Element {
   const { signIn } = useAuthActions();
   const [pendingProvider, setPendingProvider] =
     useState<PendingProvider | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const url = Linking.useURL();
   const lastInvokedProvider = useRef<OAuthProvider | null>(null);
   const lastHandledCode = useRef<string | null>(null);
+  const { error, run } = useAsyncAction();
 
   useEffect(() => {
     if (!url) {
@@ -41,49 +42,30 @@ export default function LoginScreen(): JSX.Element {
     }
 
     lastHandledCode.current = code;
+    setPendingProvider('callback');
+    void run(async () => {
+      await signIn(provider, { code });
+    }, 'Could not finish sign-in.').finally(() => setPendingProvider(null));
+  }, [run, signIn, url]);
 
-    void (async () => {
-      setPendingProvider('callback');
-      setErrorMessage(null);
-      try {
-        await signIn(provider, { code });
-      } catch (error) {
-        setErrorMessage(
-          error instanceof Error ? error.message : 'Could not finish sign-in.',
-        );
-      } finally {
-        setPendingProvider(null);
-      }
-    })();
-  }, [signIn, url]);
-
-  const handleSignIn = async (provider: OAuthProvider): Promise<void> => {
+  const handleSignIn = (provider: OAuthProvider): Promise<boolean> => {
     lastInvokedProvider.current = provider;
     setPendingProvider(provider);
-    setErrorMessage(null);
     void haptic.commit();
-    try {
+    return run(async () => {
       const result = await signIn(provider);
       if (result.redirect) {
         await Linking.openURL(result.redirect.toString());
       }
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Sign-in failed.',
-      );
-    } finally {
-      setPendingProvider(null);
-    }
+    }, 'Sign-in failed.').finally(() => setPendingProvider(null));
   };
 
   return (
     <Screen>
       <View className="flex-1 justify-between py-8">
-        <View>
-          <Typography variant="label" tone="signal">
-            Fucus
-          </Typography>
-        </View>
+        <Typography variant="label" tone="signal">
+          Fucus
+        </Typography>
 
         <View className="gap-3">
           <Typography variant="display-lg" tone="ink">
@@ -97,8 +79,7 @@ export default function LoginScreen(): JSX.Element {
             tone="muted"
             className="mt-4 max-w-[320px]"
           >
-            A verdict against distraction. Pick what blocks, pick the window,
-            and commit.
+            Block what pulls you in. Pick a window. Come back to yourself.
           </Typography>
         </View>
 
@@ -118,22 +99,12 @@ export default function LoginScreen(): JSX.Element {
             disabled={pendingProvider !== null}
           />
 
-          {errorMessage ? (
-            <Typography
-              variant="caption"
-              tone="danger"
-              align="center"
-              className="mt-1"
-            >
-              {errorMessage}
+          {error ? (
+            <Typography variant="caption" tone="danger" align="center">
+              {error}
             </Typography>
           ) : pendingProvider === 'callback' ? (
-            <Typography
-              variant="caption"
-              tone="muted"
-              align="center"
-              className="mt-1"
-            >
+            <Typography variant="caption" tone="muted" align="center">
               Finishing sign-in...
             </Typography>
           ) : null}

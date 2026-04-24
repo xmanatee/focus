@@ -12,7 +12,7 @@ import {
 
 type BusyState = 'idle' | 'authorizing' | 'syncing';
 
-export const DEFAULT_SESSION_DURATION_SEC = 25 * 60;
+const DEFAULT_SESSION_DURATION_SEC = 25 * 60;
 
 interface BlockerState {
   busyState: BusyState;

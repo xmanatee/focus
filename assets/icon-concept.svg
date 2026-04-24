@@ -1,14 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <defs>
-    <!--
-      Fucus app icon concept.
-      Direction: editorial / bold / confrontational.
-      Two elements: the surface and the verdict.
-      The period is the verdict - a full stop on distraction.
-    -->
-  </defs>
-  <rect width="1024" height="1024" fill="#1F1B17"/>
-  <g fill="#F4EEE3">
+  <!--
+    Fucus app icon concept.
+    Direction: Headspace warmth + Duolingo roundness + Endel restraint.
+    Warm cream surface, deep-ink "F", signal-orange period — a full stop on distraction.
+  -->
+  <rect width="1024" height="1024" fill="#F8F2E8"/>
+  <g fill="#2B221A">
     <text
       x="512"
       y="680"
@@ -18,5 +15,5 @@
       font-weight="900"
       letter-spacing="-32">F</text>
   </g>
-  <circle cx="800" cy="672" r="56" fill="#E8884A"/>
+  <circle cx="800" cy="672" r="56" fill="#EA7A3A"/>
 </svg>

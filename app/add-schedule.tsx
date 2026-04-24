@@ -15,7 +15,7 @@ import { Button } from '../src/shared/components/Button';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
-import { color } from '../src/shared/design/theme';
+import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
 const DAYS: readonly { label: string; value: DayOfWeek; order: number }[] = [
@@ -51,6 +51,8 @@ function dateToTimeString(date: Date): string {
 
 export default function AddScheduleScreen(): JSX.Element {
   const router = useRouter();
+  const colors = useThemeColors();
+  const isDark = useIsDark();
   const addSchedule = useScheduleStore((s) => s.addSchedule);
   const selection = useBlockerStore((s) => s.selection);
 
@@ -143,13 +145,13 @@ export default function AddScheduleScreen(): JSX.Element {
             value={name}
             onChangeText={setName}
             placeholder="Focus window"
-            placeholderTextColor={color.inkFaint}
-            className="border-b border-divider pb-3 text-ink text-[22px] font-semibold"
-            style={{ color: color.ink }}
+            placeholderTextColor={colors.inkFaint}
+            className="bg-surface-raised rounded-xl px-5 py-4 text-[22px] font-semibold"
+            style={{ color: colors.ink }}
           />
         </View>
 
-        <View className="flex-row gap-12 justify-center">
+        <View className="flex-row gap-8 justify-center">
           <View className="items-center gap-2">
             <Typography variant="label" tone="faint">
               Start
@@ -158,9 +160,9 @@ export default function AddScheduleScreen(): JSX.Element {
               value={startDate}
               mode="time"
               display="spinner"
-              themeVariant="dark"
+              themeVariant={isDark ? 'dark' : 'light'}
               onChange={handleStartChange}
-              textColor={color.ink}
+              textColor={colors.ink}
             />
           </View>
           <View className="items-center gap-2">
@@ -171,9 +173,9 @@ export default function AddScheduleScreen(): JSX.Element {
               value={endDate}
               mode="time"
               display="spinner"
-              themeVariant="dark"
+              themeVariant={isDark ? 'dark' : 'light'}
               onChange={handleEndChange}
-              textColor={color.ink}
+              textColor={colors.ink}
             />
           </View>
         </View>
@@ -189,16 +191,13 @@ export default function AddScheduleScreen(): JSX.Element {
                 <Pressable
                   key={day.value}
                   onPress={() => toggleDay(day.value)}
-                  className={`px-4 py-2 rounded-lg border ${
-                    active
-                      ? 'bg-signal border-signal'
-                      : 'bg-transparent border-divider'
+                  className={`px-5 py-3 rounded-full ${
+                    active ? 'bg-signal' : 'bg-surface-raised'
                   }`}
                 >
                   <Typography
                     variant="body-md"
-                    tone={active ? 'ink' : 'muted'}
-                    className={active ? 'text-surface' : ''}
+                    tone={active ? 'surface' : 'muted'}
                   >
                     {day.label}
                   </Typography>

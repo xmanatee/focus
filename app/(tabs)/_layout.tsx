@@ -3,20 +3,16 @@ import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBlockerStore } from '../../src/features/blocker/useBlockerStore';
 import { Icon } from '../../src/shared/components/Icon';
-import { color } from '../../src/shared/design/theme';
+import { useThemeColors } from '../../src/shared/design/theme';
 
 export default function TabLayout(): JSX.Element {
   const insets = useSafeAreaInsets();
-  const initialize = useBlockerStore((state) => state.initialize);
-  const isActive = useBlockerStore((state) => state.isActive);
+  const colors = useThemeColors();
+  const initialize = useBlockerStore((s) => s.initialize);
+  const isActive = useBlockerStore((s) => s.isActive);
 
   useEffect(() => {
-    initialize().catch((caught: unknown) => {
-      console.error(
-        '[fucus] Failed to read Screen Time state:',
-        caught instanceof Error ? caught.message : caught,
-      );
-    });
+    void initialize();
   }, [initialize]);
 
   return (
@@ -26,14 +22,14 @@ export default function TabLayout(): JSX.Element {
         tabBarStyle: isActive
           ? { display: 'none' }
           : {
-              backgroundColor: color.surface,
+              backgroundColor: colors.surface,
               borderTopWidth: 1,
-              borderTopColor: color.divider,
+              borderTopColor: colors.divider,
               paddingBottom: insets.bottom > 0 ? insets.bottom : 10,
               height: insets.bottom > 0 ? 72 + insets.bottom : 72,
             },
-        tabBarActiveTintColor: color.signal,
-        tabBarInactiveTintColor: color.inkMuted,
+        tabBarActiveTintColor: colors.signal,
+        tabBarInactiveTintColor: colors.inkMuted,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',

@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1284 2778" width="1284" height="2778">
-  <!-- iPhone 15 Pro Max resolution; universal splash works by letterboxing. -->
-  <rect width="1284" height="2778" fill="#1F1B17"/>
-  <g fill="#F4EEE3">
+  <!-- Matches light-mode surface / ink. A dark counterpart can use #1A1510 background + #F5EEDF ink. -->
+  <rect width="1284" height="2778" fill="#F8F2E8"/>
+  <g fill="#2B221A">
     <text
       x="642"
       y="1460"
@@ -11,5 +11,5 @@
       font-weight="900"
       letter-spacing="-4">Fucus</text>
   </g>
-  <circle cx="850" cy="1455" r="24" fill="#E8884A"/>
+  <circle cx="850" cy="1455" r="24" fill="#EA7A3A"/>
 </svg>
