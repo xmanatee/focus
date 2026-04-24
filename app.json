@@ -38,7 +38,7 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "@nauverse/expo-cloud-settings"
+      "./plugins/with-fucus-icloud"
     ],
     "experiments": {
       "typedRoutes": true
