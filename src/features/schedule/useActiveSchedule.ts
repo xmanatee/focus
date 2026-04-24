@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { isScheduleActiveAt, nextStartAfter } from './activeness';
-import type { Schedule } from './useScheduleStore';
+import type { Schedule } from './types';
 
 interface ActiveScheduleView {
   readonly active: Schedule | null;

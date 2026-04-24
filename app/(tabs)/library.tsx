@@ -1,15 +1,10 @@
-import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
-import { api } from '../../convex/_generated/api';
-import { parseBlockedDomain } from '../../src/features/blocker/domain';
-import {
-  type BlockSelection,
-  selectionHasBlockedTargets,
-} from '../../src/features/blocker/types';
-import { useProfileStore } from '../../src/features/profile/useProfileStore';
+import { selectionHasBlockedTargets } from '../../src/features/blocker/types';
+import { useBlocklistStore } from '../../src/features/blocker/useBlocklistStore';
 import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
+import { useScheduleStore } from '../../src/features/schedule/useScheduleStore';
 import { useAdminState } from '../../src/features/settings/useAdminState';
 import { Button } from '../../src/shared/components/Button';
 import { Icon } from '../../src/shared/components/Icon';
@@ -24,29 +19,17 @@ type Segment = 'apps' | 'sites';
 export default function LibraryScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
-  const profiles = useQuery(api.profiles.list);
-  const schedules = useQuery(api.schedules.get);
-  const setSelection = useProfileStore((s) => s.setSelection);
+  const selection = useBlocklistStore((s) => s.selection);
+  const addWebDomain = useBlocklistStore((s) => s.addWebDomain);
+  const removeWebDomain = useBlocklistStore((s) => s.removeWebDomain);
+  const schedules = useScheduleStore((s) => s.schedules);
 
   const { active } = useActiveSchedule(schedules);
   const { state: adminState } = useAdminState();
-  const profile = profiles?.[0] ?? null;
 
   const [segment, setSegment] = useState<Segment>('apps');
   const [newDomain, setNewDomain] = useState('');
   const { error, run } = useAsyncAction();
-
-  if (!profile) {
-    return (
-      <Screen>
-        <View className="flex-1 items-center justify-center">
-          <Typography variant="body" tone="muted">
-            Preparing your blocklist...
-          </Typography>
-        </View>
-      </Screen>
-    );
-  }
 
   const isAdminLocked = adminState.kind === 'locked';
   const isLocked = active !== null || isAdminLocked;
@@ -57,49 +40,27 @@ export default function LibraryScreen(): JSX.Element {
         ? 'Outside setup hours. Open Settings.'
         : null;
 
-  const updateSelection = (
-    nextSelection: BlockSelection,
-    fallback: string,
-  ): Promise<boolean> =>
-    run(() => setSelection(profile._id, profile.name, nextSelection), fallback);
-
   const handleAddDomain = async (): Promise<void> => {
-    const parsed = parseBlockedDomain(newDomain);
-    if (!parsed) {
-      void run(async () => {
-        throw new Error('Enter a valid domain like example.com.');
-      }, 'Invalid domain.');
-      return;
-    }
-    if (profile.selection.webDomains.includes(parsed)) {
-      setNewDomain('');
-      return;
-    }
-    const nextSelection: BlockSelection = {
-      ...profile.selection,
-      webDomains: [...profile.selection.webDomains, parsed],
-    };
-    const ok = await updateSelection(nextSelection, 'Could not add site.');
+    const ok = await run(async () => {
+      addWebDomain(newDomain);
+    }, 'Could not add site.');
     if (ok) {
       void haptic.select();
       setNewDomain('');
     }
   };
 
-  const handleRemoveDomain = (domain: string): Promise<boolean> => {
-    void haptic.select();
-    const nextSelection: BlockSelection = {
-      ...profile.selection,
-      webDomains: profile.selection.webDomains.filter((d) => d !== domain),
-    };
-    return updateSelection(nextSelection, 'Could not remove site.');
-  };
+  const handleRemoveDomain = (domain: string): Promise<boolean> =>
+    run(async () => {
+      void haptic.select();
+      removeWebDomain(domain);
+    }, 'Could not remove site.');
 
-  const hasTargets = selectionHasBlockedTargets(profile.selection);
+  const hasTargets = selectionHasBlockedTargets(selection);
 
   const appsSummary =
-    profile.selection.activitySelection.status === 'saved'
-      ? `${profile.selection.activitySelection.applicationCount} apps · ${profile.selection.activitySelection.categoryCount} categories`
+    selection.activitySelection.status === 'saved'
+      ? `${selection.activitySelection.applicationCount} apps · ${selection.activitySelection.categoryCount} categories`
       : 'No apps picked.';
 
   return (
@@ -148,11 +109,6 @@ export default function LibraryScreen(): JSX.Element {
             onPress={() => router.push('/select-apps')}
             disabled={isLocked}
           />
-          {lockReason ? (
-            <Typography variant="caption" tone="faint">
-              {lockReason}
-            </Typography>
-          ) : null}
         </View>
       ) : (
         <View className="flex-1">
@@ -187,7 +143,7 @@ export default function LibraryScreen(): JSX.Element {
             </Typography>
           ) : null}
 
-          {profile.selection.webDomains.length === 0 ? (
+          {selection.webDomains.length === 0 ? (
             <Typography
               variant="body"
               tone="muted"
@@ -198,11 +154,11 @@ export default function LibraryScreen(): JSX.Element {
             </Typography>
           ) : (
             <ScrollView showsVerticalScrollIndicator={false}>
-              {profile.selection.webDomains.map((domain, index) => (
+              {selection.webDomains.map((domain, index) => (
                 <View
                   key={domain}
                   className={`flex-row justify-between items-center py-4 ${
-                    index !== profile.selection.webDomains.length - 1
+                    index !== selection.webDomains.length - 1
                       ? 'border-b border-divider'
                       : ''
                   }`}

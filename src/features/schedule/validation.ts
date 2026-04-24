@@ -1,4 +1,4 @@
-import type { CreateScheduleInput, DayOfWeek } from './types';
+import type { DayOfWeek, ScheduleInput } from './types';
 
 const DAY_OF_WEEK_VALUES: DayOfWeek[] = [
   'mon',
@@ -22,7 +22,7 @@ function timeOfDayToMinutes(value: string): number {
 }
 
 export function validateScheduleInput(
-  input: Omit<CreateScheduleInput, 'profileId'>,
+  input: Omit<ScheduleInput, 'profileId'>,
 ): void {
   if (input.name.trim().length === 0) {
     throw new Error('Schedule name is required.');

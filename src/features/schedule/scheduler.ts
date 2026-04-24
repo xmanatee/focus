@@ -23,7 +23,7 @@ const DAY_WEEKDAY_INDEX: Record<DayOfWeek, number> = {
 
 const ACTIVITY_PREFIX = 'fucus_s_';
 
-export interface ScheduleSpec {
+interface ScheduleSpec {
   readonly id: string;
   readonly days: readonly DayOfWeek[];
   readonly startTime: string;

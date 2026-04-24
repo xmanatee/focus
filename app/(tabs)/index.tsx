@@ -1,12 +1,10 @@
-import { useQuery } from 'convex/react';
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
-import { api } from '../../convex/_generated/api';
 import { useBlockerStore } from '../../src/features/blocker/useBlockerStore';
+import type { Schedule } from '../../src/features/schedule/types';
 import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
-import type { Schedule } from '../../src/features/schedule/useScheduleStore';
-import { useAdminState } from '../../src/features/settings/useAdminState';
+import { useScheduleStore } from '../../src/features/schedule/useScheduleStore';
 import { Button } from '../../src/shared/components/Button';
 import { Icon } from '../../src/shared/components/Icon';
 import { Screen } from '../../src/shared/components/Screen';
@@ -33,16 +31,13 @@ function formatRelative(at: Date, now: Date): string {
 
 export default function DashboardScreen(): JSX.Element {
   const router = useRouter();
-
   const authorizationStatus = useBlockerStore((s) => s.authorizationStatus);
   const busyState = useBlockerStore((s) => s.busyState);
   const requestPermissions = useBlockerStore((s) => s.requestPermissions);
   const hasPermissions = authorizationStatus === 'authorized';
 
-  const schedules = useQuery(api.schedules.get);
+  const schedules = useScheduleStore((s) => s.schedules);
   const { active, next, now } = useActiveSchedule(schedules);
-  const { state: adminState } = useAdminState();
-
   const { error, run } = useAsyncAction();
 
   const handleGrant = (): Promise<boolean> =>
@@ -123,19 +118,6 @@ export default function DashboardScreen(): JSX.Element {
     );
   }
 
-  if (schedules === undefined) {
-    return (
-      <Screen>
-        <TopBar onOpenSettings={openSettings} />
-        <View className="flex-1 items-center justify-center">
-          <Typography variant="body" tone="muted">
-            Loading...
-          </Typography>
-        </View>
-      </Screen>
-    );
-  }
-
   if (schedules.length === 0) {
     return (
       <Screen>
@@ -156,15 +138,8 @@ export default function DashboardScreen(): JSX.Element {
               title="Add schedule"
               variant="commit"
               onPress={() => router.push('/add-schedule')}
-              disabled={adminState.kind === 'locked'}
             />
           </View>
-          {adminState.kind === 'locked' ? (
-            <Typography variant="caption" tone="faint" className="mt-1">
-              Setup hours are locked. Open Settings to check when the next
-              unlock window opens.
-            </Typography>
-          ) : null}
         </View>
       </Screen>
     );

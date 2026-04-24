@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { CreateScheduleInput, DayOfWeek } from './types';
+import type { DayOfWeek, ScheduleInput } from './types';
 import { validateScheduleInput } from './validation';
 
-function baseInput(
-  overrides: Partial<Omit<CreateScheduleInput, 'profileId'>> = {},
-): Omit<CreateScheduleInput, 'profileId'> {
+function baseInput(overrides: Partial<ScheduleInput> = {}): ScheduleInput {
   const weekdays: DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri'];
   return {
     name: 'Work',

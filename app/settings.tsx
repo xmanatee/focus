@@ -1,13 +1,9 @@
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
-import { api } from '../convex/_generated/api';
-import { authClient } from '../src/api/authClient';
-import { RequireAuth } from '../src/features/auth/RequireAuth';
 import type { DayOfWeek } from '../src/features/schedule/types';
 import type {
   AdminState,
@@ -16,7 +12,6 @@ import type {
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { Button } from '../src/shared/components/Button';
-import { Icon } from '../src/shared/components/Icon';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
@@ -70,24 +65,15 @@ function nextUnlockLabel(state: AdminState, now: Date): string {
   return `Next unlock in ${days} day${days === 1 ? '' : 's'}.`;
 }
 
-export default function SettingsRoute(): JSX.Element {
-  return (
-    <RequireAuth>
-      <SettingsScreen />
-    </RequireAuth>
-  );
-}
-
-function SettingsScreen(): JSX.Element {
+export default function SettingsScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
   const isDark = useIsDark();
-  const settings = useQuery(api.settings.get);
+  const existing = useSettingsStore((s) => s.setupWindow);
   const setSetupWindow = useSettingsStore((s) => s.setSetupWindow);
   const clearSetupWindow = useSettingsStore((s) => s.clearSetupWindow);
-  const { state, now, isSettled } = useAdminState();
+  const { state, now } = useAdminState();
 
-  const existing = settings?.setupWindow ?? null;
   const isUnlocked = state.kind === 'unlocked';
 
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(
@@ -146,7 +132,7 @@ function SettingsScreen(): JSX.Element {
     };
     const success = await run(async () => {
       void haptic.commit();
-      await setSetupWindow(nextWindow);
+      setSetupWindow(nextWindow);
     }, 'Could not save setup hours.');
     if (success) {
       router.back();
@@ -164,7 +150,9 @@ function SettingsScreen(): JSX.Element {
           style: 'destructive',
           onPress: () => {
             void haptic.abandon();
-            void run(() => clearSetupWindow(), 'Could not remove setup hours.');
+            void run(async () => {
+              clearSetupWindow();
+            }, 'Could not remove setup hours.');
           },
         },
       ],
@@ -197,20 +185,18 @@ function SettingsScreen(): JSX.Element {
             <Typography variant="h3" tone="ink">
               Setup hours
             </Typography>
-            {isSettled ? (
-              <View
-                className={`rounded-full px-3 py-1 ${
-                  isUnlocked ? 'bg-signal' : 'bg-surface-sunken'
-                }`}
+            <View
+              className={`rounded-full px-3 py-1 ${
+                isUnlocked ? 'bg-signal' : 'bg-surface-sunken'
+              }`}
+            >
+              <Typography
+                variant="caption"
+                tone={isUnlocked ? 'surface' : 'muted'}
               >
-                <Typography
-                  variant="caption"
-                  tone={isUnlocked ? 'surface' : 'muted'}
-                >
-                  {isUnlocked ? 'Unlocked' : 'Locked'}
-                </Typography>
-              </View>
-            ) : null}
+                {isUnlocked ? 'Unlocked' : 'Locked'}
+              </Typography>
+            </View>
           </View>
 
           {!isUnlocked && existing ? (
@@ -301,26 +287,6 @@ function SettingsScreen(): JSX.Element {
               />
             ) : null}
           </View>
-        </View>
-
-        <View className="gap-3">
-          <Pressable
-            onPress={() => {
-              void haptic.select();
-              void authClient.signOut();
-              router.replace('/login');
-            }}
-            className="flex-row items-center justify-between py-4 border-t border-divider"
-          >
-            <Typography variant="body-md" tone="ink">
-              Sign out
-            </Typography>
-            <Icon
-              name="rectangle.portrait.and.arrow.right"
-              size={20}
-              tone="muted"
-            />
-          </Pressable>
         </View>
       </ScrollView>
     </Screen>

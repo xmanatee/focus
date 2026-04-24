@@ -1,24 +1,28 @@
 import { create } from 'zustand';
-import { api } from '../../../convex/_generated/api';
-import { convex } from '../../api/convex';
+import { persist } from 'zustand/middleware';
+import { persistedStorage } from '../../shared/storage';
 import type { SetupWindow } from './adminState';
+import { validateSetupWindow } from './validation';
 
-interface SettingsActions {
-  setSetupWindow: (window: SetupWindow) => Promise<void>;
-  clearSetupWindow: () => Promise<void>;
+interface SettingsState {
+  setupWindow: SetupWindow | null;
+  setSetupWindow: (window: SetupWindow) => void;
+  clearSetupWindow: () => void;
 }
 
-export const useSettingsStore = create<SettingsActions>(() => ({
-  setSetupWindow: async (window) => {
-    await convex.mutation(api.settings.setSetupWindow, {
-      window: {
-        days: [...window.days],
-        startTime: window.startTime,
-        endTime: window.endTime,
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
+      setupWindow: null,
+      setSetupWindow: (window) => {
+        validateSetupWindow(window);
+        set({ setupWindow: window });
       },
-    });
-  },
-  clearSetupWindow: async () => {
-    await convex.mutation(api.settings.clearSetupWindow);
-  },
-}));
+      clearSetupWindow: () => set({ setupWindow: null }),
+    }),
+    {
+      name: 'fucus.settings',
+      storage: persistedStorage,
+    },
+  ),
+);

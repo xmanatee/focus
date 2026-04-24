@@ -1,18 +1,12 @@
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { useQuery } from 'convex/react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
-import { api } from '../convex/_generated/api';
-import type { Id } from '../convex/_generated/dataModel';
-import { RequireAuth } from '../src/features/auth/RequireAuth';
 import { selectionHasBlockedTargets } from '../src/features/blocker/types';
-import type {
-  CreateScheduleInput,
-  DayOfWeek,
-} from '../src/features/schedule/types';
+import { useBlocklistStore } from '../src/features/blocker/useBlocklistStore';
+import type { DayOfWeek, ScheduleInput } from '../src/features/schedule/types';
 import { useScheduleStore } from '../src/features/schedule/useScheduleStore';
 import { validateScheduleInput } from '../src/features/schedule/validation';
 import { useAdminState } from '../src/features/settings/useAdminState';
@@ -54,30 +48,20 @@ function dateToTimeString(date: Date): string {
   return `${h}:${m}`;
 }
 
-export default function AddScheduleRoute(): JSX.Element {
-  return (
-    <RequireAuth>
-      <AddScheduleScreen />
-    </RequireAuth>
-  );
-}
-
-function AddScheduleScreen(): JSX.Element {
+export default function AddScheduleScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
   const isDark = useIsDark();
   const params = useLocalSearchParams<{ id?: string }>();
-  const editId = params.id as Id<'schedules'> | undefined;
-  const isEditing = Boolean(editId);
+  const editId = params.id ?? null;
+  const isEditing = editId !== null;
 
   const addSchedule = useScheduleStore((s) => s.addSchedule);
   const updateSchedule = useScheduleStore((s) => s.updateSchedule);
-  const profiles = useQuery(api.profiles.list);
-  const profile = profiles?.[0] ?? null;
-  const schedules = useQuery(api.schedules.get);
-  const existing = editId
-    ? schedules?.find((s) => s._id === editId) ?? null
-    : null;
+  const existing = useScheduleStore((s) =>
+    editId ? s.schedules.find((item) => item.id === editId) ?? null : null,
+  );
+  const selection = useBlocklistStore((s) => s.selection);
   const { state: adminState, isSettled } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
 
@@ -164,37 +148,28 @@ function AddScheduleScreen(): JSX.Element {
   }
 
   const handleSave = async (): Promise<void> => {
-    if (!profile) {
-      void run(async () => {
-        throw new Error('Blocklist is still loading.');
-      }, 'Blocklist is still loading.');
-      return;
-    }
-
-    if (!selectionHasBlockedTargets(profile.selection)) {
+    if (!selectionHasBlockedTargets(selection)) {
       void run(async () => {
         throw new Error('Pick at least one app or site on the Blocklist tab.');
       }, 'Blocklist is empty.');
       return;
     }
 
-    const input: CreateScheduleInput = {
+    const input: ScheduleInput = {
       name,
       startTime,
       endTime,
       days: selectedDays,
       isEnabled: existing?.isEnabled ?? true,
-      profileId: profile._id,
     };
 
     const success = await run(async () => {
       validateScheduleInput(input);
       void haptic.commit();
-      const trimmed = { ...input, name: input.name.trim() };
       if (editId) {
-        await updateSchedule(editId, trimmed);
+        updateSchedule(editId, input);
       } else {
-        await addSchedule(trimmed);
+        addSchedule(input);
       }
     }, 'Could not save schedule.');
 
@@ -301,7 +276,7 @@ function AddScheduleScreen(): JSX.Element {
             variant="commit"
             onPress={() => void handleSave()}
             isLoading={isPending}
-            disabled={isPending || !profile}
+            disabled={isPending}
           />
           <Button
             title="Cancel"

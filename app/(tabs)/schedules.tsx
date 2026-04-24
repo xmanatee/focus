@@ -1,8 +1,5 @@
-import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
-import { api } from '../../convex/_generated/api';
-import type { Id } from '../../convex/_generated/dataModel';
 import { isScheduleActiveAt } from '../../src/features/schedule/activeness';
 import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
 import { useScheduleStore } from '../../src/features/schedule/useScheduleStore';
@@ -17,7 +14,7 @@ import { useAsyncAction } from '../../src/shared/hooks/useAsyncAction';
 export default function SchedulesScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
-  const schedules = useQuery(api.schedules.get);
+  const schedules = useScheduleStore((s) => s.schedules);
   const toggleSchedule = useScheduleStore((s) => s.toggleSchedule);
   const deleteSchedule = useScheduleStore((s) => s.deleteSchedule);
   const { error, run } = useAsyncAction();
@@ -26,17 +23,16 @@ export default function SchedulesScreen(): JSX.Element {
   const isAdminLocked = adminState.kind === 'locked';
 
   const handleToggle = (
-    scheduleId: Id<'schedules'>,
+    scheduleId: string,
     nextIsEnabled: boolean,
   ): Promise<boolean> => {
     void haptic.select();
-    return run(
-      () => toggleSchedule(scheduleId, nextIsEnabled),
-      'Could not update schedule.',
-    );
+    return run(async () => {
+      toggleSchedule(scheduleId, nextIsEnabled);
+    }, 'Could not update schedule.');
   };
 
-  const confirmDelete = (scheduleId: Id<'schedules'>, name: string): void => {
+  const confirmDelete = (scheduleId: string, name: string): void => {
     Alert.alert(
       `Delete "${name}"?`,
       'This schedule will stop triggering. You can always create a new one.',
@@ -47,10 +43,9 @@ export default function SchedulesScreen(): JSX.Element {
           style: 'destructive',
           onPress: () => {
             void haptic.abandon();
-            void run(
-              () => deleteSchedule(scheduleId),
-              'Could not delete schedule.',
-            );
+            void run(async () => {
+              deleteSchedule(scheduleId);
+            }, 'Could not delete schedule.');
           },
         },
       ],
@@ -90,16 +85,7 @@ export default function SchedulesScreen(): JSX.Element {
         </Typography>
       ) : null}
 
-      {schedules === undefined ? (
-        <Typography
-          variant="body"
-          tone="muted"
-          className="mt-12"
-          align="center"
-        >
-          Loading...
-        </Typography>
-      ) : schedules.length === 0 ? (
+      {schedules.length === 0 ? (
         <View className="mt-12 items-center gap-3">
           <Typography variant="body" tone="muted" align="center">
             No schedules yet.
@@ -115,7 +101,7 @@ export default function SchedulesScreen(): JSX.Element {
             const isRowLocked = isActive || isAdminLocked;
             return (
               <View
-                key={schedule._id}
+                key={schedule.id}
                 className={`py-5 ${
                   index !== schedules.length - 1
                     ? 'border-b border-divider'
@@ -129,7 +115,7 @@ export default function SchedulesScreen(): JSX.Element {
                       void haptic.select();
                       router.push({
                         pathname: '/add-schedule',
-                        params: { id: schedule._id },
+                        params: { id: schedule.id },
                       });
                     }}
                     disabled={isRowLocked}
@@ -157,7 +143,7 @@ export default function SchedulesScreen(): JSX.Element {
                     <Switch
                       value={schedule.isEnabled}
                       onValueChange={(next) =>
-                        void handleToggle(schedule._id, next)
+                        void handleToggle(schedule.id, next)
                       }
                       disabled={isRowLocked}
                       trackColor={{
@@ -168,7 +154,7 @@ export default function SchedulesScreen(): JSX.Element {
                       ios_backgroundColor={colors.divider}
                     />
                     <Pressable
-                      onPress={() => confirmDelete(schedule._id, schedule.name)}
+                      onPress={() => confirmDelete(schedule.id, schedule.name)}
                       disabled={isRowLocked}
                       hitSlop={10}
                       accessibilityLabel={`Delete ${schedule.name}`}

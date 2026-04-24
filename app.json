@@ -10,8 +10,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourbound.fucus",
-      "appleTeamId": "569HBLNQPC",
-      "usesAppleSignIn": true
+      "appleTeamId": "569HBLNQPC"
     },
     "splash": {
       "backgroundColor": "#F8F2E8",
@@ -38,15 +37,8 @@
           "appGroup": "group.com.yourbound.fucus"
         }
       ],
-      "expo-secure-store",
       "@react-native-community/datetimepicker",
-      "expo-apple-authentication",
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.PLACEHOLDER_REVERSED_IOS_CLIENT_ID"
-        }
-      ]
+      "@nauverse/expo-cloud-settings"
     ],
     "experiments": {
       "typedRoutes": true
