@@ -1,6 +1,6 @@
 import { BLOCK_ACTIVITY_SELECTION_ID } from './constants';
 
-export interface ActivitySelectionMetadata {
+interface ActivitySelectionMetadata {
   applicationCount: number;
   categoryCount: number;
   webDomainCount: number;
@@ -19,12 +19,7 @@ export interface BlockSelection {
   webDomains: string[];
 }
 
-export interface FucusConfig {
-  isActive: boolean;
-  selection: BlockSelection;
-}
-
-export const EMPTY_ACTIVITY_SELECTION: PersistedActivitySelection = {
+const EMPTY_ACTIVITY_SELECTION: PersistedActivitySelection = {
   status: 'empty',
 };
 
@@ -32,16 +27,6 @@ export const EMPTY_BLOCK_SELECTION: BlockSelection = {
   activitySelection: EMPTY_ACTIVITY_SELECTION,
   webDomains: [],
 };
-
-export function createSavedActivitySelection(
-  metadata: ActivitySelectionMetadata,
-): PersistedActivitySelection {
-  return {
-    status: 'saved',
-    selectionId: BLOCK_ACTIVITY_SELECTION_ID,
-    ...metadata,
-  };
-}
 
 export function createActivitySelectionFromMetadata(
   metadata: ActivitySelectionMetadata,
@@ -53,7 +38,11 @@ export function createActivitySelectionFromMetadata(
   ) {
     return EMPTY_ACTIVITY_SELECTION;
   }
-  return createSavedActivitySelection(metadata);
+  return {
+    status: 'saved',
+    selectionId: BLOCK_ACTIVITY_SELECTION_ID,
+    ...metadata,
+  };
 }
 
 export function hasSavedActivitySelection(

@@ -74,7 +74,7 @@ function actionsForSelection(
   return actions;
 }
 
-export function materializeSchedule(spec: ScheduleSpec): MonitorPlan[] {
+function materializeSchedule(spec: ScheduleSpec): MonitorPlan[] {
   if (!spec.isEnabled) {
     return [];
   }
@@ -135,8 +135,4 @@ export async function reconcileSchedules(
   for (const plan of desired.values()) {
     await applyPlan(plan);
   }
-}
-
-export function scheduleIsActiveName(name: string): boolean {
-  return name.startsWith(ACTIVITY_PREFIX);
 }

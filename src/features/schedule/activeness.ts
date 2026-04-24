@@ -1,6 +1,6 @@
 import type { DayOfWeek } from './types';
 
-export interface ScheduleWindow {
+interface ScheduleWindow {
   readonly days: readonly DayOfWeek[];
   readonly startTime: string;
   readonly endTime: string;
@@ -58,7 +58,7 @@ export function isScheduleActiveAt(
   return schedule.days.includes(todayKey) && current >= start && current < end;
 }
 
-export interface NextWindow {
+interface NextWindow {
   readonly day: DayOfWeek;
   readonly at: Date;
 }

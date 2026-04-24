@@ -1,6 +1,6 @@
 import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, Switch, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Switch, View } from 'react-native';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { isScheduleActiveAt } from '../../src/features/schedule/activeness';
@@ -18,6 +18,7 @@ export default function SchedulesScreen(): JSX.Element {
   const colors = useThemeColors();
   const schedules = useQuery(api.schedules.get);
   const toggleSchedule = useScheduleStore((s) => s.toggleSchedule);
+  const deleteSchedule = useScheduleStore((s) => s.deleteSchedule);
   const { error, run } = useAsyncAction();
   const { now } = useActiveSchedule(schedules);
 
@@ -29,6 +30,27 @@ export default function SchedulesScreen(): JSX.Element {
     return run(
       () => toggleSchedule(scheduleId, nextIsEnabled),
       'Could not update schedule.',
+    );
+  };
+
+  const confirmDelete = (scheduleId: Id<'schedules'>, name: string): void => {
+    Alert.alert(
+      `Delete "${name}"?`,
+      'This schedule will stop triggering. You can always create a new one.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            void haptic.abandon();
+            void run(
+              () => deleteSchedule(scheduleId),
+              'Could not delete schedule.',
+            );
+          },
+        },
+      ],
     );
   };
 
@@ -111,16 +133,33 @@ export default function SchedulesScreen(): JSX.Element {
                       {schedule.startTime}–{schedule.endTime}
                     </Typography>
                   </View>
-                  <Switch
-                    value={schedule.isEnabled}
-                    onValueChange={(next) =>
-                      void handleToggle(schedule._id, next)
-                    }
-                    disabled={isActive}
-                    trackColor={{ true: colors.signal, false: colors.divider }}
-                    thumbColor={colors.ink}
-                    ios_backgroundColor={colors.divider}
-                  />
+                  <View className="flex-row items-center gap-3">
+                    <Switch
+                      value={schedule.isEnabled}
+                      onValueChange={(next) =>
+                        void handleToggle(schedule._id, next)
+                      }
+                      disabled={isActive}
+                      trackColor={{
+                        true: colors.signal,
+                        false: colors.divider,
+                      }}
+                      thumbColor={colors.ink}
+                      ios_backgroundColor={colors.divider}
+                    />
+                    <Pressable
+                      onPress={() => confirmDelete(schedule._id, schedule.name)}
+                      disabled={isActive}
+                      hitSlop={10}
+                      accessibilityLabel={`Delete ${schedule.name}`}
+                    >
+                      <Icon
+                        name="trash"
+                        size={20}
+                        tone={isActive ? 'faint' : 'muted'}
+                      />
+                    </Pressable>
+                  </View>
                 </View>
                 {isActive ? (
                   <Typography variant="caption" tone="faint" className="mt-2">

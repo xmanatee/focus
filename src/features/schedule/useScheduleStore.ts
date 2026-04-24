@@ -19,12 +19,17 @@ interface ScheduleActions {
   ) => Promise<void>;
 }
 
-function ensureNotActive(
-  schedule: Pick<Schedule, 'days' | 'startTime' | 'endTime' | 'isEnabled'>,
-  at: Date,
-  message: string,
-): void {
-  if (isScheduleActiveAt({ ...schedule }, at)) {
+async function requireSchedule(id: Id<'schedules'>): Promise<Schedule> {
+  const schedules = await convex.query(api.schedules.get);
+  const schedule = schedules.find((s) => s._id === id);
+  if (!schedule) {
+    throw new Error('Schedule not found.');
+  }
+  return schedule;
+}
+
+function refuseWhileActive(schedule: Schedule, message: string): void {
+  if (isScheduleActiveAt(schedule, new Date())) {
     throw new Error(message);
   }
 }
@@ -35,31 +40,20 @@ export const useScheduleStore = create<ScheduleActions>(() => ({
   },
 
   toggleSchedule: async (id, isEnabled) => {
-    const [schedule] = await convex
-      .query(api.schedules.get)
-      .then((all) => all.filter((s) => s._id === id));
-    if (!schedule) {
-      throw new Error('Schedule not found.');
-    }
-    ensureNotActive(
+    const schedule = await requireSchedule(id);
+    refuseWhileActive(
       schedule,
-      new Date(),
       'Cannot change a schedule while its window is active.',
     );
     await convex.mutation(api.schedules.toggle, { id, isEnabled });
   },
 
   deleteSchedule: async (id) => {
-    const [schedule] = await convex
-      .query(api.schedules.get)
-      .then((all) => all.filter((s) => s._id === id));
-    if (schedule) {
-      ensureNotActive(
-        schedule,
-        new Date(),
-        'Cannot delete a schedule while its window is active.',
-      );
-    }
+    const schedule = await requireSchedule(id);
+    refuseWhileActive(
+      schedule,
+      'Cannot delete a schedule while its window is active.',
+    );
     await convex.mutation(api.schedules.remove, { id });
   },
 

@@ -1,5 +1,6 @@
 import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { View } from 'react-native';
 import {
   type ActivitySelectionMetadata,
@@ -9,6 +10,7 @@ import { api } from '../convex/_generated/api';
 import { BLOCK_ACTIVITY_SELECTION_ID } from '../src/features/blocker/constants';
 import { createActivitySelectionFromMetadata } from '../src/features/blocker/types';
 import { useProfileStore } from '../src/features/profile/useProfileStore';
+import { useActiveSchedule } from '../src/features/schedule/useActiveSchedule';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
@@ -17,9 +19,17 @@ import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 export default function SelectAppsScreen(): JSX.Element {
   const router = useRouter();
   const profiles = useQuery(api.profiles.list);
+  const schedules = useQuery(api.schedules.get);
   const profile = profiles?.[0] ?? null;
   const setSelection = useProfileStore((s) => s.setSelection);
   const { error, run } = useAsyncAction();
+  const { active } = useActiveSchedule(schedules);
+
+  useEffect(() => {
+    if (active) {
+      router.back();
+    }
+  }, [active, router]);
 
   const handleSelectionChange = (event: {
     nativeEvent: ActivitySelectionMetadata;
@@ -27,6 +37,11 @@ export default function SelectAppsScreen(): JSX.Element {
     run(async () => {
       if (!profile) {
         throw new Error('Blocklist is still loading.');
+      }
+      if (active) {
+        throw new Error(
+          'Cannot change the blocklist while a schedule is active.',
+        );
       }
       void haptic.select();
       await setSelection(profile._id, profile.name, {

@@ -5,7 +5,7 @@ import { convex } from '../../api/convex';
 import type { BlockSelection } from '../blocker/types';
 import { EMPTY_BLOCK_SELECTION } from '../blocker/types';
 
-export type Profile = Doc<'blockProfiles'>;
+type Profile = Doc<'blockProfiles'>;
 
 interface ProfileActions {
   list: () => Promise<Profile[]>;
