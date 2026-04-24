@@ -1,106 +1,121 @@
-# Fucus: Next-Gen App & Web Blocker (Design Doc)
+# Fucus — Design Doc
 
 ## 1. Executive Summary
-Fucus is a productivity application for iOS, iPadOS, and macOS designed to help users regain focus by blocking distracting apps and websites. Built with **React Native** (Expo SDK 52), it leverages Apple's modern **Screen Time API** (introduced in iOS 15/16) to provide native-level blocking without the need for VPNs or MDM profiles.
+Fucus is a productivity iOS app that blocks distracting apps and websites
+on a weekly schedule. It leverages Apple's **Screen Time / Family
+Controls** API (iOS 15+) for native-level blocking without VPNs or MDM.
+
+The app is entirely local; no server, no accounts, no sign-in. Schedules,
+blocklist metadata, and the weekly setup window live in three persisted
+Zustand stores and sync across the user's iCloud-signed devices via
+Apple's NSUbiquitousKeyValueStore.
 
 ---
 
-## 2. Research & Competitive Analysis
-
-### 2.1 Existing Solutions
+## 2. Competitive Landscape
 | App | Tech | Pros | Cons |
 | :--- | :--- | :--- | :--- |
-| **Opal** | Native (Swift) | High polish, deep Screen Time integration. | Subscription heavy, closed source. |
-| **Freedom** | VPN/Profile | Cross-platform (Windows/Mac/Mobile). | VPN can be unstable; privacy concerns. |
-| **Digital Break** | RN (Open Source) | Proof of concept for React Native Screen Time. | Basic UI, limited scheduling. |
+| **Opal** | Native Swift | High polish, deep Screen Time integration. | Subscription heavy, closed source. |
+| **Freedom** | VPN / Profile | Cross-platform. | VPN instability, privacy concerns. |
+| **One Sec** | Native Swift | Excellent interception UX. | Very narrow scope. |
 
-### 2.2 Core Technical Hurdles
-1. **Entitlements:** Accessing the `ManagedSettings` framework requires the `com.apple.developer.family-controls` entitlement, which must be requested manually from Apple.
-2. **Extensions:** System-level blocking occurs in separate processes (App Extensions). React Native logic does not run here; these must be lightweight Swift targets.
-3. **Website Blocking:** Limited to 50 specific domains at a time via `webContent.blockedByFilter`.
+## 3. Core Technical Hurdles
+1. **Entitlements**: `ManagedSettings` access requires the
+   `com.apple.developer.family-controls` entitlement, requested manually
+   from Apple. Already granted for team 569HBLNQPC.
+2. **Extensions**: System-level blocking runs in Swift extension
+   processes (`DeviceActivityMonitor`, `ShieldAction`, `ShieldConfiguration`);
+   JS never runs there. We use `react-native-device-activity` which
+   bundles the monitor extension and reads configured actions from the
+   shared App Group at runtime.
+3. **Website blocking** is capped at 50 domains per Apple's web-content
+   filter.
+4. **Cross-device sync**: Apple tokens from `FamilyActivitySelection` are
+   device-bound. iCloud KV carries the metadata (counts, domains,
+   schedules, setup hours); app pickers must be re-applied once per
+   device.
 
 ---
 
-## 3. Technical Architecture
+## 4. Architecture
 
-### 3.1 Tech Stack
-*   **Framework:** Expo SDK 52 + React Native 0.76, Expo Router 4 for file-system routing.
-*   **Language:** TypeScript (strict mode).
-*   **State Management:** Zustand (one store per feature).
-*   **Database/Auth:** Convex (`convex/` backend functions, `@convex-dev/auth` for Apple/Google OAuth and JWT sessions synced via `expo-secure-store`).
-*   **Styling:** NativeWind (Tailwind-for-RN) via `react-native-css-interop`.
-*   **Native integrations:** `react-native-device-activity` for `FamilyControls`, `ManagedSettings`, `DeviceActivityMonitor`, and `ShieldConfiguration` extensions (see `targets/`).
-
-### 3.2 Native Integration (The "Bridge")
-Most of the app is TypeScript; only the pieces that must run in extension processes are Swift:
-*   **Permission / sync bridge:** Wrapped in `src/bridge/BlockerBridge.ts` so the rest of the app talks to a single typed interface.
-*   **`DeviceActivityMonitor` extension** (`targets/DeviceActivityMonitor/`): triggers when a Block Session starts or ends.
-*   **`ShieldAction` / `ShieldConfiguration` extensions** (`targets/Shield*`/): customize the "App Blocked" screen and shield behavior.
-
-### 3.3 Project Structure (300-Line Rule)
-Feature-based layout enforced by `scripts/check-line-limit.mjs` (300-line max per file) and `scripts/check-antipatterns.mjs` (import-path and cast hygiene):
+See [`docs/ARCHITECTURE_GUIDE.md`](docs/ARCHITECTURE_GUIDE.md) for the
+runtime picture (stores, scheduler, bridge, iCloud sync).
 
 ```text
-app/                      # Expo Router file-system routes
-├── _layout.tsx           # Root providers + auth gate
-├── login.tsx
-├── add-schedule.tsx
-├── select-apps.tsx
+app/                       # Expo Router routes
+├── _layout.tsx            # Root Stack + theme + iCloud sync listener
+├── add-schedule.tsx       # Create / edit schedule (modal)
+├── select-apps.tsx        # Apple FamilyActivityPicker wrapper (modal)
+├── settings.tsx           # Setup hours (modal)
 └── (tabs)/
-    ├── _layout.tsx       # Authenticated zone; initializes BlockerBridge
-    ├── index.tsx         # Dashboard / status
-    ├── library.tsx       # Blocked-app + blocked-domain library
-    └── schedules.tsx
+    ├── _layout.tsx        # Tab bar + initialize + reconcile effect
+    ├── index.tsx          # Focus / status tab
+    ├── library.tsx        # Blocklist editor
+    └── schedules.tsx      # Schedule list
 
 src/
-├── api/convex.ts              # ConvexReactClient singleton
-├── bridge/BlockerBridge.ts    # Thin wrapper: Screen Time auth status + request
+├── bridge/BlockerBridge.ts       # Screen Time authorization wrapper
 ├── features/
 │   ├── blocker/
 │   │   ├── constants.ts
-│   │   ├── domain.ts          # parseBlockedDomain
-│   │   ├── types.ts           # BlockSelection discriminated union
-│   │   └── useBlockerStore.ts # permissions only (no session state)
-│   ├── profile/
-│   │   └── useProfileStore.ts # Convex CRUD for blocklist profiles
-│   └── schedule/
-│       ├── types.ts
-│       ├── validation.ts
-│       ├── activeness.ts      # isScheduleActiveAt, nextStartAfter
-│       ├── scheduler.ts       # reconcileSchedules: materialize -> DeviceActivity monitors + actions
-│       ├── useActiveSchedule.ts
-│       └── useScheduleStore.ts
+│   │   ├── domain.ts             # parseBlockedDomain (WHATWG URL parser)
+│   │   ├── types.ts              # BlockSelection types
+│   │   ├── useBlockerStore.ts    # auth status (not persisted)
+│   │   └── useBlocklistStore.ts  # apps + sites (persisted)
+│   ├── schedule/
+│   │   ├── activeness.ts         # isScheduleActiveAt / nextStartAfter
+│   │   ├── scheduler.ts          # reconcileSchedules → DeviceActivity
+│   │   ├── types.ts
+│   │   ├── useActiveSchedule.ts
+│   │   ├── useScheduleStore.ts   # CRUD (persisted)
+│   │   └── validation.ts
+│   └── settings/
+│       ├── adminState.ts         # resolveAdminState (pure)
+│       ├── useAdminState.ts
+│       ├── useSettingsStore.ts   # setup window (persisted)
+│       └── validation.ts
 └── shared/
-    ├── components/            # Screen, Button, Typography, Icon
-    ├── design/                # theme (CSS vars + useThemeColors hook), haptics, motion
-    └── hooks/                 # useAsyncAction
+    ├── components/               # Screen, Button, Typography, Icon
+    ├── design/                   # theme, haptics, motion
+    ├── hooks/                    # useAsyncAction
+    └── storage.ts                # AsyncStorage + iCloud KV adapter
 
-convex/                        # Backend functions + schema (see convex/_generated/ai/guidelines.md)
-targets/                       # Swift extensions generated by react-native-device-activity
+targets/                          # Swift extensions (ShieldAction, ShieldConfiguration)
 ```
 
 ---
 
-## 4. Product Features & UX
+## 5. Product Features
 
-### 4.1 Authentication
-*   **Apple Sign-In** via `@convex-dev/auth` OAuth flow.
-*   **Google Sign-In** via `@convex-dev/auth` OAuth flow.
-*   JWT + refresh token persisted in `expo-secure-store`.
+### 5.1 Blocklist
+- **Apps + Categories**: the system `FamilyActivityPicker` via
+  `react-native-device-activity`. Tokens live on-device; we surface
+  aggregate counts only.
+- **Websites**: manual domain entry; validated by `parseBlockedDomain`;
+  Apple caps the filter at 50 entries.
 
-### 4.2 Blocking Logic
-*   **Apps + Categories:** `FamilyActivityPicker` via `react-native-device-activity`. Apple returns opaque tokens representing applications, activity categories, and web-content categories; we surface counts only (never app names).
-*   **Websites:** Manual domain entry validated by `parseBlockedDomain` (WHATWG URL parser, not regex). Apple caps the web-content filter at 50 domains.
-*   **Profiles:** a named `BlockSelection` (apps + categories + sites). MVP auto-creates a single "Default" profile; schedules reference a profile by id.
+### 5.2 Schedules (primary driver)
+- Recurring day-of-week + start/end time windows.
+- Scheduler materializes each schedule into one `DeviceActivity` per
+  active weekday; `intervalDidStart` / `intervalDidEnd` actions apply
+  and clear the shield without the JS app being alive.
+- Active-window lock: while a schedule's window is active, its
+  toggle/edit/delete are disabled, and the blocklist editor is read-only.
 
-### 4.3 Schedules — the primary driver
-*   **Recurring windows**: day-of-week chips + start/end time, stored in Convex.
-*   **Enforcement**: `src/features/schedule/scheduler.ts` expands one schedule into N `DeviceActivity` monitors (one per active weekday, via `DateComponents.weekday`). `configureActions` wires `blockSelection` + `setWebContentFilterPolicy` on `intervalDidStart` and their inverses on `intervalDidEnd`. The bundled `DeviceActivityMonitor` extension runs those actions without the JS app being alive.
-*   **Active-window lock**: while any schedule's window is active, that schedule's toggle/edit/delete are disabled client-side, and the Blocklist editor is read-only. Full OS-level lock (deny app removal, deny time manipulation) requires MDM/supervised enrollment and is not reachable from a consumer `.individual` Family Controls authorization.
+### 5.3 Setup hours (anti-bypass)
+- User-configured recurring window in Settings. When set, every
+  destructive change (add/edit/delete schedule, edit blocklist, edit the
+  setup window itself) requires being inside an active setup window.
+- Full OS-level lock (prevent app deletion, block clock manipulation) is
+  MDM-only on consumer iOS and explicitly not pursued.
 
 ---
 
-## 5. Constraints & Compliance
-*   **Privacy:** No app-usage logs are sent to the server. Monitoring happens on-device via Apple's private APIs.
-*   **Stability:** Zustand selectors prevent unnecessary re-renders. Auth gating uses Expo Router's own effect-based redirects — never `useRootNavigationState` (see `scripts/check-antipatterns.mjs`).
-*   **Maintenance:** 300-line file limit, banned-anti-pattern pre-commit checks, Biome for lint/format, `vitest` for pure-logic unit tests.
+## 6. Constraints
+- **Privacy**: no app-usage telemetry; nothing leaves the device except
+  iCloud KV syncing user-chosen settings.
+- **Stability**: Zustand selectors + the `scripts/check-antipatterns.mjs`
+  guardrails. Never `useRootNavigationState` as a render gate.
+- **Maintenance**: 300-line file limit, Biome for lint/format, `vitest`
+  for pure-logic unit tests.

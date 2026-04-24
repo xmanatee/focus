@@ -5,9 +5,8 @@
       ".expo/**",
       "dist/**",
       "build/**",
-      "ios/build/**",
-      "ios/Pods/**",
-      "convex/_generated/**",
+      "ios/**",
+      "android/**",
       "expo-env.d.ts",
       "targets/**/expo-target.config.js"
     ]

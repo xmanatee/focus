@@ -6,8 +6,7 @@
     "targets/**/expo-target.config.js"
   ],
   "ignoreIssues": {
-    "app.json": ["unlisted"],
-    "convex/auth.ts": ["exports"]
+    "app.json": ["unlisted"]
   },
   "treatConfigHintsAsErrors": false
 }

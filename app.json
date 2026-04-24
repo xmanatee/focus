@@ -42,6 +42,9 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "android": {
+      "package": "com.yourbound.fucus"
     }
   }
 }

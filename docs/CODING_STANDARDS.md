@@ -8,21 +8,21 @@ If it grows beyond this:
 3. **Logic Outsourcing**: Move complex calculations into `utils/` or `services/`.
 
 ## 2. Feature-Based Architecture
-We organize code by "Feature," not by "Type." Each feature is a mini-app:
-- `features/blocker/`: Picker UI, blocker logic, store.
-- `features/auth/`: Login screens, session management.
-- `features/status/`: Main dashboard, focus timer.
+We organize code by feature. Each feature is a mini-app with its types,
+validation, and store co-located.
 
 ## 3. TypeScript Guidelines
-- **No `any`**: Use strict typing.
-- **Discriminated Unions**: For `status` ('idle', 'loading', 'active').
-- **Explicit Return Types**: On all hooks and API functions.
+- **No `any`**. Strict typing.
+- **Discriminated Unions** for state with distinct shapes.
+- **Explicit Return Types** on exported functions and hooks.
 
 ## 4. State Management (Zustand)
 - One store per major feature.
-- **Selector Pattern**: Always use selectors to prevent unnecessary re-renders.
+- All persisted stores go through `src/shared/storage.ts` (AsyncStorage +
+  iCloud KV fan-out).
+- **Selector Pattern**: always use selectors to prevent re-renders.
   ```typescript
-  const isActive = useBlockerStore((s) => s.isActive);
+  const schedules = useScheduleStore((s) => s.schedules);
   ```
 
 ## 5. Portability Layer

@@ -1,14 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SCAN_ROOTS = ['./app', './src', './convex'];
+const SCAN_ROOTS = ['./app', './src'];
 const IGNORED_DIRS = new Set([
   'node_modules',
   '.expo',
   'dist',
   'ios',
   'android',
-  '_generated',
 ]);
 const FILE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx']);
 
@@ -36,16 +35,6 @@ const rules = [
     pattern: /router\.(push|replace|navigate)\(\s*['"`]\.\.?\//,
     message:
       'Expo Router paths must be absolute. Use "/select-apps" not "../select-apps".',
-  },
-  {
-    id: 'no-legacy-store-path',
-    pattern: /from\s+['"][^'"]*src\/store\/useBlockerStore['"]/,
-    message: 'useBlockerStore moved to src/features/blocker/useBlockerStore.',
-  },
-  {
-    id: 'no-initialization-error-state',
-    pattern: /\binitializationError\b/,
-    message: 'initializationError was a swallowed-error anti-pattern.',
   },
   {
     id: 'no-console-in-runtime',

@@ -14,40 +14,15 @@ import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { Button } from '../src/shared/components/Button';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
+import {
+  DAYS,
+  DAY_ORDER,
+  dateToTimeString,
+  timeStringToDate,
+} from '../src/shared/days';
 import { haptic } from '../src/shared/design/haptics';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
-
-const DAYS: readonly { label: string; value: DayOfWeek; order: number }[] = [
-  { label: 'Mon', value: 'mon', order: 0 },
-  { label: 'Tue', value: 'tue', order: 1 },
-  { label: 'Wed', value: 'wed', order: 2 },
-  { label: 'Thu', value: 'thu', order: 3 },
-  { label: 'Fri', value: 'fri', order: 4 },
-  { label: 'Sat', value: 'sat', order: 5 },
-  { label: 'Sun', value: 'sun', order: 6 },
-] as const;
-
-const ORDER: Record<DayOfWeek, number> = DAYS.reduce(
-  (acc, day) => {
-    acc[day.value] = day.order;
-    return acc;
-  },
-  {} as Record<DayOfWeek, number>,
-);
-
-function timeStringToDate(value: string): Date {
-  const [hours, minutes] = value.split(':').map(Number);
-  const date = new Date();
-  date.setHours(hours ?? 0, minutes ?? 0, 0, 0);
-  return date;
-}
-
-function dateToTimeString(date: Date): string {
-  const h = String(date.getHours()).padStart(2, '0');
-  const m = String(date.getMinutes()).padStart(2, '0');
-  return `${h}:${m}`;
-}
 
 function nextUnlockLabel(state: AdminState, now: Date): string {
   if (state.kind === 'unlocked') {
@@ -106,7 +81,7 @@ export default function SettingsScreen(): JSX.Element {
       if (current.includes(day)) {
         return current.filter((d) => d !== day);
       }
-      return [...current, day].sort((a, b) => ORDER[a] - ORDER[b]);
+      return [...current, day].sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]);
     });
   };
 
