@@ -6,6 +6,7 @@ import type { Id } from '../../convex/_generated/dataModel';
 import { isScheduleActiveAt } from '../../src/features/schedule/activeness';
 import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
 import { useScheduleStore } from '../../src/features/schedule/useScheduleStore';
+import { useAdminState } from '../../src/features/settings/useAdminState';
 import { Icon } from '../../src/shared/components/Icon';
 import { Screen } from '../../src/shared/components/Screen';
 import { Typography } from '../../src/shared/components/Typography';
@@ -21,6 +22,8 @@ export default function SchedulesScreen(): JSX.Element {
   const deleteSchedule = useScheduleStore((s) => s.deleteSchedule);
   const { error, run } = useAsyncAction();
   const { now } = useActiveSchedule(schedules);
+  const { state: adminState } = useAdminState();
+  const isAdminLocked = adminState.kind === 'locked';
 
   const handleToggle = (
     scheduleId: Id<'schedules'>,
@@ -67,10 +70,14 @@ export default function SchedulesScreen(): JSX.Element {
         </View>
         <Pressable
           onPress={() => {
+            if (isAdminLocked) return;
             void haptic.select();
             router.push('/add-schedule');
           }}
-          className="h-11 w-11 items-center justify-center rounded-full bg-signal"
+          disabled={isAdminLocked}
+          className={`h-11 w-11 items-center justify-center rounded-full bg-signal ${
+            isAdminLocked ? 'opacity-40' : ''
+          }`}
           accessibilityLabel="Add schedule"
         >
           <Icon name="plus" size={20} tone="surface" />
@@ -105,6 +112,7 @@ export default function SchedulesScreen(): JSX.Element {
         <ScrollView showsVerticalScrollIndicator={false}>
           {schedules.map((schedule, index) => {
             const isActive = isScheduleActiveAt(schedule, now);
+            const isRowLocked = isActive || isAdminLocked;
             return (
               <View
                 key={schedule._id}
@@ -139,7 +147,7 @@ export default function SchedulesScreen(): JSX.Element {
                       onValueChange={(next) =>
                         void handleToggle(schedule._id, next)
                       }
-                      disabled={isActive}
+                      disabled={isRowLocked}
                       trackColor={{
                         true: colors.signal,
                         false: colors.divider,
@@ -149,14 +157,14 @@ export default function SchedulesScreen(): JSX.Element {
                     />
                     <Pressable
                       onPress={() => confirmDelete(schedule._id, schedule.name)}
-                      disabled={isActive}
+                      disabled={isRowLocked}
                       hitSlop={10}
                       accessibilityLabel={`Delete ${schedule.name}`}
                     >
                       <Icon
                         name="trash"
                         size={20}
-                        tone={isActive ? 'faint' : 'muted'}
+                        tone={isRowLocked ? 'faint' : 'muted'}
                       />
                     </Pressable>
                   </View>
@@ -164,6 +172,10 @@ export default function SchedulesScreen(): JSX.Element {
                 {isActive ? (
                   <Typography variant="caption" tone="faint" className="mt-2">
                     Locked while in session. Ends at {schedule.endTime}.
+                  </Typography>
+                ) : isAdminLocked ? (
+                  <Typography variant="caption" tone="faint" className="mt-2">
+                    Locked outside setup hours.
                   </Typography>
                 ) : null}
               </View>

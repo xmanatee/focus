@@ -10,6 +10,7 @@ import {
 } from '../../src/features/blocker/types';
 import { useProfileStore } from '../../src/features/profile/useProfileStore';
 import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
+import { useAdminState } from '../../src/features/settings/useAdminState';
 import { Button } from '../../src/shared/components/Button';
 import { Icon } from '../../src/shared/components/Icon';
 import { Screen } from '../../src/shared/components/Screen';
@@ -28,6 +29,7 @@ export default function LibraryScreen(): JSX.Element {
   const setSelection = useProfileStore((s) => s.setSelection);
 
   const { active } = useActiveSchedule(schedules);
+  const { state: adminState } = useAdminState();
   const profile = profiles?.[0] ?? null;
 
   const [segment, setSegment] = useState<Segment>('apps');
@@ -46,7 +48,14 @@ export default function LibraryScreen(): JSX.Element {
     );
   }
 
-  const isLocked = active !== null;
+  const isAdminLocked = adminState.kind === 'locked';
+  const isLocked = active !== null || isAdminLocked;
+  const lockReason =
+    active !== null
+      ? 'End the active schedule to edit.'
+      : isAdminLocked
+        ? 'Outside setup hours. Open Settings.'
+        : null;
 
   const updateSelection = (
     nextSelection: BlockSelection,
@@ -97,11 +106,16 @@ export default function LibraryScreen(): JSX.Element {
     <Screen>
       <View className="pt-4 pb-6">
         <Typography variant="label" tone="muted">
-          {isLocked ? 'Locked while a schedule is active' : 'Blocklist'}
+          {isLocked ? 'Locked' : 'Blocklist'}
         </Typography>
         <Typography variant="display-md" tone="ink">
           What to block.
         </Typography>
+        {lockReason ? (
+          <Typography variant="caption" tone="faint" className="mt-1">
+            {lockReason}
+          </Typography>
+        ) : null}
       </View>
 
       <View className="flex-row bg-surface-sunken rounded-full p-1 mb-6">
@@ -134,9 +148,9 @@ export default function LibraryScreen(): JSX.Element {
             onPress={() => router.push('/select-apps')}
             disabled={isLocked}
           />
-          {isLocked ? (
+          {lockReason ? (
             <Typography variant="caption" tone="faint">
-              End the active schedule to edit.
+              {lockReason}
             </Typography>
           ) : null}
         </View>

@@ -11,6 +11,7 @@ import { BLOCK_ACTIVITY_SELECTION_ID } from '../src/features/blocker/constants';
 import { createActivitySelectionFromMetadata } from '../src/features/blocker/types';
 import { useProfileStore } from '../src/features/profile/useProfileStore';
 import { useActiveSchedule } from '../src/features/schedule/useActiveSchedule';
+import { useAdminState } from '../src/features/settings/useAdminState';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
@@ -24,12 +25,14 @@ export default function SelectAppsScreen(): JSX.Element {
   const setSelection = useProfileStore((s) => s.setSelection);
   const { error, run } = useAsyncAction();
   const { active } = useActiveSchedule(schedules);
+  const { state: adminState } = useAdminState();
+  const isLocked = active !== null || adminState.kind === 'locked';
 
   useEffect(() => {
-    if (active) {
+    if (isLocked) {
       router.back();
     }
-  }, [active, router]);
+  }, [isLocked, router]);
 
   const handleSelectionChange = (event: {
     nativeEvent: ActivitySelectionMetadata;
@@ -38,10 +41,8 @@ export default function SelectAppsScreen(): JSX.Element {
       if (!profile) {
         throw new Error('Blocklist is still loading.');
       }
-      if (active) {
-        throw new Error(
-          'Cannot change the blocklist while a schedule is active.',
-        );
+      if (isLocked) {
+        throw new Error('Blocklist is locked right now.');
       }
       void haptic.select();
       await setSelection(profile._id, profile.name, {

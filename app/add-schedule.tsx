@@ -3,7 +3,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { api } from '../convex/_generated/api';
 import { selectionHasBlockedTargets } from '../src/features/blocker/types';
@@ -13,6 +13,7 @@ import type {
 } from '../src/features/schedule/types';
 import { useScheduleStore } from '../src/features/schedule/useScheduleStore';
 import { validateScheduleInput } from '../src/features/schedule/validation';
+import { useAdminState } from '../src/features/settings/useAdminState';
 import { Button } from '../src/shared/components/Button';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
@@ -58,6 +59,14 @@ export default function AddScheduleScreen(): JSX.Element {
   const addSchedule = useScheduleStore((s) => s.addSchedule);
   const profiles = useQuery(api.profiles.list);
   const profile = profiles?.[0] ?? null;
+  const { state: adminState } = useAdminState();
+  const isAdminLocked = adminState.kind === 'locked';
+
+  useEffect(() => {
+    if (isAdminLocked) {
+      router.back();
+    }
+  }, [isAdminLocked, router]);
 
   const [name, setName] = useState('Focus window');
   const [startDate, setStartDate] = useState(() => timeStringToDate('09:00'));

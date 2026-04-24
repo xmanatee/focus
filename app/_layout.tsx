@@ -75,6 +75,7 @@ function AuthGate(): JSX.Element {
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="add-schedule" options={{ presentation: 'modal' }} />
       <Stack.Screen name="select-apps" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

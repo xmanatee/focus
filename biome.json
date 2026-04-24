@@ -3,6 +3,7 @@
   "files": {
     "ignore": [
       ".expo/**",
+      "dist/**",
       "build/**",
       "ios/build/**",
       "ios/Pods/**",

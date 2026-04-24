@@ -1,4 +1,3 @@
-import { useAuthActions } from '@convex-dev/auth/react';
 import { useQuery } from 'convex/react';
 import { useRouter } from 'expo-router';
 import { Pressable, View } from 'react-native';
@@ -6,6 +5,7 @@ import { api } from '../../convex/_generated/api';
 import { useBlockerStore } from '../../src/features/blocker/useBlockerStore';
 import { useActiveSchedule } from '../../src/features/schedule/useActiveSchedule';
 import type { Schedule } from '../../src/features/schedule/useScheduleStore';
+import { useAdminState } from '../../src/features/settings/useAdminState';
 import { Button } from '../../src/shared/components/Button';
 import { Icon } from '../../src/shared/components/Icon';
 import { Screen } from '../../src/shared/components/Screen';
@@ -31,7 +31,6 @@ function formatRelative(at: Date, now: Date): string {
 }
 
 export default function DashboardScreen(): JSX.Element {
-  const { signOut } = useAuthActions();
   const router = useRouter();
 
   const hasPermissions = useBlockerStore((s) => s.hasPermissions);
@@ -40,6 +39,7 @@ export default function DashboardScreen(): JSX.Element {
 
   const schedules = useQuery(api.schedules.get);
   const { active, next, now } = useActiveSchedule(schedules);
+  const { state: adminState } = useAdminState();
 
   const { error, run } = useAsyncAction();
 
@@ -52,10 +52,15 @@ export default function DashboardScreen(): JSX.Element {
       }
     }, 'Could not request Screen Time permission.');
 
+  const openSettings = (): void => {
+    void haptic.select();
+    router.push('/settings');
+  };
+
   if (!hasPermissions) {
     return (
       <Screen>
-        <TopBar onSignOut={() => void signOut()} />
+        <TopBar onOpenSettings={openSettings} />
         <View className="flex-1 justify-center gap-5">
           <Typography variant="label" tone="signal">
             Before you begin
@@ -89,7 +94,7 @@ export default function DashboardScreen(): JSX.Element {
   if (schedules === undefined) {
     return (
       <Screen>
-        <TopBar onSignOut={() => void signOut()} />
+        <TopBar onOpenSettings={openSettings} />
         <View className="flex-1 items-center justify-center">
           <Typography variant="body" tone="muted">
             Loading...
@@ -102,7 +107,7 @@ export default function DashboardScreen(): JSX.Element {
   if (schedules.length === 0) {
     return (
       <Screen>
-        <TopBar onSignOut={() => void signOut()} />
+        <TopBar onOpenSettings={openSettings} />
         <View className="flex-1 justify-center gap-5">
           <Typography variant="label" tone="muted">
             Empty calendar
@@ -119,20 +124,29 @@ export default function DashboardScreen(): JSX.Element {
               title="Add schedule"
               variant="commit"
               onPress={() => router.push('/add-schedule')}
+              disabled={adminState.kind === 'locked'}
             />
           </View>
+          {adminState.kind === 'locked' ? (
+            <Typography variant="caption" tone="faint" className="mt-1">
+              Setup hours are locked. Open Settings to check when the next
+              unlock window opens.
+            </Typography>
+          ) : null}
         </View>
       </Screen>
     );
   }
 
   if (active) {
-    return <ActiveView schedule={active} now={now} onSignOut={signOut} />;
+    return (
+      <ActiveView schedule={active} now={now} onOpenSettings={openSettings} />
+    );
   }
 
   return (
     <Screen>
-      <TopBar onSignOut={() => void signOut()} />
+      <TopBar onOpenSettings={openSettings} />
       <View className="flex-1 justify-center gap-5">
         <Typography variant="label" tone="muted">
           Idle
@@ -158,11 +172,11 @@ export default function DashboardScreen(): JSX.Element {
 function ActiveView({
   schedule,
   now,
-  onSignOut,
+  onOpenSettings,
 }: {
   schedule: Schedule;
   now: Date;
-  onSignOut: () => void;
+  onOpenSettings: () => void;
 }): JSX.Element {
   const endParts = schedule.endTime.split(':').map(Number);
   const endOfWindow = new Date(now);
@@ -173,7 +187,7 @@ function ActiveView({
 
   return (
     <Screen tone="sunken">
-      <TopBar onSignOut={onSignOut} />
+      <TopBar onOpenSettings={onOpenSettings} />
       <View className="flex-1 items-center justify-center gap-4 py-10">
         <Typography variant="label" tone="signal">
           In session
@@ -204,18 +218,22 @@ function ActiveView({
   );
 }
 
-function TopBar({ onSignOut }: { onSignOut: () => void }): JSX.Element {
+function TopBar({
+  onOpenSettings,
+}: {
+  onOpenSettings: () => void;
+}): JSX.Element {
   return (
     <View className="flex-row justify-between items-center py-3">
       <Typography variant="label" tone="signal">
         Fucus
       </Typography>
       <Pressable
-        onPress={onSignOut}
+        onPress={onOpenSettings}
         className="h-11 w-11 items-center justify-center rounded-full bg-surface-raised"
-        accessibilityLabel="Sign out"
+        accessibilityLabel="Settings"
       >
-        <Icon name="person.crop.circle" size={22} tone="muted" />
+        <Icon name="gearshape" size={20} tone="muted" />
       </Pressable>
     </View>
   );

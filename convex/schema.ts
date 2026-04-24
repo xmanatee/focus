@@ -5,6 +5,17 @@ import { blockSelectionValidator, dayOfWeekValidator } from './validators';
 
 export default defineSchema({
   ...authTables,
+  settings: defineTable({
+    userId: v.id('users'),
+    setupWindow: v.union(
+      v.null(),
+      v.object({
+        days: v.array(dayOfWeekValidator),
+        startTime: v.string(),
+        endTime: v.string(),
+      }),
+    ),
+  }).index('by_user', ['userId']),
   blockProfiles: defineTable({
     userId: v.id('users'),
     name: v.string(),
