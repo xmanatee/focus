@@ -16,11 +16,11 @@ export function NotificationsCard({
   onChangeEnd,
 }: NotificationsCardProps): JSX.Element {
   return (
-    <View className="gap-4">
+    <View className="gap-3">
       <Typography variant="label" tone="faint">
         Notifications
       </Typography>
-      <View className="bg-surface-raised rounded-3xl p-6 gap-6 shadow-sm border border-divider/10">
+      <View className="bg-surface-raised rounded-3xl p-5 gap-4 shadow-sm border border-divider/10">
         <NotifyRow
           title="Start Notification"
           subtitle="Alert when this block begins."

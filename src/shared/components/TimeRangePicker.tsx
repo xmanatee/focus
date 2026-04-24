@@ -5,6 +5,13 @@ import { View } from 'react-native';
 import { useIsDark, useThemeColors } from '../design/theme';
 import { Typography } from './Typography';
 
+// @react-native-community/datetimepicker (iOS) inflates the picker's measured
+// width by 10pt in RNDateTimePickerShadowView.m (`size.width += 10`). The
+// native UIDatePicker chip renders at the trailing edge of that frame, so the
+// inflation surfaces as empty padding on the leading edge. Counter it on the
+// start side so the chip aligns with the rest of the form.
+const PICKER_LEADING_INFLATION = 10;
+
 interface TimeRangePickerProps {
   readonly start: Date;
   readonly end: Date;
@@ -24,7 +31,7 @@ export function TimeRangePicker({
   const isDark = useIsDark();
 
   return (
-    <View className="flex-row gap-4 justify-between bg-surface-sunken/60 rounded-2xl px-6 py-5 items-center">
+    <View className="flex-row items-end justify-between">
       <Cell
         label="Starts"
         align="start"
@@ -34,7 +41,6 @@ export function TimeRangePicker({
         inkColor={colors.ink}
         disabled={disabled}
       />
-      <View className="w-[1px] h-10 bg-divider/20" />
       <Cell
         label="Ends"
         align="end"
@@ -68,10 +74,9 @@ function Cell({
   const handle = (_: DateTimePickerEvent, next: Date | undefined): void => {
     if (next) onChange(next);
   };
+  const isStart = align === 'start';
   return (
-    <View
-      className={`gap-1 ${align === 'start' ? 'items-start' : 'items-end'}`}
-    >
+    <View className={`gap-2 ${isStart ? 'items-start' : 'items-end'}`}>
       <Typography variant="label" tone="faint">
         {label}
       </Typography>
@@ -83,6 +88,11 @@ function Cell({
         onChange={handle}
         disabled={disabled}
         textColor={inkColor}
+        style={{
+          marginLeft: isStart ? -PICKER_LEADING_INFLATION : 0,
+          transform: [{ scale: 1.2 }],
+          transformOrigin: isStart ? '0% 50%' : '100% 50%',
+        }}
       />
     </View>
   );

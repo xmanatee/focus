@@ -127,27 +127,24 @@ export default function SettingsScreen(): JSX.Element {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 24,
+          paddingHorizontal: 20,
           paddingBottom: 60,
-          paddingTop: 12,
-          gap: 32,
+          paddingTop: 32,
+          gap: 20,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="gap-2">
-          <Typography variant="label" tone="muted">
-            Restriction Settings
-          </Typography>
+        <View className="gap-3">
           <Typography variant="display-md" tone="ink">
             Configure Lock-in.
           </Typography>
-          <Typography variant="body" tone="muted" className="mt-2">
+          <Typography variant="body" tone="muted">
             The Lock-in mechanism prevents you from disabling or editing your
             focus blocks when you are most likely to be distracted.
           </Typography>
         </View>
 
-        <View className="gap-6 bg-surface-raised rounded-3xl p-6 shadow-sm border border-divider/10">
+        <View className="gap-4 bg-surface-raised rounded-3xl p-5 shadow-sm border border-divider/10">
           <View className="flex-row items-center justify-between">
             <Typography variant="h3" tone="ink">
               Setup Block
@@ -172,7 +169,9 @@ export default function SettingsScreen(): JSX.Element {
             </Typography>
           ) : null}
 
-          <View className="gap-3">
+          <View className="h-[1px] bg-divider" />
+
+          <View className="gap-2">
             <Typography variant="label" tone="faint">
               Active Days
             </Typography>
@@ -183,6 +182,8 @@ export default function SettingsScreen(): JSX.Element {
             />
           </View>
 
+          <View className="h-[1px] bg-divider" />
+
           <TimeRangePicker
             start={startDate}
             end={endDate}
@@ -191,20 +192,15 @@ export default function SettingsScreen(): JSX.Element {
             disabled={!isUnlocked}
           />
 
-          <View className="gap-4 mt-2">
-            <Typography variant="label" tone="faint">
-              Notifications
-            </Typography>
-            <View className="bg-surface-sunken/40 rounded-2xl p-5 border border-divider/5">
-              <NotifyRow
-                title="Setup Reminder"
-                subtitle="Alert when this setup block begins."
-                value={notifyOnStart}
-                onChange={(v) => void handleToggleNotify(v)}
-                disabled={!isUnlocked}
-              />
-            </View>
-          </View>
+          <View className="h-[1px] bg-divider" />
+
+          <NotifyRow
+            title="Setup Reminder"
+            subtitle="Alert when this setup block begins."
+            value={notifyOnStart}
+            onChange={(v) => void handleToggleNotify(v)}
+            disabled={!isUnlocked}
+          />
 
           {error ? (
             <Typography variant="caption" tone="danger">
@@ -212,7 +208,7 @@ export default function SettingsScreen(): JSX.Element {
             </Typography>
           ) : null}
 
-          <View className="gap-2 mt-2">
+          <View className="gap-2 pt-1">
             <Button
               title={existing ? 'Update setup block' : 'Save setup block'}
               variant="commit"

@@ -29,8 +29,8 @@ export function BlockFormCard({
   const colors = useThemeColors();
 
   return (
-    <View className="gap-6 bg-surface-raised rounded-3xl p-6 shadow-sm border border-divider/10">
-      <View className="gap-3">
+    <View className="gap-4 bg-surface-raised rounded-3xl p-5 shadow-sm border border-divider/10">
+      <View className="gap-2">
         <Typography variant="label" tone="faint">
           Block Name
         </Typography>
@@ -55,7 +55,7 @@ export function BlockFormCard({
 
       <View className="h-[1px] bg-divider" />
 
-      <View className="gap-3">
+      <View className="gap-2">
         <Typography variant="label" tone="faint">
           Repeat
         </Typography>

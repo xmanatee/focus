@@ -217,22 +217,17 @@ export default function AddFocusBlockScreen(): JSX.Element {
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
-            paddingHorizontal: 24,
-            paddingBottom: 80,
-            paddingTop: 12,
-            gap: 32,
+            paddingHorizontal: 20,
+            paddingBottom: 60,
+            paddingTop: 32,
+            gap: 20,
           }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View className="gap-2">
-            <Typography variant="label" tone="muted">
-              {isEditing ? 'Modify Block' : 'New Focus Block'}
-            </Typography>
-            <Typography variant="display-md" tone="ink">
-              Set your rules.
-            </Typography>
-          </View>
+          <Typography variant="display-md" tone="ink">
+            {isEditing ? 'Edit block.' : 'Set your rules.'}
+          </Typography>
 
           {!isEditing && <PresetRow onSelect={applyPreset} />}
 

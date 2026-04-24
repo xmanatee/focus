@@ -17,7 +17,7 @@ export function FormActions({
   onCancel,
 }: FormActionsProps): JSX.Element {
   return (
-    <View className="gap-3 pt-2 pb-10">
+    <View className="gap-3">
       <Button
         title={isEditing ? 'Save changes' : 'Create block'}
         variant="commit"

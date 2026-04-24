@@ -27,17 +27,17 @@ export function BlockingCard({
   const colors = useThemeColors();
 
   return (
-    <View className="gap-4">
+    <View className="gap-3">
       <Typography variant="label" tone="faint">
         Blocking
       </Typography>
-      <View className="gap-4">
+      <View className="gap-3">
         <Pressable
           onPress={() => {
             void haptic.select();
             onOpenAppsPicker();
           }}
-          className="bg-surface-raised rounded-3xl p-6 flex-row items-center justify-between"
+          className="bg-surface-raised rounded-3xl p-5 flex-row items-center justify-between shadow-sm border border-divider/10"
         >
           <View className="flex-row items-center gap-4">
             <Icon name="app.badge" size={24} tone="muted" />
@@ -55,7 +55,7 @@ export function BlockingCard({
           <Icon name="chevron.right" size={18} tone="faint" />
         </Pressable>
 
-        <View className="bg-surface-raised rounded-3xl p-6 gap-6 shadow-sm border border-divider/10">
+        <View className="bg-surface-raised rounded-3xl p-5 gap-4 shadow-sm border border-divider/10">
           <View className="flex-row items-center gap-4">
             <Icon name="globe" size={24} tone="muted" />
             <Typography variant="body-md" tone="ink" className="flex-1">
@@ -84,11 +84,11 @@ export function BlockingCard({
           </View>
 
           {webDomains.length > 0 && (
-            <View className="gap-3">
+            <View className="gap-2">
               {webDomains.map((domain) => (
                 <View
                   key={domain}
-                  className="flex-row justify-between items-center bg-surface-sunken/40 px-5 py-4 rounded-xl border border-divider/5"
+                  className="flex-row justify-between items-center bg-surface-sunken/40 px-4 py-3 rounded-xl border border-divider/5"
                 >
                   <Typography variant="body" tone="ink">
                     {domain}
