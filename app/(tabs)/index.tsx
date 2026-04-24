@@ -1,13 +1,13 @@
 import { useAuthActions } from '@convex-dev/auth/react';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBlockerStore } from '../../src/features/blocker/useBlockerStore';
 import { Button } from '../../src/shared/components/Button';
 import { Typography } from '../../src/shared/components/Typography';
-import { useBlockerStore } from '../../src/store/useBlockerStore';
+import { useAsyncAction } from '../../src/shared/hooks/useAsyncAction';
 
-export default function DashboardScreen() {
+export default function DashboardScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { signOut } = useAuthActions();
@@ -15,45 +15,26 @@ export default function DashboardScreen() {
   const isActive = useBlockerStore((state) => state.isActive);
   const hasPermissions = useBlockerStore((state) => state.hasPermissions);
   const busyState = useBlockerStore((state) => state.busyState);
-  const initializationError = useBlockerStore(
-    (state) => state.initializationError,
-  );
   const activitySelection = useBlockerStore(
     (state) => state.selection.activitySelection,
   );
-
   const setBlockerEnabled = useBlockerStore((state) => state.setBlockerEnabled);
   const requestPermissions = useBlockerStore(
     (state) => state.requestPermissions,
   );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleRequestPermissions = async () => {
-    setErrorMessage(null);
-    try {
-      const hasPermissions = await requestPermissions();
-      if (!hasPermissions) {
-        setErrorMessage('Screen Time permission was not granted.');
+  const { error, run } = useAsyncAction();
+
+  const handleRequestPermissions = (): Promise<boolean> =>
+    run(async () => {
+      const granted = await requestPermissions();
+      if (!granted) {
+        throw new Error('Screen Time permission was not granted.');
       }
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error
-          ? error.message
-          : 'Could not request Screen Time permission.',
-      );
-    }
-  };
+    }, 'Could not request Screen Time permission.');
 
-  const handleToggle = async () => {
-    setErrorMessage(null);
-    try {
-      await setBlockerEnabled(!isActive);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Could not update blocker.',
-      );
-    }
-  };
+  const handleToggle = (): Promise<boolean> =>
+    run(() => setBlockerEnabled(!isActive), 'Could not update blocker.');
 
   const selectedAppsLabel =
     activitySelection.status === 'saved'
@@ -109,7 +90,7 @@ export default function DashboardScreen() {
             <Button
               title="Choose Apps to Block"
               variant="secondary"
-              onPress={() => router.push('../select-apps')}
+              onPress={() => router.push('/select-apps')}
               disabled={busyState !== 'idle'}
             />
             <Button
@@ -122,13 +103,13 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {errorMessage ?? initializationError ? (
+        {error ? (
           <Typography
             variant="caption"
             align="center"
             className="mt-4 text-red-600"
           >
-            {errorMessage ?? initializationError}
+            {error}
           </Typography>
         ) : null}
       </View>

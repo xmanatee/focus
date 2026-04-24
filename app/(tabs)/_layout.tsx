@@ -1,8 +1,20 @@
 import { Tabs } from 'expo-router';
+import { useEffect } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBlockerStore } from '../../src/features/blocker/useBlockerStore';
 
-export default function TabLayout() {
+export default function TabLayout(): JSX.Element {
   const insets = useSafeAreaInsets();
+  const initialize = useBlockerStore((state) => state.initialize);
+
+  useEffect(() => {
+    initialize().catch((caught: unknown) => {
+      console.error(
+        '[fucus] Failed to read Screen Time state:',
+        caught instanceof Error ? caught.message : caught,
+      );
+    });
+  }, [initialize]);
 
   return (
     <Tabs
@@ -18,24 +30,9 @@ export default function TabLayout() {
         tabBarInactiveTintColor: '#6B7280',
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Status',
-        }}
-      />
-      <Tabs.Screen
-        name="library"
-        options={{
-          title: 'Library',
-        }}
-      />
-      <Tabs.Screen
-        name="schedules"
-        options={{
-          title: 'Schedules',
-        }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Status' }} />
+      <Tabs.Screen name="library" options={{ title: 'Library' }} />
+      <Tabs.Screen name="schedules" options={{ title: 'Schedules' }} />
     </Tabs>
   );
 }

@@ -2,45 +2,33 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBlockerStore } from '../../src/features/blocker/useBlockerStore';
 import { Button } from '../../src/shared/components/Button';
 import { Typography } from '../../src/shared/components/Typography';
-import { useBlockerStore } from '../../src/store/useBlockerStore';
+import { useAsyncAction } from '../../src/shared/hooks/useAsyncAction';
 
-export default function LibraryScreen() {
+export default function LibraryScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const selection = useBlockerStore((state) => state.selection);
-  const initializationError = useBlockerStore(
-    (state) => state.initializationError,
-  );
   const addWebDomain = useBlockerStore((state) => state.addWebDomain);
   const removeWebDomain = useBlockerStore((state) => state.removeWebDomain);
 
   const [newDomain, setNewDomain] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { error, run } = useAsyncAction();
 
-  const handleAddDomain = async () => {
-    setErrorMessage(null);
-    try {
-      await addWebDomain(newDomain);
+  const handleAddDomain = async (): Promise<void> => {
+    const success = await run(
+      () => addWebDomain(newDomain),
+      'Could not add website.',
+    );
+    if (success) {
       setNewDomain('');
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Could not add website.',
-      );
     }
   };
 
-  const handleRemoveDomain = async (domain: string) => {
-    setErrorMessage(null);
-    try {
-      await removeWebDomain(domain);
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Could not remove website.',
-      );
-    }
-  };
+  const handleRemoveDomain = (domain: string): Promise<boolean> =>
+    run(() => removeWebDomain(domain), 'Could not remove website.');
 
   const appSelectionSummary =
     selection.activitySelection.status === 'saved'
@@ -69,7 +57,7 @@ export default function LibraryScreen() {
           <Button
             title="Choose Apps"
             variant="secondary"
-            onPress={() => router.push('../select-apps')}
+            onPress={() => router.push('/select-apps')}
           />
         </View>
 
@@ -93,9 +81,9 @@ export default function LibraryScreen() {
             </Pressable>
           </View>
 
-          {errorMessage ?? initializationError ? (
+          {error ? (
             <Typography variant="caption" className="mb-4 text-red-600">
-              {errorMessage ?? initializationError}
+              {error}
             </Typography>
           ) : null}
 

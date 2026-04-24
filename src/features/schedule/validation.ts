@@ -17,11 +17,11 @@ const DAY_OF_WEEK_VALUES: DayOfWeek[] = [
 
 const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
-function isTimeOfDay(value: string) {
+function isTimeOfDay(value: string): boolean {
   return TIME_OF_DAY_PATTERN.test(value);
 }
 
-export function validateScheduleInput(input: CreateScheduleInput) {
+export function validateScheduleInput(input: CreateScheduleInput): void {
   if (input.name.trim().length === 0) {
     throw new Error('Schedule name is required.');
   }

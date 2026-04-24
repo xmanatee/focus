@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import type {
   CreateScheduleInput,
   DayOfWeek,
@@ -9,7 +10,7 @@ import { useScheduleStore } from '../src/features/schedule/useScheduleStore';
 import { validateScheduleInput } from '../src/features/schedule/validation';
 import { Button } from '../src/shared/components/Button';
 import { Typography } from '../src/shared/components/Typography';
-import { useBlockerStore } from '../src/store/useBlockerStore';
+import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
 const DAYS: { label: string; value: DayOfWeek }[] = [
   { label: 'M', value: 'mon' },
@@ -31,7 +32,7 @@ const DAY_ORDER: Record<DayOfWeek, number> = {
   sun: 6,
 };
 
-export default function AddScheduleScreen() {
+export default function AddScheduleScreen(): JSX.Element {
   const router = useRouter();
   const addSchedule = useScheduleStore((state) => state.addSchedule);
   const selection = useBlockerStore((state) => state.selection);
@@ -46,10 +47,10 @@ export default function AddScheduleScreen() {
     'thu',
     'fri',
   ]);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
 
-  const toggleDay = (day: DayOfWeek) => {
+  const { error, isPending, run } = useAsyncAction();
+
+  const toggleDay = (day: DayOfWeek): void => {
     setSelectedDays((currentDays) => {
       if (currentDays.includes(day)) {
         return currentDays.filter((currentDay) => currentDay !== day);
@@ -60,7 +61,7 @@ export default function AddScheduleScreen() {
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     const input: CreateScheduleInput = {
       name,
       startTime,
@@ -70,21 +71,13 @@ export default function AddScheduleScreen() {
       selection,
     };
 
-    setErrorMessage(null);
-    setIsSaving(true);
-    try {
+    const success = await run(async () => {
       validateScheduleInput(input);
-      await addSchedule({
-        ...input,
-        name: input.name.trim(),
-      });
+      await addSchedule({ ...input, name: input.name.trim() });
+    }, 'Could not create schedule.');
+
+    if (success) {
       router.back();
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Could not create schedule.',
-      );
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -179,9 +172,9 @@ export default function AddScheduleScreen() {
           </View>
         </View>
 
-        {errorMessage ? (
+        {error ? (
           <Typography variant="caption" className="mb-4 text-red-600">
-            {errorMessage}
+            {error}
           </Typography>
         ) : null}
 
@@ -189,14 +182,14 @@ export default function AddScheduleScreen() {
           <Button
             title="Create Schedule"
             onPress={() => void handleSave()}
-            isLoading={isSaving}
-            disabled={isSaving}
+            isLoading={isPending}
+            disabled={isPending}
           />
           <Button
             title="Cancel"
             variant="secondary"
             onPress={() => router.back()}
-            disabled={isSaving}
+            disabled={isPending}
           />
         </View>
       </ScrollView>

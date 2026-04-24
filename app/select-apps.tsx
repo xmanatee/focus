@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { View } from 'react-native';
 import {
   type ActivitySelectionMetadata,
@@ -7,30 +6,27 @@ import {
 } from 'react-native-device-activity';
 import { BLOCK_ACTIVITY_SELECTION_ID } from '../src/features/blocker/constants';
 import { createActivitySelectionFromMetadata } from '../src/features/blocker/types';
+import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { Typography } from '../src/shared/components/Typography';
-import { useBlockerStore } from '../src/store/useBlockerStore';
+import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
-export default function SelectAppsScreen() {
+export default function SelectAppsScreen(): JSX.Element {
   const router = useRouter();
   const setActivitySelection = useBlockerStore(
     (state) => state.setActivitySelection,
   );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { error, run } = useAsyncAction();
 
-  const handleSelectionChange = async (event: {
+  const handleSelectionChange = (event: {
     nativeEvent: ActivitySelectionMetadata;
-  }) => {
-    setErrorMessage(null);
-    try {
-      await setActivitySelection(
-        createActivitySelectionFromMetadata(event.nativeEvent),
-      );
-    } catch (error) {
-      setErrorMessage(
-        error instanceof Error ? error.message : 'Could not save selection.',
-      );
-    }
-  };
+  }): Promise<boolean> =>
+    run(
+      () =>
+        setActivitySelection(
+          createActivitySelectionFromMetadata(event.nativeEvent),
+        ),
+      'Could not save selection.',
+    );
 
   return (
     <View className="flex-1 bg-background">
@@ -45,13 +41,13 @@ export default function SelectAppsScreen() {
         >
           If the system picker takes a moment, stay on this screen.
         </Typography>
-        {errorMessage ? (
+        {error ? (
           <Typography
             variant="caption"
             align="center"
             className="mt-4 text-red-600"
           >
-            {errorMessage}
+            {error}
           </Typography>
         ) : null}
       </View>

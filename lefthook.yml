@@ -7,6 +7,10 @@ pre-commit:
       run: npx tsc --noEmit
     line-limit:
       run: node scripts/check-line-limit.mjs
+    antipatterns:
+      run: node scripts/check-antipatterns.mjs
+    test:
+      run: npx vitest run
     knip:
       run: npx knip
 

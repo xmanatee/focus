@@ -1,4 +1,4 @@
-function parseDomainCandidate(input: string) {
+function parseDomainCandidate(input: string): string | null {
   const normalizedInput = input.trim().toLowerCase();
   if (normalizedInput.length === 0) {
     return null;
@@ -12,10 +12,11 @@ function parseDomainCandidate(input: string) {
     if (url.hostname !== normalizedInput) {
       return null;
     }
-    if (url.hostname.includes('..')) {
+    const labels = url.hostname.split('.');
+    if (labels.length < 2) {
       return null;
     }
-    if (!url.hostname.includes('.')) {
+    if (labels.some((label) => label.length === 0)) {
       return null;
     }
     return url.hostname;
@@ -24,6 +25,6 @@ function parseDomainCandidate(input: string) {
   }
 }
 
-export function parseBlockedDomain(input: string) {
+export function parseBlockedDomain(input: string): string | null {
   return parseDomainCandidate(input);
 }

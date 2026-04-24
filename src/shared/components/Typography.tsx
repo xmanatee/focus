@@ -12,7 +12,7 @@ export function Typography({
   variant = 'body',
   align = 'left',
   className = '',
-}: TypographyProps) {
+}: TypographyProps): JSX.Element {
   const variantClasses = {
     h1: 'text-4xl font-extrabold text-text tracking-tight',
     h2: 'text-2xl font-bold text-text',

@@ -5,18 +5,16 @@ import { View } from 'react-native';
 import { Button } from '../src/shared/components/Button';
 import { Typography } from '../src/shared/components/Typography';
 
+type OAuthProvider = 'apple' | 'google';
+type PendingProvider = OAuthProvider | 'callback';
+
 export default function LoginScreen() {
   const { signIn } = useAuthActions();
-  const signInWithCode = signIn as unknown as (
-    provider: string | undefined,
-    params: { code: string },
-  ) => Promise<{ redirect?: URL }>;
-
-  const [pendingProvider, setPendingProvider] = useState<
-    'apple' | 'google' | 'callback' | null
-  >(null);
+  const [pendingProvider, setPendingProvider] =
+    useState<PendingProvider | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const url = Linking.useURL();
+  const lastInvokedProvider = useRef<OAuthProvider | null>(null);
   const lastHandledCode = useRef<string | null>(null);
 
   useEffect(() => {
@@ -35,13 +33,18 @@ export default function LoginScreen() {
       return;
     }
 
+    const provider = lastInvokedProvider.current;
+    if (provider === null) {
+      return;
+    }
+
     lastHandledCode.current = code;
 
     void (async () => {
       setPendingProvider('callback');
       setErrorMessage(null);
       try {
-        await signInWithCode(undefined, { code });
+        await signIn(provider, { code });
       } catch (error) {
         setErrorMessage(
           error instanceof Error ? error.message : 'Could not finish sign-in.',
@@ -50,9 +53,10 @@ export default function LoginScreen() {
         setPendingProvider(null);
       }
     })();
-  }, [signInWithCode, url]);
+  }, [signIn, url]);
 
-  const handleSignIn = async (provider: 'apple' | 'google') => {
+  const handleSignIn = async (provider: OAuthProvider) => {
+    lastInvokedProvider.current = provider;
     setPendingProvider(provider);
     setErrorMessage(null);
     try {

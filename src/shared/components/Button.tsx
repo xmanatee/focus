@@ -14,7 +14,7 @@ export function Button({
   variant = 'primary',
   isLoading = false,
   disabled = false,
-}: ButtonProps) {
+}: ButtonProps): JSX.Element {
   const baseClasses = 'py-4 rounded-2xl items-center justify-center flex-row';
 
   const variantClasses = {

@@ -9,7 +9,7 @@ import { useScheduleStore } from '../../src/features/schedule/useScheduleStore';
 import { Button } from '../../src/shared/components/Button';
 import { Typography } from '../../src/shared/components/Typography';
 
-export default function SchedulesScreen() {
+export default function SchedulesScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const schedules = useQuery(api.schedules.get);
@@ -22,7 +22,7 @@ export default function SchedulesScreen() {
   const handleToggle = async (
     scheduleId: Id<'schedules'>,
     nextIsEnabled: boolean,
-  ) => {
+  ): Promise<void> => {
     setBusyScheduleId(scheduleId);
     setErrorMessage(null);
     try {

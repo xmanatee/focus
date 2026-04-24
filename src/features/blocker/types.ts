@@ -62,7 +62,7 @@ export function hasSavedActivitySelection(
   return selection.status === 'saved';
 }
 
-export function selectionHasBlockedTargets(selection: BlockSelection) {
+export function selectionHasBlockedTargets(selection: BlockSelection): boolean {
   return (
     hasSavedActivitySelection(selection.activitySelection) ||
     selection.webDomains.length > 0

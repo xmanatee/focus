@@ -1,14 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { BlockerBridge } from '../bridge/BlockerBridge';
-import { parseBlockedDomain } from '../features/blocker/domain';
+import { BlockerBridge } from '../../bridge/BlockerBridge';
+import { parseBlockedDomain } from './domain';
 import {
   type BlockSelection,
   EMPTY_BLOCK_SELECTION,
   type PersistedActivitySelection,
   selectionHasBlockedTargets,
-} from '../features/blocker/types';
+} from './types';
 
 type BusyState = 'idle' | 'authorizing' | 'syncing';
 
@@ -16,7 +16,6 @@ interface BlockerState {
   busyState: BusyState;
   isActive: boolean;
   hasPermissions: boolean;
-  initializationError: string | null;
   selection: BlockSelection;
   initialize: () => Promise<void>;
   requestPermissions: () => Promise<boolean>;
@@ -97,35 +96,22 @@ export const useBlockerStore = create<BlockerState>()(
         busyState: 'idle',
         isActive: false,
         hasPermissions: false,
-        initializationError: null,
         selection: EMPTY_BLOCK_SELECTION,
 
         initialize: async () => {
-          try {
-            const authorizationStatus =
-              await BlockerBridge.checkAuthorizationStatus();
-            const activitySelection = BlockerBridge.getActivitySelection();
-            const isActive = BlockerBridge.isBlockerActive();
+          const authorizationStatus =
+            await BlockerBridge.checkAuthorizationStatus();
+          const activitySelection = BlockerBridge.getActivitySelection();
+          const isActive = BlockerBridge.isBlockerActive();
 
-            set((state) => ({
-              hasPermissions: authorizationStatus === 'authorized',
-              initializationError: null,
-              isActive,
-              selection: {
-                ...state.selection,
-                activitySelection,
-              },
-            }));
-          } catch (error) {
-            set({
-              hasPermissions: false,
-              initializationError:
-                error instanceof Error
-                  ? error.message
-                  : 'Could not load Screen Time status.',
-              isActive: false,
-            });
-          }
+          set((state) => ({
+            hasPermissions: authorizationStatus === 'authorized',
+            isActive,
+            selection: {
+              ...state.selection,
+              activitySelection,
+            },
+          }));
         },
 
         requestPermissions: async () => {

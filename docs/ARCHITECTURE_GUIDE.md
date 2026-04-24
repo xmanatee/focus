@@ -19,7 +19,7 @@ func syncState(json: String) {
 ```
 
 ### React Native Side (JS)
-1. **The Brain (`src/store/useBlockerStore.ts`)**: Calculates the `FucusConfig` based on the current time, user settings, and schedules.
+1. **The Brain (`src/features/blocker/useBlockerStore.ts`)**: Calculates the `FucusConfig` based on the current time, user settings, and schedules.
 2. **The Sync Engine**: Whenever the store changes, it calls the `syncState` bridge method.
 
 ## 2. Scalability

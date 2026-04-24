@@ -1,18 +1,12 @@
 import '../global.css';
 import { ConvexAuthProvider } from '@convex-dev/auth/react';
 import { useConvexAuth } from 'convex/react';
-import {
-  Stack,
-  useRootNavigationState,
-  useRouter,
-  useSegments,
-} from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { convex } from '../src/api/convex';
-import { useBlockerStore } from '../src/store/useBlockerStore';
 
 const storage = {
   getItem: SecureStore.getItemAsync,
@@ -35,23 +29,12 @@ export default function RootLayout() {
 }
 
 function AuthGate() {
-  const initializeBlocker = useBlockerStore((state) => state.initialize);
-  const rootNavigationState = useRootNavigationState();
   const segments = useSegments();
   const router = useRouter();
   const { isAuthenticated, isLoading } = useConvexAuth();
-  const isNavigationReady = rootNavigationState?.key !== undefined;
 
   useEffect(() => {
-    if (!isNavigationReady || isLoading || !isAuthenticated) {
-      return;
-    }
-
-    void initializeBlocker();
-  }, [initializeBlocker, isAuthenticated, isLoading, isNavigationReady]);
-
-  useEffect(() => {
-    if (!isNavigationReady || isLoading) {
+    if (isLoading) {
       return;
     }
 
@@ -65,9 +48,9 @@ function AuthGate() {
     if (isAuthenticated && isPublicRoute) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isLoading, isNavigationReady, router, segments]);
+  }, [isAuthenticated, isLoading, router, segments]);
 
-  if (!isNavigationReady || isLoading) {
+  if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" color="#1E40AF" />
