@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "fucus",
-    "slug": "fucus",
+    "name": "Focus Blocks",
+    "slug": "focus-blocks",
     "version": "1.0.0",
     "icon": "./assets/icon.png",
     "orientation": "portrait",
@@ -9,11 +9,11 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourbound.fucus",
+      "bundleIdentifier": "love.nemi.focus",
       "appleTeamId": "569HBLNQPC",
       "buildNumber": "1",
       "infoPlist": {
-        "NSFamilyControlsUsageDescription": "Fucus uses Screen Time to block the apps you choose during the focus blocks you create.",
+        "NSFamilyControlsUsageDescription": "Focus Blocks uses Screen Time to block the apps you choose during the schedules you create.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -24,7 +24,7 @@
         "backgroundColor": "#1A1510"
       }
     },
-    "scheme": "fucus",
+    "scheme": "focusblocks",
     "plugins": [
       "expo-router",
       [
@@ -39,17 +39,17 @@
         "react-native-device-activity",
         {
           "appleTeamId": "569HBLNQPC",
-          "appGroup": "group.com.yourbound.fucus"
+          "appGroup": "group.love.nemi.focus"
         }
       ],
       "@react-native-community/datetimepicker",
-      "./plugins/with-fucus-icloud"
+      "./plugins/with-focusblocks-icloud"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "android": {
-      "package": "com.yourbound.fucus"
+      "package": "love.nemi.focus"
     }
   }
 }

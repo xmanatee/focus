@@ -28,12 +28,7 @@ class ScreenTimeBlockerBridge implements IBlockerBridge {
   }
 
   async checkAuthorizationStatus(): Promise<AuthorizationStatus> {
-    try {
-      const status = getAuthorizationStatus();
-      return mapAuthorizationStatus(status);
-    } catch {
-      return 'notDetermined';
-    }
+    return mapAuthorizationStatus(getAuthorizationStatus());
   }
 }
 

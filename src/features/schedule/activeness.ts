@@ -1,3 +1,4 @@
+import { minutesOf } from '../../shared/days';
 import type { DayOfWeek } from './types';
 
 interface FocusBlockInternal {
@@ -16,11 +17,6 @@ const DAY_BY_INDEX: readonly DayOfWeek[] = [
   'fri',
   'sat',
 ];
-
-function minutesOf(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
-}
 
 function minuteOfDay(at: Date): number {
   return at.getHours() * 60 + at.getMinutes();

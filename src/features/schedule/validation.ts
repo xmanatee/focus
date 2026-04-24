@@ -1,21 +1,5 @@
-import type { DayOfWeek, FocusBlockInput } from './types';
-
-const DAY_OF_WEEK_VALUES: readonly DayOfWeek[] = [
-  'mon',
-  'tue',
-  'wed',
-  'thu',
-  'fri',
-  'sat',
-  'sun',
-] as const;
-
-const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
-function minutesOf(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
-}
+import { TIME_OF_DAY_PATTERN, minutesOf } from '../../shared/days';
+import { DAY_OF_WEEK_VALUES, type FocusBlockInput } from './types';
 
 export function validateFocusBlockInput(input: FocusBlockInput): void {
   const name = input.name.trim();

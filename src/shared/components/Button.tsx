@@ -8,12 +8,12 @@ import Animated, {
 import { motion, useThemeColors } from '../design/theme';
 import { Typography } from './Typography';
 
-type ButtonVariant = 'primary' | 'commit' | 'ghost' | 'abandon';
+type ButtonVariant = 'commit' | 'ghost' | 'abandon';
 
 interface ButtonProps {
   readonly title: string;
   readonly onPress: () => void;
-  readonly variant?: ButtonVariant;
+  readonly variant: ButtonVariant;
   readonly isLoading?: boolean;
   readonly disabled?: boolean;
 }
@@ -21,14 +21,12 @@ interface ButtonProps {
 const PressableAnimated = Animated.createAnimatedComponent(Pressable);
 
 const containerClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-ink',
   commit: 'bg-signal',
   ghost: 'bg-transparent border-[1.5px] border-divider',
   abandon: 'bg-transparent',
 };
 
 const textTone: Record<ButtonVariant, 'surface' | 'ink' | 'muted'> = {
-  primary: 'surface',
   commit: 'surface',
   ghost: 'ink',
   abandon: 'muted',
@@ -37,7 +35,7 @@ const textTone: Record<ButtonVariant, 'surface' | 'ink' | 'muted'> = {
 export function Button({
   title,
   onPress,
-  variant = 'primary',
+  variant,
   isLoading = false,
   disabled = false,
 }: ButtonProps): JSX.Element {
@@ -57,8 +55,7 @@ export function Button({
     transform: [{ scale: scale.value }],
   }));
 
-  const spinnerColor =
-    variant === 'primary' || variant === 'commit' ? colors.surface : colors.ink;
+  const spinnerColor = variant === 'commit' ? colors.surface : colors.ink;
 
   return (
     <PressableAnimated

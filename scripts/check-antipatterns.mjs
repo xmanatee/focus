@@ -28,7 +28,7 @@ const rules = [
   {
     id: 'no-any-cast',
     pattern: /\bas\s+any\b/,
-    message: '`as any` is banned by CODING_STANDARDS.md #3.',
+    message: '`as any` bypasses type safety. Fix the type instead.',
   },
   {
     id: 'no-relative-router-path',

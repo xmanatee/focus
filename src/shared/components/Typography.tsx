@@ -1,11 +1,7 @@
 import { Text, type TextProps } from 'react-native';
 
 type TypographyVariant =
-  | 'display-xl'
-  | 'display-lg'
   | 'display-md'
-  | 'h1'
-  | 'h2'
   | 'h3'
   | 'body'
   | 'body-md'
@@ -27,17 +23,12 @@ interface TypographyProps {
   readonly variant?: TypographyVariant;
   readonly tone?: TypographyTone;
   readonly align?: TypographyAlign;
-  readonly numeric?: boolean;
   readonly className?: string;
   readonly accessibilityRole?: TextProps['accessibilityRole'];
 }
 
 const variantClasses: Record<TypographyVariant, string> = {
-  'display-xl': 'text-[72px] leading-[80px] font-ultralight tracking-tighter',
-  'display-lg': 'text-[44px] leading-[48px] font-black tracking-tight',
   'display-md': 'text-[32px] leading-[36px] font-black tracking-tight',
-  h1: 'text-[28px] leading-[32px] font-bold',
-  h2: 'text-[22px] leading-[28px] font-semibold',
   h3: 'text-[18px] leading-[24px] font-semibold',
   body: 'text-[16px] leading-[22px]',
   'body-md': 'text-[17px] leading-[22px] font-semibold',
@@ -65,14 +56,12 @@ export function Typography({
   variant = 'body',
   tone = 'ink',
   align = 'left',
-  numeric = false,
   className = '',
   accessibilityRole,
 }: TypographyProps): JSX.Element {
   return (
     <Text
       accessibilityRole={accessibilityRole}
-      style={numeric ? { fontVariant: ['tabular-nums'] } : undefined}
       className={`${variantClasses[variant]} ${toneClasses[tone]} ${alignClasses[align]} ${className}`}
     >
       {children}

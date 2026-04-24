@@ -13,7 +13,6 @@ module.exports = {
         'ink-muted': 'rgb(var(--ink-muted) / <alpha-value>)',
         'ink-faint': 'rgb(var(--ink-faint) / <alpha-value>)',
         signal: 'rgb(var(--signal) / <alpha-value>)',
-        'signal-soft': 'rgb(var(--signal-soft) / <alpha-value>)',
         divider: 'rgb(var(--divider) / <alpha-value>)',
         danger: 'rgb(var(--danger) / <alpha-value>)',
       },

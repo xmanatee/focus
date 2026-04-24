@@ -1,23 +1,7 @@
-import type { DayOfWeek } from '../schedule/types';
-
-const DAY_OF_WEEK_VALUES: readonly DayOfWeek[] = [
-  'mon',
-  'tue',
-  'wed',
-  'thu',
-  'fri',
-  'sat',
-  'sun',
-] as const;
-
-const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+import { TIME_OF_DAY_PATTERN, minutesOf } from '../../shared/days';
+import { DAY_OF_WEEK_VALUES, type DayOfWeek } from '../schedule/types';
 
 const MIN_SETUP_MINUTES_PER_WEEK = 15;
-
-function minutesOf(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
-}
 
 function blockMinutes(startTime: string, endTime: string): number {
   const start = minutesOf(startTime);
@@ -26,7 +10,7 @@ function blockMinutes(startTime: string, endTime: string): number {
   return end > start ? end - start : minutesInDay - start + end;
 }
 
-export interface SetupBlockInput {
+interface SetupBlockInput {
   readonly days: readonly string[];
   readonly startTime: string;
   readonly endTime: string;

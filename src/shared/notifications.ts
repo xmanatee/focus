@@ -13,8 +13,6 @@ export async function requestNotificationPermissions(): Promise<boolean> {
         allowAlert: true,
         allowBadge: true,
         allowSound: true,
-        allowDisplayInCarPlay: false,
-        allowCriticalAlerts: true,
       },
     });
     finalStatus = status;
@@ -33,10 +31,4 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   }
 
   return true;
-}
-
-export async function checkNotificationPermissions(): Promise<boolean> {
-  if (Platform.OS === 'web') return false;
-  const { status } = await Notifications.getPermissionsAsync();
-  return status === 'granted';
 }

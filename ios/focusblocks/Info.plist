@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>fucus</string>
+    <string>Focus Blocks</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -27,8 +27,8 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>fucus</string>
-          <string>com.yourbound.fucus</string>
+          <string>focusblocks</string>
+          <string>love.nemi.focus</string>
         </array>
       </dict>
     </array>
@@ -48,7 +48,7 @@
       <true/>
     </dict>
     <key>NSFamilyControlsUsageDescription</key>
-    <string>Fucus uses Screen Time to block the apps you choose during the focus blocks you create.</string>
+    <string>Focus Blocks uses Screen Time to block the apps you choose during the schedules you create.</string>
     <key>NSUserActivityTypes</key>
     <array>
       <string>$(PRODUCT_BUNDLE_IDENTIFIER).expo.index_route</string>

@@ -1,6 +1,16 @@
 import type { BlockSelection } from '../blocker/types';
 
-export type DayOfWeek = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
+export const DAY_OF_WEEK_VALUES = [
+  'mon',
+  'tue',
+  'wed',
+  'thu',
+  'fri',
+  'sat',
+  'sun',
+] as const;
+
+export type DayOfWeek = (typeof DAY_OF_WEEK_VALUES)[number];
 
 export interface FocusBlock {
   id: string;

@@ -1,32 +1,40 @@
-import type { DayOfWeek } from '../features/schedule/types';
+import { DAY_OF_WEEK_VALUES, type DayOfWeek } from '../features/schedule/types';
+
+const DAY_LABELS: Record<DayOfWeek, string> = {
+  mon: 'Mon',
+  tue: 'Tue',
+  wed: 'Wed',
+  thu: 'Thu',
+  fri: 'Fri',
+  sat: 'Sat',
+  sun: 'Sun',
+};
 
 interface DayChoice {
   readonly label: string;
   readonly value: DayOfWeek;
 }
 
-export const DAYS: readonly DayChoice[] = [
-  { label: 'Mon', value: 'mon' },
-  { label: 'Tue', value: 'tue' },
-  { label: 'Wed', value: 'wed' },
-  { label: 'Thu', value: 'thu' },
-  { label: 'Fri', value: 'fri' },
-  { label: 'Sat', value: 'sat' },
-  { label: 'Sun', value: 'sun' },
-] as const;
+export const DAYS: readonly DayChoice[] = DAY_OF_WEEK_VALUES.map((value) => ({
+  label: DAY_LABELS[value],
+  value,
+}));
 
-export const DAY_ORDER: Record<DayOfWeek, number> = DAYS.reduce(
-  (acc, day, index) => {
-    acc[day.value] = index;
-    return acc;
-  },
-  {} as Record<DayOfWeek, number>,
-);
+export const DAY_ORDER: Record<DayOfWeek, number> = Object.fromEntries(
+  DAY_OF_WEEK_VALUES.map((value, index) => [value, index]),
+) as Record<DayOfWeek, number>;
+
+export const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+export function minutesOf(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + m;
+}
 
 export function timeStringToDate(value: string): Date {
   const [hours, minutes] = value.split(':').map(Number);
   const date = new Date();
-  date.setHours(hours ?? 0, minutes ?? 0, 0, 0);
+  date.setHours(hours, minutes, 0, 0);
   return date;
 }
 
@@ -36,8 +44,14 @@ export function dateToTimeString(date: Date): string {
   return `${h}:${m}`;
 }
 
-export function formatDayShort(day: string): string {
-  return day.charAt(0).toUpperCase() + day.slice(1);
+export function nextOccurrenceOf(time: string, after: Date): Date {
+  const [h, m] = time.split(':').map(Number);
+  const at = new Date(after);
+  at.setHours(h, m, 0, 0);
+  if (at <= after) {
+    at.setDate(at.getDate() + 1);
+  }
+  return at;
 }
 
 export function formatRelative(at: Date, now: Date): string {

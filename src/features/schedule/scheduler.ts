@@ -10,20 +10,20 @@ import { hasSavedActivitySelection } from '../blocker/types';
 import type { BlockSelection } from '../blocker/types';
 import type { DayOfWeek } from './types';
 
-export interface FocusBlockSpec {
+interface FocusBlockSpec {
   id: string;
   name: string;
   days: DayOfWeek[];
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm
+  startTime: string; // HH:mm, validated upstream
+  endTime: string; // HH:mm, validated upstream
   isEnabled: boolean;
   profileSelection: BlockSelection;
   notifyOnStart: boolean;
   notifyOnEnd: boolean;
 }
 
-const ACTIVITY_PREFIX = 'fucus.block.';
-const SETUP_ACTIVITY_NAME = 'fucus.setup';
+const ACTIVITY_PREFIX = 'focusblocks.block.';
+const SETUP_ACTIVITY_NAME = 'focusblocks.setup';
 
 interface MonitorPlan {
   activityName: string;
@@ -31,10 +31,14 @@ interface MonitorPlan {
     intervalStart: { hour: number; minute: number };
     intervalEnd: { hour: number; minute: number };
     repeats: boolean;
-    warningThreshold?: { minute: number };
   };
   startActions: Action[];
   endActions: Action[];
+}
+
+function parseHM(time: string): { hour: number; minute: number } {
+  const [h, m] = time.split(':').map(Number);
+  return { hour: h, minute: m };
 }
 
 function materializeFocusBlock(spec: FocusBlockSpec): MonitorPlan[] {
@@ -42,13 +46,9 @@ function materializeFocusBlock(spec: FocusBlockSpec): MonitorPlan[] {
     return [];
   }
 
-  const [startH, startM] = spec.startTime.split(':').map(Number);
-  const [endH, endM] = spec.endTime.split(':').map(Number);
-
   const startActions: Action[] = [];
   const endActions: Action[] = [];
 
-  // 1. Handle App/Category blocking
   if (hasSavedActivitySelection(spec.profileSelection.activitySelection)) {
     const selectionId = spec.profileSelection.activitySelection.selectionId;
     startActions.push({
@@ -61,7 +61,6 @@ function materializeFocusBlock(spec: FocusBlockSpec): MonitorPlan[] {
     });
   }
 
-  // 2. Handle Website blocking
   if (spec.profileSelection.webDomains.length > 0) {
     startActions.push({
       type: 'setWebContentFilterPolicy',
@@ -70,12 +69,9 @@ function materializeFocusBlock(spec: FocusBlockSpec): MonitorPlan[] {
         domains: [...spec.profileSelection.webDomains],
       },
     });
-    endActions.push({
-      type: 'clearWebContentFilterPolicy',
-    });
+    endActions.push({ type: 'clearWebContentFilterPolicy' });
   }
 
-  // 3. Handle Notifications
   if (spec.notifyOnStart) {
     startActions.push({
       type: 'sendNotification',
@@ -102,8 +98,8 @@ function materializeFocusBlock(spec: FocusBlockSpec): MonitorPlan[] {
   return spec.days.map((day) => ({
     activityName: `${ACTIVITY_PREFIX}${spec.id}.${day}`,
     schedule: {
-      intervalStart: { hour: startH ?? 0, minute: startM ?? 0 },
-      intervalEnd: { hour: endH ?? 0, minute: endM ?? 0 },
+      intervalStart: parseHM(spec.startTime),
+      intervalEnd: parseHM(spec.endTime),
       repeats: true,
     },
     startActions,
@@ -121,9 +117,6 @@ function materializeSetupBlock(
     return [];
   }
 
-  const [startH, startM] = startTime.split(':').map(Number);
-  const [endH, endM] = endTime.split(':').map(Number);
-
   const startActions: Action[] = [
     {
       type: 'sendNotification',
@@ -139,8 +132,8 @@ function materializeSetupBlock(
   return days.map((day) => ({
     activityName: `${SETUP_ACTIVITY_NAME}.${day}`,
     schedule: {
-      intervalStart: { hour: startH ?? 0, minute: startM ?? 0 },
-      intervalEnd: { hour: endH ?? 0, minute: endM ?? 0 },
+      intervalStart: parseHM(startTime),
+      intervalEnd: parseHM(endTime),
       repeats: true,
     },
     startActions,
@@ -149,26 +142,22 @@ function materializeSetupBlock(
 }
 
 async function applyPlan(plan: MonitorPlan): Promise<void> {
-  try {
-    configureActions({
-      activityName: plan.activityName,
-      callbackName: 'intervalDidStart',
-      actions: plan.startActions,
-    });
-    configureActions({
-      activityName: plan.activityName,
-      callbackName: 'intervalDidEnd',
-      actions: plan.endActions,
-    });
-    await startMonitoring(plan.activityName, plan.schedule, []);
-  } catch {
-    // Ignore native failures to avoid crashing the JS app
-  }
+  configureActions({
+    activityName: plan.activityName,
+    callbackName: 'intervalDidStart',
+    actions: plan.startActions,
+  });
+  configureActions({
+    activityName: plan.activityName,
+    callbackName: 'intervalDidEnd',
+    actions: plan.endActions,
+  });
+  await startMonitoring(plan.activityName, plan.schedule, []);
 }
 
 export async function reconcileFocusBlocks(
   specs: readonly FocusBlockSpec[],
-  setupBlock?: {
+  setupBlock: {
     days: readonly DayOfWeek[];
     startTime: string;
     endTime: string;
@@ -193,27 +182,17 @@ export async function reconcileFocusBlocks(
     }
   }
 
-  let current: string[] = [];
-  try {
-    current = getActivities().filter(
-      (name) =>
-        name?.startsWith(ACTIVITY_PREFIX) ||
-        name?.startsWith(SETUP_ACTIVITY_NAME),
-    );
-  } catch {
-    // Return early if native module fails
-    return;
-  }
+  const current = getActivities().filter(
+    (name) =>
+      name?.startsWith(ACTIVITY_PREFIX) ||
+      name?.startsWith(SETUP_ACTIVITY_NAME),
+  );
 
   const toStop = current.filter((name) => !desired.has(name));
   if (toStop.length > 0) {
-    try {
-      stopMonitoring(toStop);
-      for (const name of toStop) {
-        cleanUpAfterActivity(name);
-      }
-    } catch {
-      // Ignore native cleanup failures
+    stopMonitoring(toStop);
+    for (const name of toStop) {
+      cleanUpAfterActivity(name);
     }
   }
 

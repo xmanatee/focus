@@ -24,8 +24,8 @@
         <action android:name="android.intent.action.VIEW"/>
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
-        <data android:scheme="fucus"/>
-        <data android:scheme="com.yourbound.fucus"/>
+        <data android:scheme="focusblocks"/>
+        <data android:scheme="love.nemi.focus"/>
       </intent-filter>
     </activity>
   </application>

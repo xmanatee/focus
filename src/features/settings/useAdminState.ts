@@ -7,7 +7,6 @@ const TICK_MS = 15_000;
 interface AdminStateView {
   readonly state: AdminState;
   readonly now: Date;
-  readonly isSettled: boolean;
 }
 
 export function useAdminState(): AdminStateView {
@@ -25,7 +24,6 @@ export function useAdminState(): AdminStateView {
     () => ({
       state: resolveAdminState(setupBlock, now),
       now,
-      isSettled: true,
     }),
     [now, setupBlock],
   );

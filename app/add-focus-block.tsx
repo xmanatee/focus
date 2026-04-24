@@ -1,52 +1,50 @@
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
-  Switch,
-  TextInput,
   View,
 } from 'react-native';
 import {
-  DeviceActivitySelectionSheetViewPersisted,
   type ActivitySelectionMetadata,
+  DeviceActivitySelectionSheetViewPersisted,
 } from 'react-native-device-activity';
-import { BLOCK_ACTIVITY_SELECTION_ID } from '../src/features/blocker/constants';
+import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
+import { parseBlockedDomain } from '../src/features/blocker/domain';
 import {
+  BLOCK_ACTIVITY_SELECTION_ID,
   EMPTY_BLOCK_SELECTION,
+  type PersistedActivitySelection,
   createActivitySelectionFromMetadata,
   selectionHasBlockedTargets,
 } from '../src/features/blocker/types';
-import { useBlocklistStore } from '../src/features/blocker/useBlocklistStore';
-import type { DayOfWeek, FocusBlockInput } from '../src/features/schedule/types';
+import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
+import { FormActions } from '../src/features/schedule/components/FormActions';
+import { NotificationsCard } from '../src/features/schedule/components/NotificationsCard';
+import { PresetRow } from '../src/features/schedule/components/PresetRow';
+import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
+import type {
+  DayOfWeek,
+  FocusBlockInput,
+} from '../src/features/schedule/types';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { validateFocusBlockInput } from '../src/features/schedule/validation';
 import { useAdminState } from '../src/features/settings/useAdminState';
-import { Button } from '../src/shared/components/Button';
-import { Icon } from '../src/shared/components/Icon';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import {
-  DAYS,
   DAY_ORDER,
   dateToTimeString,
   timeStringToDate,
 } from '../src/shared/days';
 import { haptic } from '../src/shared/design/haptics';
-import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 import { requestNotificationPermissions } from '../src/shared/notifications';
 
 export default function AddFocusBlockScreen(): JSX.Element {
   const router = useRouter();
-  const colors = useThemeColors();
-  const isDark = useIsDark();
   const params = useLocalSearchParams<{ id?: string }>();
   const editId = params.id ?? null;
   const isEditing = editId !== null;
@@ -58,7 +56,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
     editId ? s.focusBlocks.find((item) => item.id === editId) ?? null : null,
   );
 
-  const { state: adminState, isSettled } = useAdminState();
+  const { state: adminState } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
 
   const [name, setName] = useState<string>(existing?.name ?? 'Focus block');
@@ -79,171 +77,102 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const [notifyOnEnd, setNotifyOnEnd] = useState(
     existing?.notifyOnEnd ?? false,
   );
-
-  const selection = useBlocklistStore((s) => s.selection);
-  const setSelection = useBlocklistStore((s) => s.setActivitySelection);
-  const setWebDomains = useBlocklistStore((s) => s.setWebDomains);
-  const addWebDomain = useBlocklistStore((s) => s.addWebDomain);
-  const removeWebDomain = useBlocklistStore((s) => s.removeWebDomain);
-
-  useEffect(() => {
-    if (existing) {
-      const blockSelection = existing.selection ?? EMPTY_BLOCK_SELECTION;
-      setSelection(blockSelection.activitySelection);
-      setWebDomains(blockSelection.webDomains);
-    } else {
-      setSelection(EMPTY_BLOCK_SELECTION.activitySelection);
-      setWebDomains(EMPTY_BLOCK_SELECTION.webDomains);
-    }
-  }, [existing, setSelection, setWebDomains]);
+  const [activitySelection, setActivitySelection] =
+    useState<PersistedActivitySelection>(
+      existing?.selection.activitySelection ??
+        EMPTY_BLOCK_SELECTION.activitySelection,
+    );
+  const [webDomains, setWebDomains] = useState<string[]>(
+    existing ? [...existing.selection.webDomains] : [],
+  );
 
   const { error, isPending, run } = useAsyncAction();
 
   useEffect(() => {
-    if (isSettled && isAdminLocked) {
+    if (isAdminLocked) {
       router.back();
     }
-  }, [isAdminLocked, isSettled, router]);
+  }, [isAdminLocked, router]);
 
   const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
   const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
 
-  const applyPreset = (kind: 'work' | 'evening' | 'weekend') => {
+  const applyPreset = (kind: PresetKind): void => {
     void haptic.select();
-    if (kind === 'work') {
-      setName('Deep Work');
-      setStartDate(timeStringToDate('09:00'));
-      setEndDate(timeStringToDate('12:00'));
-      setSelectedDays(['mon', 'tue', 'wed', 'thu', 'fri']);
-      setNotifyOnStart(true);
-      setNotifyOnEnd(true);
-      setWebDomains([
-        'instagram.com',
-        'facebook.com',
-        'twitter.com',
-        'x.com',
-        'tiktok.com',
-        'youtube.com',
-        'reddit.com',
-        'twitch.tv',
-        'netflix.com',
-        'hulu.com',
-      ]);
-    } else if (kind === 'evening') {
-      setName('Evening Wind-down');
-      setStartDate(timeStringToDate('21:00'));
-      setEndDate(timeStringToDate('23:30'));
-      setSelectedDays(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
-      setNotifyOnStart(true);
-      setNotifyOnEnd(false);
-      setWebDomains([
-        'youtube.com',
-        'netflix.com',
-        'tiktok.com',
-        'twitch.tv',
-        'hulu.com',
-        'disneyplus.com',
-        'primevideo.com',
-        'instagram.com',
-      ]);
-    } else {
-      setName('Digital Detox');
-      setStartDate(timeStringToDate('08:00'));
-      setEndDate(timeStringToDate('20:00'));
-      setSelectedDays(['sat', 'sun']);
-      setNotifyOnStart(true);
-      setNotifyOnEnd(true);
-      setWebDomains([
-        'instagram.com',
-        'tiktok.com',
-        'facebook.com',
-        'reddit.com',
-        'twitter.com',
-        'x.com',
-        'youtube.com',
-        'twitch.tv',
-      ]);
-    }
+    const preset = PRESETS[kind];
+    setName(preset.name);
+    setStartDate(timeStringToDate(preset.startTime));
+    setEndDate(timeStringToDate(preset.endTime));
+    setSelectedDays(preset.days);
+    setNotifyOnStart(preset.notifyOnStart);
+    setNotifyOnEnd(preset.notifyOnEnd);
+    setWebDomains(preset.webDomains);
   };
 
   const toggleDay = (day: DayOfWeek): void => {
+    setSelectedDays((current) =>
+      current.includes(day)
+        ? current.filter((d) => d !== day)
+        : [...current, day].sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]),
+    );
+  };
+
+  const handleToggleNotify = async (
+    value: boolean,
+    setter: (next: boolean) => void,
+  ): Promise<void> => {
     void haptic.select();
-    setSelectedDays((current) => {
-      if (current.includes(day)) {
-        return current.filter((d) => d !== day);
+    if (value && !(await requestNotificationPermissions())) return;
+    setter(value);
+  };
+
+  const addDomain = (): void => {
+    const trimmed = newDomain.trim();
+    if (!trimmed) return;
+    void run(async () => {
+      const domain = parseBlockedDomain(trimmed);
+      if (domain === null) {
+        throw new Error('Enter a valid domain like example.com.');
       }
-      return [...current, day].sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]);
-    });
-  };
-
-  const handleStartChange = (
-    _: DateTimePickerEvent,
-    next: Date | undefined,
-  ): void => {
-    if (next) setStartDate(next);
-  };
-
-  const handleEndChange = (
-    _: DateTimePickerEvent,
-    next: Date | undefined,
-  ): void => {
-    if (next) setEndDate(next);
-  };
-
-  const handleToggleNotifyStart = async (value: boolean) => {
-    void haptic.select();
-    if (value) {
-      const granted = await requestNotificationPermissions();
-      if (!granted) return;
-    }
-    setNotifyOnStart(value);
-  };
-
-  const handleToggleNotifyEnd = async (value: boolean) => {
-    void haptic.select();
-    if (value) {
-      const granted = await requestNotificationPermissions();
-      if (!granted) return;
-    }
-    setNotifyOnEnd(value);
-  };
-
-  const handleAddDomain = async (): Promise<void> => {
-    if (!newDomain.trim()) return;
-    const success = await run(async () => {
-      addWebDomain(newDomain);
+      setWebDomains((current) =>
+        current.includes(domain) ? current : [...current, domain],
+      );
+      setNewDomain('');
       void haptic.select();
     }, 'Invalid domain.');
-    if (success) {
-      setNewDomain('');
-    }
   };
 
-  const handleRemoveDomain = (domain: string) => {
-    removeWebDomain(domain);
+  const removeDomain = (domain: string): void => {
+    setWebDomains((current) => current.filter((d) => d !== domain));
     void haptic.select();
   };
 
-  const handleSave = async (): Promise<void> => {
-    if (!selectionHasBlockedTargets(selection)) {
-      void run(async () => {
-        throw new Error('Pick at least one app or site to block.');
-      }, 'Blocklist is empty.');
-      return;
-    }
+  const handleSelectionChange = (event: {
+    nativeEvent: ActivitySelectionMetadata;
+  }): Promise<boolean> =>
+    run(async () => {
+      void haptic.select();
+      setActivitySelection(
+        createActivitySelectionFromMetadata(event.nativeEvent),
+      );
+    }, 'Could not save selection.');
 
+  const handleSave = async (): Promise<void> => {
     const input: FocusBlockInput = {
       name,
       startTime,
       endTime,
       days: selectedDays,
       isEnabled: existing?.isEnabled ?? true,
-      selection,
+      selection: { activitySelection, webDomains },
       notifyOnStart,
       notifyOnEnd,
     };
 
     const success = await run(async () => {
+      if (!selectionHasBlockedTargets(input.selection)) {
+        throw new Error('Pick at least one app or site to block.');
+      }
       validateFocusBlockInput(input);
       void haptic.commit();
       if (editId) {
@@ -278,14 +207,6 @@ export default function AddFocusBlockScreen(): JSX.Element {
     );
   };
 
-  const handleSelectionChange = (event: {
-    nativeEvent: ActivitySelectionMetadata;
-  }): Promise<boolean> =>
-    run(async () => {
-      void haptic.select();
-      setSelection(createActivitySelectionFromMetadata(event.nativeEvent));
-    }, 'Could not save selection.');
-
   return (
     <Screen padded={false} edges={['bottom']}>
       <KeyboardAvoidingView
@@ -313,224 +234,35 @@ export default function AddFocusBlockScreen(): JSX.Element {
             </Typography>
           </View>
 
-          {!isEditing && (
-            <View className="gap-3">
-              <Typography variant="label" tone="faint">
-                Presets
-              </Typography>
-              <View className="flex-row gap-2">
-                <PresetChip
-                  label="Deep Work"
-                  onPress={() => applyPreset('work')}
-                />
-                <PresetChip
-                  label="Evening"
-                  onPress={() => applyPreset('evening')}
-                />
-                <PresetChip
-                  label="Weekend"
-                  onPress={() => applyPreset('weekend')}
-                />
-              </View>
-            </View>
-          )}
+          {!isEditing && <PresetRow onSelect={applyPreset} />}
 
-          <View className="gap-6 bg-surface-raised rounded-3xl p-6 shadow-sm border border-divider/10">
-            <View className="gap-3">
-              <Typography variant="label" tone="faint">
-                Block Name
-              </Typography>
-              <TextInput
-                value={name}
-                onChangeText={setName}
-                placeholder="e.g. Morning Deep Work"
-                placeholderTextColor={colors.inkFaint}
-                className="text-[22px] font-semibold"
-                style={{ color: colors.ink }}
-              />
-            </View>
+          <BlockFormCard
+            name={name}
+            onNameChange={setName}
+            startDate={startDate}
+            endDate={endDate}
+            onStartChange={setStartDate}
+            onEndChange={setEndDate}
+            selectedDays={selectedDays}
+            onToggleDay={toggleDay}
+          />
 
-            <View className="h-[1px] bg-divider" />
+          <BlockingCard
+            activitySelection={activitySelection}
+            onOpenAppsPicker={() => setIsPickerVisible(true)}
+            webDomains={webDomains}
+            newDomain={newDomain}
+            onNewDomainChange={setNewDomain}
+            onAddDomain={addDomain}
+            onRemoveDomain={removeDomain}
+          />
 
-            <View className="flex-row gap-4 justify-between bg-surface-sunken/60 rounded-2xl px-6 py-5 items-center">
-              <View className="items-start gap-1">
-                <Typography variant="label" tone="faint">
-                  Starts
-                </Typography>
-                <DateTimePicker
-                  value={startDate}
-                  mode="time"
-                  display="default"
-                  themeVariant={isDark ? 'dark' : 'light'}
-                  onChange={handleStartChange}
-                  textColor={colors.ink}
-                />
-              </View>
-              <View className="w-[1px] h-10 bg-divider/20" />
-              <View className="items-end gap-1">
-                <Typography variant="label" tone="faint">
-                  Ends
-                </Typography>
-                <DateTimePicker
-                  value={endDate}
-                  mode="time"
-                  display="default"
-                  themeVariant={isDark ? 'dark' : 'light'}
-                  onChange={handleEndChange}
-                  textColor={colors.ink}
-                />
-              </View>
-            </View>
-
-            <View className="h-[1px] bg-divider" />
-
-            <View className="gap-3">
-              <Typography variant="label" tone="faint">
-                Repeat
-              </Typography>
-              <View className="flex-row justify-between">
-                {DAYS.map((day) => {
-                  const active = selectedDays.includes(day.value);
-                  return (
-                    <Pressable
-                      key={day.value}
-                      onPress={() => toggleDay(day.value)}
-                      className={`h-10 w-10 items-center justify-center rounded-full ${
-                        active ? 'bg-signal' : 'bg-surface-sunken'
-                      }`}
-                    >
-                      <Typography
-                        variant="caption"
-                        tone={active ? 'surface' : 'muted'}
-                      >
-                        {day.label.charAt(0)}
-                      </Typography>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          </View>
-
-          <View className="gap-4">
-            <Typography variant="label" tone="faint">
-              Blocking
-            </Typography>
-            <View className="gap-4">
-              <Pressable
-                onPress={() => {
-                  void haptic.select();
-                  setIsPickerVisible(true);
-                }}
-                className="bg-surface-raised rounded-3xl p-6 flex-row items-center justify-between"
-              >
-                <View className="flex-row items-center gap-4">
-                  <Icon name="app.badge" size={24} tone="muted" />
-                  <View>
-                    <Typography variant="body-md" tone="ink">
-                      Apps & Categories
-                    </Typography>
-                    <Typography variant="caption" tone="muted">
-                      {selection.activitySelection.status === 'saved'
-                        ? `${selection.activitySelection.applicationCount} apps selected`
-                        : 'None selected'}
-                    </Typography>
-                  </View>
-                </View>
-                <Icon name="chevron.right" size={18} tone="faint" />
-              </Pressable>
-
-              <View className="bg-surface-raised rounded-3xl p-6 gap-6 shadow-sm border border-divider/10">
-                <View className="flex-row items-center gap-4">
-                  <Icon name="globe" size={24} tone="muted" />
-                  <Typography variant="body-md" tone="ink" className="flex-1">
-                    Blocked Websites
-                  </Typography>
-                </View>
-
-                <View className="flex-row gap-2">
-                  <TextInput
-                    placeholder="example.com"
-                    placeholderTextColor={colors.inkFaint}
-                    value={newDomain}
-                    onChangeText={setNewDomain}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    keyboardType="url"
-                    className="flex-1 bg-surface-sunken rounded-xl px-4 py-3"
-                    style={{ color: colors.ink }}
-                  />
-                  <Pressable
-                    onPress={() => void handleAddDomain()}
-                    className="bg-signal w-12 h-12 items-center justify-center rounded-xl"
-                  >
-                    <Icon name="plus" size={20} tone="surface" />
-                  </Pressable>
-                </View>
-
-                {selection.webDomains.length > 0 && (
-                  <View className="gap-3">
-                    {selection.webDomains.map((domain) => (
-                      <View
-                        key={domain}
-                        className="flex-row justify-between items-center bg-surface-sunken/40 px-5 py-4 rounded-xl border border-divider/5"
-                      >
-                        <Typography variant="body" tone="ink">
-                          {domain}
-                        </Typography>
-                        <Pressable onPress={() => handleRemoveDomain(domain)}>
-                          <Icon
-                            name="xmark.circle.fill"
-                            size={18}
-                            tone="faint"
-                          />
-                        </Pressable>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            </View>
-          </View>
-
-          <View className="gap-4">
-            <Typography variant="label" tone="faint">
-              Notifications
-            </Typography>
-            <View className="bg-surface-raised rounded-3xl p-6 gap-6 shadow-sm border border-divider/10">
-              <View className="flex-row items-center justify-between">
-                <View className="gap-1 flex-1 mr-4">
-                  <Typography variant="body-md" tone="ink">
-                    Start Notification
-                  </Typography>
-                  <Typography variant="caption" tone="muted">
-                    Alert when this block begins.
-                  </Typography>
-                </View>
-                <Switch
-                  value={notifyOnStart}
-                  onValueChange={(v) => void handleToggleNotifyStart(v)}
-                  trackColor={{ true: colors.signal, false: colors.divider }}
-                />
-              </View>
-              <View className="h-[1px] bg-divider/10" />
-              <View className="flex-row items-center justify-between">
-                <View className="gap-1 flex-1 mr-4">
-                  <Typography variant="body-md" tone="ink">
-                    End Notification
-                  </Typography>
-                  <Typography variant="caption" tone="muted">
-                    Alert when this block finishes.
-                  </Typography>
-                </View>
-                <Switch
-                  value={notifyOnEnd}
-                  onValueChange={(v) => void handleToggleNotifyEnd(v)}
-                  trackColor={{ true: colors.signal, false: colors.divider }}
-                />
-              </View>
-            </View>
-          </View>
+          <NotificationsCard
+            notifyOnStart={notifyOnStart}
+            notifyOnEnd={notifyOnEnd}
+            onChangeStart={(v) => void handleToggleNotify(v, setNotifyOnStart)}
+            onChangeEnd={(v) => void handleToggleNotify(v, setNotifyOnEnd)}
+          />
 
           {error ? (
             <Typography variant="caption" tone="danger">
@@ -538,29 +270,13 @@ export default function AddFocusBlockScreen(): JSX.Element {
             </Typography>
           ) : null}
 
-          <View className="gap-3 pt-2 pb-10">
-            <Button
-              title={isEditing ? 'Save changes' : 'Create block'}
-              variant="commit"
-              onPress={() => void handleSave()}
-              isLoading={isPending}
-              disabled={isPending}
-            />
-            {isEditing && (
-              <Button
-                title="Delete block"
-                variant="abandon"
-                onPress={handleDelete}
-                disabled={isPending}
-              />
-            )}
-            <Button
-              title="Cancel"
-              variant="ghost"
-              onPress={() => router.back()}
-              disabled={isPending}
-            />
-          </View>
+          <FormActions
+            isEditing={isEditing}
+            isPending={isPending}
+            onSave={() => void handleSave()}
+            onDelete={handleDelete}
+            onCancel={() => router.back()}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -574,24 +290,5 @@ export default function AddFocusBlockScreen(): JSX.Element {
         />
       )}
     </Screen>
-  );
-}
-
-function PresetChip({
-  label,
-  onPress,
-}: {
-  label: string;
-  onPress: () => void;
-}): JSX.Element {
-  return (
-    <Pressable
-      onPress={onPress}
-      className="bg-surface-raised px-5 py-3 rounded-full border border-divider/50"
-    >
-      <Typography variant="body-md" tone="muted">
-        {label}
-      </Typography>
-    </Pressable>
   );
 }

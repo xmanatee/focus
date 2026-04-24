@@ -1,45 +1,35 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { type ThemeColors, useThemeColors } from '../design/theme';
 
-type IconTone = 'ink' | 'muted' | 'faint' | 'signal' | 'danger' | 'surface';
+type IconTone = 'muted' | 'faint' | 'signal' | 'surface';
 
 interface IconProps {
   readonly name: SymbolViewProps['name'];
-  readonly size?: number;
-  readonly tone?: IconTone;
-  readonly weight?: SymbolViewProps['weight'];
+  readonly size: number;
+  readonly tone: IconTone;
 }
 
 function resolveTone(tone: IconTone, colors: ThemeColors): string {
   switch (tone) {
-    case 'ink':
-      return colors.ink;
     case 'muted':
       return colors.inkMuted;
     case 'faint':
       return colors.inkFaint;
     case 'signal':
       return colors.signal;
-    case 'danger':
-      return colors.danger;
     case 'surface':
       return colors.surface;
   }
 }
 
-export function Icon({
-  name,
-  size = 20,
-  tone = 'ink',
-  weight = 'regular',
-}: IconProps): JSX.Element {
+export function Icon({ name, size, tone }: IconProps): JSX.Element {
   const colors = useThemeColors();
   return (
     <SymbolView
       name={name}
       size={size}
       tintColor={resolveTone(tone, colors)}
-      weight={weight}
+      weight="regular"
       resizeMode="scaleAspectFit"
       style={{ width: size, height: size }}
     />

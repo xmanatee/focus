@@ -1,4 +1,4 @@
-import { BLOCK_ACTIVITY_SELECTION_ID } from './constants';
+export const BLOCK_ACTIVITY_SELECTION_ID = 'main-block-selection';
 
 interface ActivitySelectionMetadata {
   applicationCount: number;

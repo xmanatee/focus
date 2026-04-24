@@ -21,7 +21,7 @@ export const useSettingsStore = create<SettingsState>()(
       clearSetupBlock: () => set({ setupBlock: null }),
     }),
     {
-      name: 'fucus.settings',
+      name: 'focusblocks.settings',
       storage: persistedStorage,
     },
   ),

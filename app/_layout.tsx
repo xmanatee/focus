@@ -4,11 +4,16 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
-import { useBlocklistStore } from '../src/features/blocker/useBlocklistStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 import { attachCloudSync } from '../src/shared/storage';
+
+async function rehydrateAll(): Promise<void> {
+  await useFocusBlockStore.persist.rehydrate();
+  await useSettingsStore.persist.rehydrate();
+  await useBlockerStore.persist.rehydrate();
+}
 
 export default function RootLayout(): JSX.Element {
   const isDark = useIsDark();
@@ -16,26 +21,10 @@ export default function RootLayout(): JSX.Element {
   const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    void (async () => {
-      // 1. Initial rehydration (sequential to avoid storage races)
-      await useBlocklistStore.persist.rehydrate();
-      await useFocusBlockStore.persist.rehydrate();
-      await useSettingsStore.persist.rehydrate();
-      await useBlockerStore.persist.rehydrate();
-      setIsHydrated(true);
-    })();
-
-    // 2. Listen for remote iCloud changes
-    const cleanup = attachCloudSync(() => {
-      void (async () => {
-        await useBlocklistStore.persist.rehydrate();
-        await useFocusBlockStore.persist.rehydrate();
-        await useSettingsStore.persist.rehydrate();
-        await useBlockerStore.persist.rehydrate();
-      })();
+    void rehydrateAll().then(() => setIsHydrated(true));
+    return attachCloudSync(() => {
+      void rehydrateAll();
     });
-
-    return cleanup;
   }, []);
 
   if (!isHydrated) {

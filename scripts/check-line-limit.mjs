@@ -32,4 +32,5 @@ function checkLines(dir) {
 
 console.log('🔍 Checking file length limits...');
 checkLines('./src');
+checkLines('./app');
 console.log('✅ All files are within the 300-line limit.');

@@ -1,4 +1,4 @@
-package com.yourbound.fucus
+package love.nemi.focus
 
 import android.app.Application
 import android.content.res.Configuration

@@ -7,7 +7,6 @@ interface AsyncAction {
     action: () => Promise<void>,
     fallbackMessage: string,
   ) => Promise<boolean>;
-  readonly clearError: () => void;
 }
 
 export function useAsyncAction(): AsyncAction {
@@ -31,7 +30,5 @@ export function useAsyncAction(): AsyncAction {
     [],
   );
 
-  const clearError = useCallback((): void => setError(null), []);
-
-  return { error, isPending, run, clearError };
+  return { error, isPending, run };
 }

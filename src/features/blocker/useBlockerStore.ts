@@ -43,7 +43,7 @@ export const useBlockerStore = create<BlockerState>()(
       },
     }),
     {
-      name: 'fucus.blocker',
+      name: 'focusblocks.blocker',
       storage: persistedStorage,
     },
   ),
