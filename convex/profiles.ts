@@ -1,25 +1,20 @@
-import { getAuthUserId } from '@convex-dev/auth/server';
 import { v } from 'convex/values';
 import type { Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { mutation, query } from './_generated/server';
+import { authComponent } from './auth';
 import { blockSelectionValidator } from './validators';
 
-async function requireAuthUserId(
-  ctx: QueryCtx | MutationCtx,
-): Promise<Id<'users'>> {
-  const userId = await getAuthUserId(ctx);
-  if (!userId) {
-    throw new Error('Not authenticated');
-  }
-  return userId;
+async function requireUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
+  const user = await authComponent.getAuthUser(ctx);
+  return user._id;
 }
 
 async function requireOwnedProfile(
   ctx: MutationCtx,
   id: Id<'blockProfiles'>,
 ): Promise<void> {
-  const userId = await requireAuthUserId(ctx);
+  const userId = await requireUserId(ctx);
   const profile = await ctx.db.get(id);
   if (!profile || profile.userId !== userId) {
     throw new Error('Unauthorized');
@@ -29,7 +24,7 @@ async function requireOwnedProfile(
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await requireAuthUserId(ctx);
+    const userId = await requireUserId(ctx);
     return ctx.db
       .query('blockProfiles')
       .withIndex('by_user', (q) => q.eq('userId', userId))
@@ -43,7 +38,7 @@ export const create = mutation({
     selection: blockSelectionValidator,
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuthUserId(ctx);
+    const userId = await requireUserId(ctx);
     if (args.name.trim().length === 0) {
       throw new Error('Profile name is required.');
     }
@@ -76,7 +71,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id('blockProfiles') },
   handler: async (ctx, args) => {
-    const userId = await requireAuthUserId(ctx);
+    const userId = await requireUserId(ctx);
     await requireOwnedProfile(ctx, args.id);
 
     const schedulesUsingProfile = await ctx.db

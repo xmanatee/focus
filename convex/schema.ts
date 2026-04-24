@@ -1,12 +1,10 @@
-import { authTables } from '@convex-dev/auth/server';
 import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 import { blockSelectionValidator, dayOfWeekValidator } from './validators';
 
 export default defineSchema({
-  ...authTables,
   settings: defineTable({
-    userId: v.id('users'),
+    userId: v.string(),
     setupWindow: v.union(
       v.null(),
       v.object({
@@ -17,12 +15,12 @@ export default defineSchema({
     ),
   }).index('by_user', ['userId']),
   blockProfiles: defineTable({
-    userId: v.id('users'),
+    userId: v.string(),
     name: v.string(),
     selection: blockSelectionValidator,
   }).index('by_user', ['userId']),
   schedules: defineTable({
-    userId: v.id('users'),
+    userId: v.string(),
     name: v.string(),
     startTime: v.string(),
     endTime: v.string(),

@@ -1,6 +1,6 @@
-import { useConvexAuth } from 'convex/react';
 import { Redirect } from 'expo-router';
 import type { ReactNode } from 'react';
+import { authClient } from '../../api/authClient';
 import { AuthStartupScreen } from './AuthStartupScreen';
 
 interface RequireAuthProps {
@@ -10,13 +10,13 @@ interface RequireAuthProps {
 export function RequireAuth({
   children,
 }: RequireAuthProps): JSX.Element | null {
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { data: session, isPending } = authClient.useSession();
 
-  if (isLoading) {
+  if (isPending) {
     return <AuthStartupScreen isLoading />;
   }
 
-  if (!isAuthenticated) {
+  if (!session?.user) {
     return <Redirect href="/login" />;
   }
 

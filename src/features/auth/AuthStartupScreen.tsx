@@ -1,6 +1,6 @@
-import { useAuthActions } from '@convex-dev/auth/react';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { authClient } from '../../api/authClient';
 import { Button } from '../../shared/components/Button';
 import { Screen } from '../../shared/components/Screen';
 import { Typography } from '../../shared/components/Typography';
@@ -14,7 +14,6 @@ interface AuthStartupScreenProps {
 export function AuthStartupScreen({
   isLoading,
 }: AuthStartupScreenProps): JSX.Element {
-  const { signOut } = useAuthActions();
   const colors = useThemeColors();
   const [isAuthStalled, setIsAuthStalled] = useState(false);
 
@@ -47,7 +46,7 @@ export function AuthStartupScreen({
               variant="abandon"
               onPress={() => {
                 void haptic.abandon();
-                void signOut();
+                void authClient.signOut();
               }}
             />
           </View>

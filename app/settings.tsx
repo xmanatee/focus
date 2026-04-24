@@ -1,4 +1,3 @@
-import { useAuthActions } from '@convex-dev/auth/react';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -7,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { api } from '../convex/_generated/api';
+import { authClient } from '../src/api/authClient';
 import { RequireAuth } from '../src/features/auth/RequireAuth';
 import type { DayOfWeek } from '../src/features/schedule/types';
 import type {
@@ -82,7 +82,6 @@ function SettingsScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
   const isDark = useIsDark();
-  const { signOut } = useAuthActions();
   const settings = useQuery(api.settings.get);
   const setSetupWindow = useSettingsStore((s) => s.setSetupWindow);
   const clearSetupWindow = useSettingsStore((s) => s.clearSetupWindow);
@@ -308,7 +307,7 @@ function SettingsScreen(): JSX.Element {
           <Pressable
             onPress={() => {
               void haptic.select();
-              void signOut();
+              void authClient.signOut();
               router.replace('/login');
             }}
             className="flex-row items-center justify-between py-4 border-t border-divider"

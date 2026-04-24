@@ -3,7 +3,7 @@ import { BlockerBridge } from '../../bridge/BlockerBridge';
 
 type BusyState = 'idle' | 'authorizing';
 
-export type AuthorizationStatus =
+type AuthorizationStatus =
   | 'unknown'
   | 'authorized'
   | 'denied'

@@ -1,17 +1,21 @@
 import '../global.css';
-import { ConvexAuthProvider } from '@convex-dev/auth/react';
+import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react';
+import { ConvexReactClient } from 'convex/react';
 import { Stack } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { convex } from '../src/api/convex';
+import { authClient } from '../src/api/authClient';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 
-const storage = {
-  getItem: SecureStore.getItemAsync,
-  setItem: SecureStore.setItemAsync,
-  removeItem: SecureStore.deleteItemAsync,
-};
+const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL;
+
+if (!convexUrl) {
+  throw new Error('Missing EXPO_PUBLIC_CONVEX_URL.');
+}
+
+const convex = new ConvexReactClient(convexUrl, {
+  unsavedChangesWarning: false,
+});
 
 export default function RootLayout(): JSX.Element {
   const isDark = useIsDark();
@@ -20,11 +24,7 @@ export default function RootLayout(): JSX.Element {
   return (
     <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
       <SafeAreaProvider>
-        <ConvexAuthProvider
-          client={convex}
-          storage={storage}
-          shouldHandleCode={false}
-        >
+        <ConvexBetterAuthProvider client={convex} authClient={authClient}>
           <Stack
             screenOptions={{
               headerShown: false,
@@ -44,7 +44,7 @@ export default function RootLayout(): JSX.Element {
             />
             <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
           </Stack>
-        </ConvexAuthProvider>
+        </ConvexBetterAuthProvider>
       </SafeAreaProvider>
     </View>
   );

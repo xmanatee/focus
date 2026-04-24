@@ -1,15 +1,15 @@
-import { useConvexAuth } from 'convex/react';
 import { Redirect } from 'expo-router';
+import { authClient } from '../src/api/authClient';
 import { AuthStartupScreen } from '../src/features/auth/AuthStartupScreen';
 
 export default function IndexRoute(): JSX.Element {
-  const { isAuthenticated, isLoading } = useConvexAuth();
+  const { data: session, isPending } = authClient.useSession();
 
-  if (isLoading) {
+  if (isPending) {
     return <AuthStartupScreen isLoading />;
   }
 
-  if (isAuthenticated) {
+  if (session?.user) {
     return <Redirect href="/(tabs)" />;
   }
 

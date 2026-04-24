@@ -1,74 +1,39 @@
-import { useAuthActions } from '@convex-dev/auth/react';
-import { useConvexAuth } from 'convex/react';
-import * as Linking from 'expo-linking';
 import { Redirect } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { View } from 'react-native';
+import { authClient } from '../src/api/authClient';
 import { AuthStartupScreen } from '../src/features/auth/AuthStartupScreen';
+import {
+  signInWithApple,
+  signInWithGoogle,
+} from '../src/features/auth/nativeSignIn';
 import { Button } from '../src/shared/components/Button';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
-type OAuthProvider = 'apple' | 'google';
-type PendingProvider = OAuthProvider | 'callback';
+type Provider = 'apple' | 'google';
 
 export default function LoginScreen(): JSX.Element {
-  const { isAuthenticated, isLoading } = useConvexAuth();
-  const { signIn } = useAuthActions();
-  const [pendingProvider, setPendingProvider] =
-    useState<PendingProvider | null>(null);
-  const url = Linking.useURL();
-  const lastInvokedProvider = useRef<OAuthProvider | null>(null);
-  const lastHandledCode = useRef<string | null>(null);
+  const { data: session, isPending } = authClient.useSession();
+  const [pendingProvider, setPendingProvider] = useState<Provider | null>(null);
   const { error, run } = useAsyncAction();
 
-  useEffect(() => {
-    if (!url) {
-      return;
-    }
-
-    const codeValue = Linking.parse(url).queryParams?.code;
-    const code = Array.isArray(codeValue) ? codeValue[0] : codeValue;
-
-    if (typeof code !== 'string' || code.length === 0) {
-      return;
-    }
-
-    if (lastHandledCode.current === code) {
-      return;
-    }
-
-    const provider = lastInvokedProvider.current;
-    if (provider === null) {
-      return;
-    }
-
-    lastHandledCode.current = code;
-    setPendingProvider('callback');
-    void run(async () => {
-      await signIn(provider, { code });
-    }, 'Could not finish sign-in.').finally(() => setPendingProvider(null));
-  }, [run, signIn, url]);
-
-  const handleSignIn = (provider: OAuthProvider): Promise<boolean> => {
-    lastInvokedProvider.current = provider;
+  const handleSignIn = (provider: Provider): Promise<boolean> => {
     setPendingProvider(provider);
     void haptic.commit();
-    return run(async () => {
-      const result = await signIn(provider);
-      if (result.redirect) {
-        await Linking.openURL(result.redirect.toString());
-      }
-    }, 'Sign-in failed.').finally(() => setPendingProvider(null));
+    return run(
+      () => (provider === 'apple' ? signInWithApple() : signInWithGoogle()),
+      provider === 'apple' ? 'Apple sign-in failed.' : 'Google sign-in failed.',
+    ).finally(() => setPendingProvider(null));
   };
 
-  if (isLoading) {
+  if (isPending) {
     return <AuthStartupScreen isLoading />;
   }
 
-  if (isAuthenticated) {
+  if (session?.user) {
     return <Redirect href="/(tabs)" />;
   }
 
@@ -114,10 +79,6 @@ export default function LoginScreen(): JSX.Element {
           {error ? (
             <Typography variant="caption" tone="danger" align="center">
               {error}
-            </Typography>
-          ) : pendingProvider === 'callback' ? (
-            <Typography variant="caption" tone="muted" align="center">
-              Finishing sign-in...
             </Typography>
           ) : null}
 

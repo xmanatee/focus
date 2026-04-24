@@ -1,23 +1,18 @@
-import { getAuthUserId } from '@convex-dev/auth/server';
 import { v } from 'convex/values';
 import { validateScheduleInput } from '../src/features/schedule/validation';
 import type { Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { mutation, query } from './_generated/server';
+import { authComponent } from './auth';
 import { dayOfWeekValidator } from './validators';
 
-async function requireAuthUserId(
-  ctx: QueryCtx | MutationCtx,
-): Promise<Id<'users'>> {
-  const userId = await getAuthUserId(ctx);
-  if (!userId) {
-    throw new Error('Not authenticated');
-  }
-  return userId;
+async function requireUserId(ctx: QueryCtx | MutationCtx): Promise<string> {
+  const user = await authComponent.getAuthUser(ctx);
+  return user._id;
 }
 
 async function requireOwnedSchedule(ctx: MutationCtx, id: Id<'schedules'>) {
-  const userId = await requireAuthUserId(ctx);
+  const userId = await requireUserId(ctx);
   const schedule = await ctx.db.get(id);
   if (!schedule || schedule.userId !== userId) {
     throw new Error('Unauthorized');
@@ -29,7 +24,7 @@ async function requireOwnedProfile(
   ctx: MutationCtx,
   profileId: Id<'blockProfiles'>,
 ) {
-  const userId = await requireAuthUserId(ctx);
+  const userId = await requireUserId(ctx);
   const profile = await ctx.db.get(profileId);
   if (!profile || profile.userId !== userId) {
     throw new Error('Profile not found.');
@@ -40,7 +35,7 @@ async function requireOwnedProfile(
 export const get = query({
   args: {},
   handler: async (ctx) => {
-    const userId = await requireAuthUserId(ctx);
+    const userId = await requireUserId(ctx);
     return ctx.db
       .query('schedules')
       .withIndex('by_user', (q) => q.eq('userId', userId))
@@ -58,7 +53,7 @@ export const create = mutation({
     profileId: v.id('blockProfiles'),
   },
   handler: async (ctx, args) => {
-    const userId = await requireAuthUserId(ctx);
+    const userId = await requireUserId(ctx);
     await requireOwnedProfile(ctx, args.profileId);
     validateScheduleInput({
       name: args.name,
