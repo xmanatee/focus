@@ -1,7 +1,10 @@
 import { useAuthActions } from '@convex-dev/auth/react';
+import { useConvexAuth } from 'convex/react';
 import * as Linking from 'expo-linking';
+import { Redirect } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
+import { AuthStartupScreen } from '../src/features/auth/AuthStartupScreen';
 import { Button } from '../src/shared/components/Button';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
@@ -12,6 +15,7 @@ type OAuthProvider = 'apple' | 'google';
 type PendingProvider = OAuthProvider | 'callback';
 
 export default function LoginScreen(): JSX.Element {
+  const { isAuthenticated, isLoading } = useConvexAuth();
   const { signIn } = useAuthActions();
   const [pendingProvider, setPendingProvider] =
     useState<PendingProvider | null>(null);
@@ -59,6 +63,14 @@ export default function LoginScreen(): JSX.Element {
       }
     }, 'Sign-in failed.').finally(() => setPendingProvider(null));
   };
+
+  if (isLoading) {
+    return <AuthStartupScreen isLoading />;
+  }
+
+  if (isAuthenticated) {
+    return <Redirect href="/(tabs)" />;
+  }
 
   return (
     <Screen>

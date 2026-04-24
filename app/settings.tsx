@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { api } from '../convex/_generated/api';
+import { RequireAuth } from '../src/features/auth/RequireAuth';
 import type { DayOfWeek } from '../src/features/schedule/types';
 import type {
   AdminState,
@@ -69,7 +70,15 @@ function nextUnlockLabel(state: AdminState, now: Date): string {
   return `Next unlock in ${days} day${days === 1 ? '' : 's'}.`;
 }
 
-export default function SettingsScreen(): JSX.Element {
+export default function SettingsRoute(): JSX.Element {
+  return (
+    <RequireAuth>
+      <SettingsScreen />
+    </RequireAuth>
+  );
+}
+
+function SettingsScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
   const isDark = useIsDark();

@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { api } from '../convex/_generated/api';
 import type { Id } from '../convex/_generated/dataModel';
+import { RequireAuth } from '../src/features/auth/RequireAuth';
 import { selectionHasBlockedTargets } from '../src/features/blocker/types';
 import type {
   CreateScheduleInput,
@@ -53,7 +54,15 @@ function dateToTimeString(date: Date): string {
   return `${h}:${m}`;
 }
 
-export default function AddScheduleScreen(): JSX.Element {
+export default function AddScheduleRoute(): JSX.Element {
+  return (
+    <RequireAuth>
+      <AddScheduleScreen />
+    </RequireAuth>
+  );
+}
+
+function AddScheduleScreen(): JSX.Element {
   const router = useRouter();
   const colors = useThemeColors();
   const isDark = useIsDark();

@@ -7,6 +7,7 @@ import {
   DeviceActivitySelectionSheetViewPersisted,
 } from 'react-native-device-activity';
 import { api } from '../convex/_generated/api';
+import { RequireAuth } from '../src/features/auth/RequireAuth';
 import { BLOCK_ACTIVITY_SELECTION_ID } from '../src/features/blocker/constants';
 import { createActivitySelectionFromMetadata } from '../src/features/blocker/types';
 import { useProfileStore } from '../src/features/profile/useProfileStore';
@@ -17,7 +18,15 @@ import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
-export default function SelectAppsScreen(): JSX.Element {
+export default function SelectAppsRoute(): JSX.Element {
+  return (
+    <RequireAuth>
+      <SelectAppsScreen />
+    </RequireAuth>
+  );
+}
+
+function SelectAppsScreen(): JSX.Element {
   const router = useRouter();
   const profiles = useQuery(api.profiles.list);
   const schedules = useQuery(api.schedules.get);
