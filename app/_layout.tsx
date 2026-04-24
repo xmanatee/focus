@@ -1,8 +1,9 @@
 import '../global.css';
 import { Stack } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useBlocklistStore } from '../src/features/blocker/useBlocklistStore';
 import { useScheduleStore } from '../src/features/schedule/useScheduleStore';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
@@ -12,16 +13,39 @@ import { attachCloudSync } from '../src/shared/storage';
 export default function RootLayout(): JSX.Element {
   const isDark = useIsDark();
   const colors = useThemeColors();
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  useEffect(
-    () =>
-      attachCloudSync(() => {
-        void useBlocklistStore.persist.rehydrate();
-        void useScheduleStore.persist.rehydrate();
-        void useSettingsStore.persist.rehydrate();
-      }),
-    [],
-  );
+  useEffect(() => {
+    void (async () => {
+      // 1. Initial rehydration (sequential to avoid storage races)
+      await useBlocklistStore.persist.rehydrate();
+      await useScheduleStore.persist.rehydrate();
+      await useSettingsStore.persist.rehydrate();
+      await useBlockerStore.persist.rehydrate();
+      setIsHydrated(true);
+    })();
+
+    // 2. Listen for remote iCloud changes
+    const cleanup = attachCloudSync(() => {
+      void (async () => {
+        await useBlocklistStore.persist.rehydrate();
+        await useScheduleStore.persist.rehydrate();
+        await useSettingsStore.persist.rehydrate();
+        await useBlockerStore.persist.rehydrate();
+      })();
+    });
+
+    return cleanup;
+  }, []);
+
+  if (!isHydrated) {
+    return (
+      <View
+        style={{ flex: 1, backgroundColor: colors.surface }}
+        className={isDark ? 'dark' : ''}
+      />
+    );
+  }
 
   return (
     <View className={`flex-1 ${isDark ? 'dark' : ''}`}>
@@ -32,15 +56,12 @@ export default function RootLayout(): JSX.Element {
             contentStyle: { backgroundColor: colors.surface },
           }}
         >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen
             name="add-schedule"
             options={{ presentation: 'modal' }}
           />
-          <Stack.Screen
-            name="select-apps"
-            options={{ presentation: 'modal' }}
-          />
+          <Stack.Screen name="select-apps" />
           <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
         </Stack>
       </SafeAreaProvider>

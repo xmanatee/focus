@@ -97,17 +97,21 @@ function materializeSchedule(spec: ScheduleSpec): MonitorPlan[] {
 }
 
 async function applyPlan(plan: MonitorPlan): Promise<void> {
-  configureActions({
-    activityName: plan.activityName,
-    callbackName: 'intervalDidStart',
-    actions: plan.startActions,
-  });
-  configureActions({
-    activityName: plan.activityName,
-    callbackName: 'intervalDidEnd',
-    actions: plan.endActions,
-  });
-  await startMonitoring(plan.activityName, plan.schedule, []);
+  try {
+    configureActions({
+      activityName: plan.activityName,
+      callbackName: 'intervalDidStart',
+      actions: plan.startActions,
+    });
+    configureActions({
+      activityName: plan.activityName,
+      callbackName: 'intervalDidEnd',
+      actions: plan.endActions,
+    });
+    await startMonitoring(plan.activityName, plan.schedule, []);
+  } catch {
+    // Ignore native failures to avoid crashing the JS app
+  }
 }
 
 export async function reconcileSchedules(
@@ -120,15 +124,25 @@ export async function reconcileSchedules(
     }
   }
 
-  const current = getActivities().filter((name) =>
-    name.startsWith(ACTIVITY_PREFIX),
-  );
+  let current: string[] = [];
+  try {
+    current = getActivities().filter((name) =>
+      name?.startsWith(ACTIVITY_PREFIX),
+    );
+  } catch {
+    // Return early if native module fails
+    return;
+  }
 
   const toStop = current.filter((name) => !desired.has(name));
   if (toStop.length > 0) {
-    stopMonitoring(toStop);
-    for (const name of toStop) {
-      cleanUpAfterActivity(name);
+    try {
+      stopMonitoring(toStop);
+      for (const name of toStop) {
+        cleanUpAfterActivity(name);
+      }
+    } catch {
+      // Ignore native cleanup failures
     }
   }
 

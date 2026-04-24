@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import {
   type ActivitySelectionMetadata,
   DeviceActivitySelectionSheetViewPersisted,
@@ -46,19 +46,28 @@ export default function SelectAppsScreen(): JSX.Element {
 
   return (
     <Screen padded={false}>
-      <View className="px-6 py-4">
-        <Typography variant="label" tone="muted">
-          Apple picker
-        </Typography>
-        <Typography variant="display-md" tone="ink">
-          What distracts you.
-        </Typography>
-        {error ? (
-          <Typography variant="caption" tone="danger" className="mt-2">
+      <View className="px-6 py-4 flex-row justify-between items-center">
+        <View>
+          <Typography variant="label" tone="muted">
+            Blocklist
+          </Typography>
+          <Typography variant="display-md" tone="ink">
+            Select apps.
+          </Typography>
+        </View>
+        <Pressable onPress={() => router.back()}>
+          <Typography variant="body-md" tone="signal">
+            Done
+          </Typography>
+        </Pressable>
+      </View>
+      {error ? (
+        <View className="px-6 pb-2">
+          <Typography variant="caption" tone="danger">
             {error}
           </Typography>
-        ) : null}
-      </View>
+        </View>
+      ) : null}
       <DeviceActivitySelectionSheetViewPersisted
         familyActivitySelectionId={BLOCK_ACTIVITY_SELECTION_ID}
         style={{ flex: 1 }}

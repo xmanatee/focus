@@ -18,6 +18,7 @@ import {
   DAYS,
   DAY_ORDER,
   dateToTimeString,
+  formatRelative,
   timeStringToDate,
 } from '../src/shared/days';
 import { haptic } from '../src/shared/design/haptics';
@@ -31,13 +32,7 @@ function nextUnlockLabel(state: AdminState, now: Date): string {
   if (!state.nextUnlock) {
     return 'Setup hours need to be configured.';
   }
-  const deltaMs = state.nextUnlock.at.getTime() - now.getTime();
-  const hours = Math.max(1, Math.round(deltaMs / 3_600_000));
-  if (hours < 24) {
-    return `Next unlock in ${hours} hr.`;
-  }
-  const days = Math.round(hours / 24);
-  return `Next unlock in ${days} day${days === 1 ? '' : 's'}.`;
+  return `Next unlock ${formatRelative(state.nextUnlock.at, now)}.`;
 }
 
 export default function SettingsScreen(): JSX.Element {
@@ -208,29 +203,30 @@ export default function SettingsScreen(): JSX.Element {
             </View>
           </View>
 
-          <View className="flex-row gap-8 justify-center">
-            <View className="items-center gap-2">
+          <View className="flex-row gap-4 justify-between bg-surface-sunken rounded-2xl px-6 py-4 items-center">
+            <View className="items-start gap-1">
               <Typography variant="label" tone="faint">
-                Start
+                Starts
               </Typography>
               <DateTimePicker
                 value={startDate}
                 mode="time"
-                display="spinner"
+                display="default"
                 themeVariant={isDark ? 'dark' : 'light'}
                 onChange={handleStartChange}
                 disabled={!isUnlocked}
                 textColor={colors.ink}
               />
             </View>
-            <View className="items-center gap-2">
+            <View className="w-[1px] h-10 bg-divider" />
+            <View className="items-end gap-1">
               <Typography variant="label" tone="faint">
-                End
+                Ends
               </Typography>
               <DateTimePicker
                 value={endDate}
                 mode="time"
-                display="spinner"
+                display="default"
                 themeVariant={isDark ? 'dark' : 'light'}
                 onChange={handleEndChange}
                 disabled={!isUnlocked}

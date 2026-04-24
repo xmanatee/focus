@@ -35,3 +35,20 @@ export function dateToTimeString(date: Date): string {
   const m = String(date.getMinutes()).padStart(2, '0');
   return `${h}:${m}`;
 }
+
+export function formatDayShort(day: string): string {
+  return day.charAt(0).toUpperCase() + day.slice(1);
+}
+
+export function formatRelative(at: Date, now: Date): string {
+  const deltaMin = Math.round((at.getTime() - now.getTime()) / 60_000);
+  if (deltaMin < 60) {
+    return `in ${Math.max(1, deltaMin)} min`;
+  }
+  const hours = Math.round(deltaMin / 60);
+  if (hours < 24) {
+    return `in ${hours} hr`;
+  }
+  const days = Math.round(hours / 24);
+  return `in ${days} day${days === 1 ? '' : 's'}`;
+}

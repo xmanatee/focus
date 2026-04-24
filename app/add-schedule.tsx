@@ -4,13 +4,17 @@ import DateTimePicker, {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
-import { selectionHasBlockedTargets } from '../src/features/blocker/types';
+import {
+  EMPTY_BLOCK_SELECTION,
+  selectionHasBlockedTargets,
+} from '../src/features/blocker/types';
 import { useBlocklistStore } from '../src/features/blocker/useBlocklistStore';
 import type { DayOfWeek, ScheduleInput } from '../src/features/schedule/types';
 import { useScheduleStore } from '../src/features/schedule/useScheduleStore';
 import { validateScheduleInput } from '../src/features/schedule/validation';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { Button } from '../src/shared/components/Button';
+import { Icon } from '../src/shared/components/Icon';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import {
@@ -36,14 +40,39 @@ export default function AddScheduleScreen(): JSX.Element {
   const existing = useScheduleStore((s) =>
     editId ? s.schedules.find((item) => item.id === editId) ?? null : null,
   );
-  const selection = useBlocklistStore((s) => s.selection);
+
   const { state: adminState, isSettled } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
 
-  const [name, setName] = useState<string | null>(null);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [selectedDays, setSelectedDays] = useState<DayOfWeek[] | null>(null);
+  const [name, setName] = useState<string>(existing?.name ?? 'Focus window');
+  const [startDate, setStartDate] = useState<Date>(() =>
+    timeStringToDate(existing?.startTime ?? '09:00'),
+  );
+  const [endDate, setEndDate] = useState<Date>(() =>
+    timeStringToDate(existing?.endTime ?? '17:00'),
+  );
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(
+    existing ? [...existing.days] : ['mon', 'tue', 'wed', 'thu', 'fri'],
+  );
+  const [newDomain, setNewDomain] = useState('');
+
+  const selection = useBlocklistStore((s) => s.selection);
+  const setSelection = useBlocklistStore((s) => s.setActivitySelection);
+  const setWebDomains = useBlocklistStore((s) => s.setWebDomains);
+  const addWebDomain = useBlocklistStore((s) => s.addWebDomain);
+  const removeWebDomain = useBlocklistStore((s) => s.removeWebDomain);
+
+  useEffect(() => {
+    if (existing) {
+      const scheduleSelection = existing.selection ?? EMPTY_BLOCK_SELECTION;
+      setSelection(scheduleSelection.activitySelection);
+      setWebDomains(scheduleSelection.webDomains);
+    } else {
+      setSelection(EMPTY_BLOCK_SELECTION.activitySelection);
+      setWebDomains(EMPTY_BLOCK_SELECTION.webDomains);
+    }
+  }, [existing, setSelection, setWebDomains]);
+
   const { error, isPending, run } = useAsyncAction();
 
   useEffect(() => {
@@ -52,38 +81,32 @@ export default function AddScheduleScreen(): JSX.Element {
     }
   }, [isAdminLocked, isSettled, router]);
 
-  useEffect(() => {
-    if (name !== null) {
-      return;
-    }
-    if (isEditing) {
-      if (existing) {
-        setName(existing.name);
-        setStartDate(timeStringToDate(existing.startTime));
-        setEndDate(timeStringToDate(existing.endTime));
-        setSelectedDays([...existing.days]);
-      }
-      return;
-    }
-    setName('Focus window');
-    setStartDate(timeStringToDate('09:00'));
-    setEndDate(timeStringToDate('17:00'));
-    setSelectedDays(['mon', 'tue', 'wed', 'thu', 'fri']);
-  }, [existing, isEditing, name]);
+  const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
+  const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
 
-  const startTime = useMemo(
-    () => (startDate ? dateToTimeString(startDate) : ''),
-    [startDate],
-  );
-  const endTime = useMemo(
-    () => (endDate ? dateToTimeString(endDate) : ''),
-    [endDate],
-  );
+  const applyPreset = (kind: 'work' | 'evening' | 'weekend') => {
+    void haptic.select();
+    if (kind === 'work') {
+      setName('Deep Work');
+      setStartDate(timeStringToDate('09:00'));
+      setEndDate(timeStringToDate('12:00'));
+      setSelectedDays(['mon', 'tue', 'wed', 'thu', 'fri']);
+    } else if (kind === 'evening') {
+      setName('Evening Wind-down');
+      setStartDate(timeStringToDate('21:00'));
+      setEndDate(timeStringToDate('23:30'));
+      setSelectedDays(['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']);
+    } else {
+      setName('Digital Detox');
+      setStartDate(timeStringToDate('08:00'));
+      setEndDate(timeStringToDate('20:00'));
+      setSelectedDays(['sat', 'sun']);
+    }
+  };
 
   const toggleDay = (day: DayOfWeek): void => {
     void haptic.select();
     setSelectedDays((current) => {
-      if (current === null) return current;
       if (current.includes(day)) {
         return current.filter((d) => d !== day);
       }
@@ -105,27 +128,26 @@ export default function AddScheduleScreen(): JSX.Element {
     if (next) setEndDate(next);
   };
 
-  if (
-    name === null ||
-    startDate === null ||
-    endDate === null ||
-    selectedDays === null
-  ) {
-    return (
-      <Screen>
-        <View className="flex-1 items-center justify-center">
-          <Typography variant="body" tone="muted">
-            Loading...
-          </Typography>
-        </View>
-      </Screen>
-    );
-  }
+  const handleAddDomain = async (): Promise<void> => {
+    if (!newDomain.trim()) return;
+    const success = await run(async () => {
+      addWebDomain(newDomain);
+      void haptic.select();
+    }, 'Invalid domain.');
+    if (success) {
+      setNewDomain('');
+    }
+  };
+
+  const handleRemoveDomain = (domain: string) => {
+    removeWebDomain(domain);
+    void haptic.select();
+  };
 
   const handleSave = async (): Promise<void> => {
     if (!selectionHasBlockedTargets(selection)) {
       void run(async () => {
-        throw new Error('Pick at least one app or site on the Blocklist tab.');
+        throw new Error('Pick at least one app or site to block.');
       }, 'Blocklist is empty.');
       return;
     }
@@ -136,6 +158,7 @@ export default function AddScheduleScreen(): JSX.Element {
       endTime,
       days: selectedDays,
       isEnabled: existing?.isEnabled ?? true,
+      selection,
     };
 
     const success = await run(async () => {
@@ -162,80 +185,180 @@ export default function AddScheduleScreen(): JSX.Element {
       >
         <View className="gap-2">
           <Typography variant="label" tone="muted">
-            {isEditing ? 'Edit schedule' : 'New schedule'}
+            {isEditing ? 'Edit window' : 'New window'}
           </Typography>
           <Typography variant="display-md" tone="ink">
-            When to block.
+            Set your focus.
           </Typography>
         </View>
 
-        <View className="gap-3">
-          <Typography variant="label" tone="faint">
-            Name
-          </Typography>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Focus window"
-            placeholderTextColor={colors.inkFaint}
-            className="bg-surface-raised rounded-xl px-5 py-4 text-[22px] font-semibold"
-            style={{ color: colors.ink }}
-          />
-        </View>
-
-        <View className="flex-row gap-8 justify-center">
-          <View className="items-center gap-2">
+        {!isEditing && (
+          <View className="gap-3">
             <Typography variant="label" tone="faint">
-              Start
+              Quick presets
             </Typography>
-            <DateTimePicker
-              value={startDate}
-              mode="time"
-              display="spinner"
-              themeVariant={isDark ? 'dark' : 'light'}
-              onChange={handleStartChange}
-              textColor={colors.ink}
+            <View className="flex-row gap-2">
+              <PresetChip label="Work" onPress={() => applyPreset('work')} />
+              <PresetChip
+                label="Evening"
+                onPress={() => applyPreset('evening')}
+              />
+              <PresetChip
+                label="Weekend"
+                onPress={() => applyPreset('weekend')}
+              />
+            </View>
+          </View>
+        )}
+
+        <View className="gap-6 bg-surface-raised rounded-3xl p-6">
+          <View className="gap-3">
+            <Typography variant="label" tone="faint">
+              Name
+            </Typography>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="Focus window"
+              placeholderTextColor={colors.inkFaint}
+              className="text-[22px] font-semibold"
+              style={{ color: colors.ink }}
             />
           </View>
-          <View className="items-center gap-2">
-            <Typography variant="label" tone="faint">
-              End
-            </Typography>
-            <DateTimePicker
-              value={endDate}
-              mode="time"
-              display="spinner"
-              themeVariant={isDark ? 'dark' : 'light'}
-              onChange={handleEndChange}
-              textColor={colors.ink}
-            />
-          </View>
-        </View>
 
-        <View className="gap-3">
-          <Typography variant="label" tone="faint">
-            Repeat
-          </Typography>
-          <View className="flex-row flex-wrap gap-2">
-            {DAYS.map((day) => {
-              const active = selectedDays.includes(day.value);
-              return (
-                <Pressable
-                  key={day.value}
-                  onPress={() => toggleDay(day.value)}
-                  className={`px-5 py-3 rounded-full ${
-                    active ? 'bg-signal' : 'bg-surface-raised'
-                  }`}
-                >
-                  <Typography
-                    variant="body-md"
-                    tone={active ? 'surface' : 'muted'}
+          <View className="h-[1px] bg-divider" />
+
+          <View className="flex-row justify-between items-center">
+            <View className="items-start gap-1">
+              <Typography variant="label" tone="faint">
+                Starts
+              </Typography>
+              <DateTimePicker
+                value={startDate}
+                mode="time"
+                display="default"
+                themeVariant={isDark ? 'dark' : 'light'}
+                onChange={handleStartChange}
+                textColor={colors.ink}
+              />
+            </View>
+            <View className="w-[1px] h-10 bg-divider" />
+            <View className="items-end gap-1">
+              <Typography variant="label" tone="faint">
+                Ends
+              </Typography>
+              <DateTimePicker
+                value={endDate}
+                mode="time"
+                display="default"
+                themeVariant={isDark ? 'dark' : 'light'}
+                onChange={handleEndChange}
+                textColor={colors.ink}
+              />
+            </View>
+          </View>
+
+          <View className="h-[1px] bg-divider" />
+
+          <View className="gap-3">
+            <Typography variant="label" tone="faint">
+              Repeat
+            </Typography>
+            <View className="flex-row justify-between">
+              {DAYS.map((day) => {
+                const active = selectedDays.includes(day.value);
+                return (
+                  <Pressable
+                    key={day.value}
+                    onPress={() => toggleDay(day.value)}
+                    className={`h-10 w-10 items-center justify-center rounded-full ${
+                      active ? 'bg-signal' : 'bg-surface-sunken'
+                    }`}
                   >
-                    {day.label}
+                    <Typography
+                      variant="caption"
+                      tone={active ? 'surface' : 'muted'}
+                    >
+                      {day.label.charAt(0)}
+                    </Typography>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+
+        <View className="gap-4">
+          <Typography variant="label" tone="faint">
+            Blocking
+          </Typography>
+          <View className="gap-4">
+            <Pressable
+              onPress={() => router.push('/select-apps')}
+              className="bg-surface-raised rounded-3xl p-6 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center gap-4">
+                <Icon name="app.badge" size={24} tone="muted" />
+                <View>
+                  <Typography variant="body-md" tone="ink">
+                    Apps & Categories
                   </Typography>
+                  <Typography variant="caption" tone="muted">
+                    {selection.activitySelection.status === 'saved'
+                      ? `${selection.activitySelection.applicationCount} apps selected`
+                      : 'None selected'}
+                  </Typography>
+                </View>
+              </View>
+              <Icon name="chevron.right" size={18} tone="faint" />
+            </Pressable>
+
+            <View className="bg-surface-raised rounded-3xl p-6 gap-4">
+              <View className="flex-row items-center gap-4">
+                <Icon name="globe" size={24} tone="muted" />
+                <Typography variant="body-md" tone="ink" className="flex-1">
+                  Websites
+                </Typography>
+              </View>
+
+              <View className="flex-row gap-2">
+                <TextInput
+                  placeholder="example.com"
+                  placeholderTextColor={colors.inkFaint}
+                  value={newDomain}
+                  onChangeText={setNewDomain}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                  className="flex-1 bg-surface-sunken rounded-xl px-4 py-2"
+                  style={{ color: colors.ink }}
+                />
+                <Pressable
+                  onPress={() => void handleAddDomain()}
+                  className="bg-signal w-10 h-10 items-center justify-center rounded-xl"
+                >
+                  <Icon name="plus" size={20} tone="surface" />
                 </Pressable>
-              );
-            })}
+              </View>
+
+              {selection.webDomains.length > 0 && (
+                <View className="gap-2 mt-2">
+                  {selection.webDomains.map((domain) => (
+                    <View
+                      key={domain}
+                      className="flex-row justify-between items-center bg-surface-sunken/50 px-4 py-2 rounded-lg"
+                    >
+                      <Typography variant="body" tone="muted">
+                        {domain}
+                      </Typography>
+                      <Pressable onPress={() => handleRemoveDomain(domain)}>
+                        <Icon name="xmark.circle.fill" size={16} tone="faint" />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
@@ -262,5 +385,24 @@ export default function AddScheduleScreen(): JSX.Element {
         </View>
       </ScrollView>
     </Screen>
+  );
+}
+
+function PresetChip({
+  label,
+  onPress,
+}: {
+  label: string;
+  onPress: () => void;
+}): JSX.Element {
+  return (
+    <Pressable
+      onPress={onPress}
+      className="bg-surface-raised px-5 py-3 rounded-full border border-divider/50"
+    >
+      <Typography variant="body-md" tone="muted">
+        {label}
+      </Typography>
+    </Pressable>
   );
 }

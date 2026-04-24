@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { EMPTY_BLOCK_SELECTION } from '../blocker/types';
 import type { DayOfWeek, ScheduleInput } from './types';
 import { validateScheduleInput } from './validation';
 
@@ -10,6 +11,7 @@ function baseInput(overrides: Partial<ScheduleInput> = {}): ScheduleInput {
     endTime: '17:00',
     days: weekdays,
     isEnabled: true,
+    selection: EMPTY_BLOCK_SELECTION,
     ...overrides,
   };
 }

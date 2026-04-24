@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { newId, persistedStorage } from '../../shared/storage';
+import { EMPTY_BLOCK_SELECTION } from '../blocker/types';
 import { isScheduleActiveAt } from './activeness';
 import type { Schedule, ScheduleInput } from './types';
 
@@ -10,6 +11,7 @@ interface ScheduleState {
   updateSchedule: (id: string, input: ScheduleInput) => void;
   toggleSchedule: (id: string, isEnabled: boolean) => void;
   deleteSchedule: (id: string) => void;
+  addPreset: (preset: 'deep-work' | 'evening' | 'weekend') => void;
 }
 
 function assertNotActive(schedule: Schedule, message: string): void {
@@ -34,6 +36,7 @@ export const useScheduleStore = create<ScheduleState>()(
               endTime: input.endTime,
               days: input.days,
               isEnabled: input.isEnabled,
+              selection: input.selection,
             },
           ],
         })),
@@ -56,6 +59,7 @@ export const useScheduleStore = create<ScheduleState>()(
                   startTime: input.startTime,
                   endTime: input.endTime,
                   days: input.days,
+                  selection: input.selection,
                 }
               : s,
           ),
@@ -89,6 +93,40 @@ export const useScheduleStore = create<ScheduleState>()(
         set((state) => ({
           schedules: state.schedules.filter((s) => s.id !== id),
         }));
+      },
+
+      addPreset: (kind) => {
+        const presets: Record<string, ScheduleInput> = {
+          'deep-work': {
+            name: 'Deep Work',
+            startTime: '09:00',
+            endTime: '12:00',
+            days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+            isEnabled: true,
+            selection: EMPTY_BLOCK_SELECTION,
+          },
+          evening: {
+            name: 'Evening Wind-down',
+            startTime: '21:00',
+            endTime: '23:30',
+            days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+            isEnabled: true,
+            selection: EMPTY_BLOCK_SELECTION,
+          },
+          weekend: {
+            name: 'Digital Detox',
+            startTime: '08:00',
+            endTime: '20:00',
+            days: ['sat', 'sun'],
+            isEnabled: true,
+            selection: EMPTY_BLOCK_SELECTION,
+          },
+        };
+
+        const input = presets[kind];
+        if (input) {
+          get().addSchedule(input);
+        }
       },
     }),
     {

@@ -9,29 +9,41 @@ function cloudIsUsable(): boolean {
 
 const cloudBackedStorage: StateStorage = {
   getItem: async (key) => {
-    const local = await AsyncStorage.getItem(key);
-    if (local !== null) {
-      return local;
-    }
-    if (!cloudIsUsable()) {
+    try {
+      const local = await AsyncStorage.getItem(key);
+      if (local !== null) {
+        return local;
+      }
+      if (!cloudIsUsable()) {
+        return null;
+      }
+      const remote = Cloud.getString(key);
+      if (remote !== null) {
+        await AsyncStorage.setItem(key, remote);
+      }
+      return remote;
+    } catch {
       return null;
     }
-    const remote = Cloud.getString(key);
-    if (remote !== null) {
-      await AsyncStorage.setItem(key, remote);
-    }
-    return remote;
   },
   setItem: async (key, value) => {
-    await AsyncStorage.setItem(key, value);
-    if (cloudIsUsable()) {
-      Cloud.setString(key, value);
+    try {
+      await AsyncStorage.setItem(key, value);
+      if (cloudIsUsable()) {
+        Cloud.setString(key, value);
+      }
+    } catch {
+      // Ignore storage failures to prevent app crash
     }
   },
   removeItem: async (key) => {
-    await AsyncStorage.removeItem(key);
-    if (cloudIsUsable()) {
-      Cloud.remove(key);
+    try {
+      await AsyncStorage.removeItem(key);
+      if (cloudIsUsable()) {
+        Cloud.remove(key);
+      }
+    } catch {
+      // Ignore storage failures to prevent app crash
     }
   },
 };
@@ -42,18 +54,26 @@ export function attachCloudSync(onRemoteChange: () => void): () => void {
   if (!cloudIsUsable()) {
     return () => {};
   }
-  const subscription = Cloud.addChangeListener(async (event) => {
-    for (const key of event.changedKeys) {
-      const value = Cloud.getString(key);
-      if (value !== null) {
-        await AsyncStorage.setItem(key, value);
-      } else {
-        await AsyncStorage.removeItem(key);
+  try {
+    const subscription = Cloud.addChangeListener(async (event) => {
+      try {
+        for (const key of event.changedKeys) {
+          const value = Cloud.getString(key);
+          if (value !== null) {
+            await AsyncStorage.setItem(key, value);
+          } else {
+            await AsyncStorage.removeItem(key);
+          }
+        }
+        onRemoteChange();
+      } catch {
+        // Silently ignore sync issues
       }
-    }
-    onRemoteChange();
-  });
-  return () => subscription.remove();
+    });
+    return () => subscription.remove();
+  } catch {
+    return () => {};
+  }
 }
 
 export function newId(): string {

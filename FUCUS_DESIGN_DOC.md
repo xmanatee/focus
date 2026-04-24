@@ -45,14 +45,10 @@ runtime picture (stores, scheduler, bridge, iCloud sync).
 ```text
 app/                       # Expo Router routes
 ├── _layout.tsx            # Root Stack + theme + iCloud sync listener
-├── add-schedule.tsx       # Create / edit schedule (modal)
-├── select-apps.tsx        # Apple FamilyActivityPicker wrapper (modal)
-├── settings.tsx           # Setup hours (modal)
-└── (tabs)/
-    ├── _layout.tsx        # Tab bar + initialize + reconcile effect
-    ├── index.tsx          # Focus / status tab
-    ├── library.tsx        # Blocklist editor
-    └── schedules.tsx      # Schedule list
+├── index.tsx              # Main Feed (Permissions, Active Session, Lock-in, Schedules)
+├── add-schedule.tsx       # Create / edit schedule + site blocking (modal)
+├── select-apps.tsx        # Apple FamilyActivityPicker wrapper
+└── settings.tsx           # Setup hours (modal)
 
 src/
 ├── bridge/BlockerBridge.ts       # Screen Time authorization wrapper
@@ -89,11 +85,10 @@ targets/                          # Swift extensions (ShieldAction, ShieldConfig
 ## 5. Product Features
 
 ### 5.1 Blocklist
-- **Apps + Categories**: the system `FamilyActivityPicker` via
-  `react-native-device-activity`. Tokens live on-device; we surface
-  aggregate counts only.
-- **Websites**: manual domain entry; validated by `parseBlockedDomain`;
-  Apple caps the filter at 50 entries.
+- Each schedule carries its own `BlockSelection`.
+- Apps + Categories: system `FamilyActivityPicker` counts only.
+- Websites: manual domain entry per schedule.
+- The `useBlocklistStore` acts as a temporary buffer during schedule creation and editing.
 
 ### 5.2 Schedules (primary driver)
 - Recurring day-of-week + start/end time windows.

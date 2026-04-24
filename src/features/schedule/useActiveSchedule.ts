@@ -25,10 +25,12 @@ export function useActiveSchedule(
       return { active: null, next: null, now };
     }
 
-    const active = schedules.find((s) => isScheduleActiveAt(s, now)) ?? null;
+    const active =
+      schedules.find((s) => s && isScheduleActiveAt(s, now)) ?? null;
 
     let soonest: { schedule: Schedule; at: Date } | null = null;
     for (const schedule of schedules) {
+      if (!schedule) continue;
       const candidate = nextStartAfter(schedule, now);
       if (!candidate) {
         continue;

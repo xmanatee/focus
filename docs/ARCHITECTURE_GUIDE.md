@@ -46,8 +46,7 @@ expanded into N `DeviceActivity` monitors (one per weekday) via
 `configureActions('intervalDidStart', ...)` and
 `configureActions('intervalDidEnd', ...)` to apply / remove the shield
 using the current blocklist. `reconcileSchedules()` is idempotent and
-runs in a `useEffect` in `(tabs)/_layout.tsx` whenever schedules or the
-blocklist change.
+runs in a `useEffect` in `app/index.tsx` whenever schedules change.
 
 ## 5. No server, no auth
 

@@ -11,6 +11,7 @@ import {
 interface BlocklistState {
   selection: BlockSelection;
   setActivitySelection: (next: PersistedActivitySelection) => void;
+  setWebDomains: (domains: string[]) => void;
   addWebDomain: (input: string) => void;
   removeWebDomain: (domain: string) => void;
 }
@@ -27,6 +28,11 @@ export const useBlocklistStore = create<BlocklistState>()(
       setActivitySelection: (next) =>
         set((state) => ({
           selection: { ...state.selection, activitySelection: next },
+        })),
+
+      setWebDomains: (domains) =>
+        set((state) => ({
+          selection: { ...state.selection, webDomains: dedupe(domains) },
         })),
 
       addWebDomain: (input) => {
