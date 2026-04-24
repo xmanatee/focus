@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "ignoreFiles": [
+    "babel.config.js",
+    "metro.config.js",
+    "targets/**/expo-target.config.js"
+  ],
+  "ignoreIssues": {
+    "app.json": ["unlisted"],
+    "convex/auth.ts": ["exports"]
+  },
+  "treatConfigHintsAsErrors": false
+}

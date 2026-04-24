@@ -1,0 +1,16 @@
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      run: npx @biomejs/biome check --apply {staged_files}
+    tsc:
+      run: npx tsc --noEmit
+    line-limit:
+      run: node scripts/check-line-limit.mjs
+    knip:
+      run: npx knip
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx commitlint --edit {1}
