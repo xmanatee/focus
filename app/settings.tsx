@@ -130,10 +130,15 @@ export default function SettingsScreen(): JSX.Element {
   };
 
   return (
-    <Screen>
+    <Screen padded={false} edges={['bottom']}>
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingVertical: 16, gap: 32 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: 60,
+          paddingTop: 12,
+          gap: 32,
+        }}
         showsVerticalScrollIndicator={false}
       >
         <View className="gap-2">

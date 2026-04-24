@@ -33,7 +33,6 @@ export default function MainFeedScreen(): JSX.Element {
 
   const schedules = useScheduleStore((s) => s.schedules);
   const toggleSchedule = useScheduleStore((s) => s.toggleSchedule);
-  const deleteSchedule = useScheduleStore((s) => s.deleteSchedule);
   const { active, now } = useActiveSchedule(schedules);
 
   const { state: adminState } = useAdminState();
@@ -90,22 +89,6 @@ export default function MainFeedScreen(): JSX.Element {
     }, 'Could not update schedule.');
   };
 
-  const confirmDelete = (scheduleId: string, name: string): void => {
-    Alert.alert(`Delete "${name}"?`, 'This schedule will stop triggering.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          void haptic.abandon();
-          void run(async () => {
-            deleteSchedule(scheduleId);
-          }, 'Could not delete schedule.');
-        },
-      },
-    ]);
-  };
-
   if (authorizationStatus === 'denied') {
     return (
       <Screen>
@@ -141,26 +124,22 @@ export default function MainFeedScreen(): JSX.Element {
   }
 
   return (
-    <Screen>
-      <View className="flex-row justify-between items-center py-3 mb-2">
-        <Typography variant="label" tone="signal">
-          Fucus
-        </Typography>
-        <Pressable
-          onPress={() => {
-            void haptic.select();
-            router.push('/settings');
-          }}
-          className="h-11 w-11 items-center justify-center rounded-full bg-surface-raised"
-          accessibilityLabel="Settings"
-        >
-          <Icon name="gearshape" size={20} tone="muted" />
-        </Pressable>
+    <Screen padded={false}>
+      <View className="px-6">
+        <View className="flex-row justify-between items-center py-3 mb-2">
+          <Typography variant="label" tone="signal">
+            Fucus
+          </Typography>
+        </View>
       </View>
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: 40, gap: 24 }}
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: 40,
+          gap: 24,
+        }}
         showsVerticalScrollIndicator={false}
       >
         {/* Permission Prompt Card */}
@@ -348,19 +327,6 @@ export default function MainFeedScreen(): JSX.Element {
                             false: colors.divider,
                           }}
                         />
-                        <Pressable
-                          onPress={() =>
-                            confirmDelete(schedule.id, schedule.name)
-                          }
-                          disabled={isRowLocked}
-                          hitSlop={10}
-                        >
-                          <Icon
-                            name="trash"
-                            size={18}
-                            tone={isRowLocked ? 'faint' : 'muted'}
-                          />
-                        </Pressable>
                       </View>
                     </View>
                   </View>

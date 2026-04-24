@@ -59,10 +59,18 @@ export default function RootLayout(): JSX.Element {
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen
             name="add-schedule"
-            options={{ presentation: 'modal' }}
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+            }}
           />
-          <Stack.Screen name="select-apps" />
-          <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+          <Stack.Screen
+            name="settings"
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+            }}
+          />
         </Stack>
       </SafeAreaProvider>
     </View>

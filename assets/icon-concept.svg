@@ -1,19 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <!--
-    Fucus app icon concept.
-    Direction: Headspace warmth + Duolingo roundness + Endel restraint.
-    Warm cream surface, deep-ink "F", signal-orange period — a full stop on distraction.
-  -->
-  <rect width="1024" height="1024" fill="#F8F2E8"/>
-  <g fill="#2B221A">
-    <text
-      x="512"
-      y="680"
-      text-anchor="middle"
-      font-family="-apple-system, SF Pro Display, SF Pro, system-ui, sans-serif"
-      font-size="640"
-      font-weight="900"
-      letter-spacing="-32">F</text>
-  </g>
-  <circle cx="800" cy="672" r="56" fill="#EA7A3A"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FDFBF7" />
+      <stop offset="100%" stop-color="#F8F2E8" />
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  
+  <!-- Geometric "F" with intentional weight and spacing -->
+  <path 
+    d="M320 240 C 320 210 345 190 375 190 H 680 C 715 190 740 215 740 250 S 715 310 680 310 H 460 V 460 H 640 C 675 460 700 485 700 520 S 675 580 640 580 H 460 V 780 C 460 815 435 840 400 840 S 340 815 340 780 V 260 L 320 260 C 320 260 320 240 320 240 Z" 
+    fill="#2B221A"
+  />
+  
+  <!-- Signature "Fucus" full stop — large, vibrant, and perfectly placed -->
+  <circle cx="760" cy="740" r="85" fill="#EA7A3A"/>
 </svg>
