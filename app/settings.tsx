@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { protectionCopy } from '../src/features/protection/copy';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import type { DayOfWeek } from '../src/features/schedule/types';
@@ -11,6 +11,7 @@ import type {
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { Button } from '../src/shared/components/Button';
+import { Card } from '../src/shared/components/Card';
 import { DayPicker } from '../src/shared/components/DayPicker';
 import { Icon } from '../src/shared/components/Icon';
 import { NotifyRow } from '../src/shared/components/NotifyRow';
@@ -155,32 +156,28 @@ export default function SettingsScreen(): JSX.Element {
           </Typography>
         </View>
 
-        <Pressable
-          onPress={() => {
-            void haptic.select();
-            router.push('/protection');
-          }}
-          className="bg-surface-raised rounded-3xl p-card flex-row items-center justify-between shadow-sm border border-divider/10"
-        >
-          <View className="flex-row items-center gap-3 flex-1">
-            <Icon
-              name="shield.fill"
-              size={22}
-              tone={posture.score === 'none' ? 'muted' : 'signal'}
-            />
-            <View className="flex-1 gap-0.5">
-              <Typography variant="body-md" tone="ink">
-                {protectionCopy.settingsRow.title}
-              </Typography>
-              <Typography variant="caption" tone="muted">
-                {protectionSubtitle}
-              </Typography>
+        <Card onPress={() => router.push('/protection')}>
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-3 flex-1">
+              <Icon
+                name="shield.fill"
+                size={22}
+                tone={posture.score === 'none' ? 'muted' : 'signal'}
+              />
+              <View className="flex-1 gap-0.5">
+                <Typography variant="body-md" tone="ink">
+                  {protectionCopy.settingsRow.title}
+                </Typography>
+                <Typography variant="caption" tone="muted">
+                  {protectionSubtitle}
+                </Typography>
+              </View>
             </View>
+            <Icon name="chevron.right" size={16} tone="faint" />
           </View>
-          <Icon name="chevron.right" size={16} tone="faint" />
-        </Pressable>
+        </Card>
 
-        <View className="gap-3 bg-surface-raised rounded-3xl p-card shadow-sm border border-divider/10">
+        <Card>
           <View className="flex-row items-center justify-between">
             <Typography variant="h3" tone="ink">
               Setup Block
@@ -264,7 +261,7 @@ export default function SettingsScreen(): JSX.Element {
               />
             ) : null}
           </View>
-        </View>
+        </Card>
       </ScrollView>
     </Screen>
   );

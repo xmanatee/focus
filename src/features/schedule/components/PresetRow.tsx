@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import { Chip } from '../../../shared/components/Chip';
-import { Typography } from '../../../shared/components/Typography';
+import { Section } from '../../../shared/components/Section';
 import type { PresetKind } from '../presets';
 
 interface PresetRowProps {
@@ -19,10 +19,7 @@ export function PresetRow({
   onLongPress,
 }: PresetRowProps): JSX.Element {
   return (
-    <View className="gap-3">
-      <Typography variant="label" tone="faint">
-        Presets
-      </Typography>
+    <Section title="Presets">
       <View className="flex-row gap-2">
         {ENTRIES.map(({ kind, label }) => (
           <Chip
@@ -33,6 +30,6 @@ export function PresetRow({
           />
         ))}
       </View>
-    </View>
+    </Section>
   );
 }

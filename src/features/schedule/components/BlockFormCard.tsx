@@ -1,4 +1,5 @@
 import { TextInput, View } from 'react-native';
+import { Card } from '../../../shared/components/Card';
 import { DayPicker } from '../../../shared/components/DayPicker';
 import { TimeRangePicker } from '../../../shared/components/TimeRangePicker';
 import { Typography } from '../../../shared/components/Typography';
@@ -29,7 +30,7 @@ export function BlockFormCard({
   const colors = useThemeColors();
 
   return (
-    <View className="gap-3 bg-surface-raised rounded-3xl p-card shadow-sm border border-divider/10">
+    <Card>
       <View className="gap-2">
         <Typography variant="label" tone="faint">
           Block Name
@@ -61,6 +62,6 @@ export function BlockFormCard({
         </Typography>
         <DayPicker selected={selectedDays} onToggle={onToggleDay} />
       </View>
-    </View>
+    </Card>
   );
 }

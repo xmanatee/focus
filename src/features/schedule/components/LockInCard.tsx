@@ -1,7 +1,7 @@
-import { View } from 'react-native';
+import { Card } from '../../../shared/components/Card';
 import { InfoBanner } from '../../../shared/components/InfoBanner';
 import { NotifyRow } from '../../../shared/components/NotifyRow';
-import { Typography } from '../../../shared/components/Typography';
+import { Section } from '../../../shared/components/Section';
 import { protectionCopy } from '../../protection/copy';
 
 interface LockInCardProps {
@@ -16,11 +16,8 @@ export function LockInCard({
   tamperReady,
 }: LockInCardProps): JSX.Element {
   return (
-    <View className="gap-3">
-      <Typography variant="label" tone="faint">
-        Lock-in
-      </Typography>
-      <View className="bg-surface-raised rounded-3xl p-card gap-3 shadow-sm border border-divider/10">
+    <Section title="Lock-in">
+      <Card>
         <NotifyRow
           title={protectionCopy.lockInCard.title}
           subtitle={protectionCopy.lockInCard.body}
@@ -32,7 +29,7 @@ export function LockInCard({
             {protectionCopy.lockInCard.needsSetup}
           </InfoBanner>
         ) : null}
-      </View>
-    </View>
+      </Card>
+    </Section>
   );
 }

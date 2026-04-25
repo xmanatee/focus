@@ -1,7 +1,7 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { protectionCopy } from '../../features/protection/copy';
 import type { ProtectionPosture } from '../../features/protection/types';
-import { haptic } from '../design/haptics';
+import { Card } from './Card';
 import { DefenseDotsRow } from './DefenseDotsRow';
 import { Icon } from './Icon';
 import { Typography } from './Typography';
@@ -22,13 +22,7 @@ export function ProtectionStatusCard({
   onPress,
 }: ProtectionStatusCardProps): JSX.Element {
   return (
-    <Pressable
-      onPress={() => {
-        void haptic.select();
-        onPress();
-      }}
-      className="bg-surface-raised rounded-[32px] p-card gap-3"
-    >
+    <Card onPress={onPress}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
           <Icon
@@ -48,6 +42,6 @@ export function ProtectionStatusCard({
       <Typography variant="body" tone="muted">
         {subtitleByScore[posture.score]}
       </Typography>
-    </Pressable>
+    </Card>
   );
 }

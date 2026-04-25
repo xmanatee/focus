@@ -1,14 +1,18 @@
 import {
   AuthorizationStatus as NativeAuthorizationStatus,
   getAuthorizationStatus,
+  onAuthorizationStatusChange,
   requestAuthorization,
 } from 'react-native-device-activity';
 
-type AuthorizationStatus = 'authorized' | 'denied' | 'notDetermined';
+export type AuthorizationStatus = 'authorized' | 'denied' | 'notDetermined';
 
 interface IBlockerBridge {
   requestAuthorization(): Promise<boolean>;
-  checkAuthorizationStatus(): Promise<AuthorizationStatus>;
+  readAuthorizationStatus(): AuthorizationStatus;
+  subscribeToAuthorizationStatus(
+    listener: (status: AuthorizationStatus) => void,
+  ): () => void;
 }
 
 function mapAuthorizationStatus(status: number): AuthorizationStatus {
@@ -24,11 +28,20 @@ function mapAuthorizationStatus(status: number): AuthorizationStatus {
 class ScreenTimeBlockerBridge implements IBlockerBridge {
   async requestAuthorization(): Promise<boolean> {
     await requestAuthorization('individual');
-    return (await this.checkAuthorizationStatus()) === 'authorized';
+    return this.readAuthorizationStatus() === 'authorized';
   }
 
-  async checkAuthorizationStatus(): Promise<AuthorizationStatus> {
+  readAuthorizationStatus(): AuthorizationStatus {
     return mapAuthorizationStatus(getAuthorizationStatus());
+  }
+
+  subscribeToAuthorizationStatus(
+    listener: (status: AuthorizationStatus) => void,
+  ): () => void {
+    const subscription = onAuthorizationStatusChange((event) => {
+      listener(mapAuthorizationStatus(event.authorizationStatus));
+    });
+    return () => subscription.remove();
   }
 }
 

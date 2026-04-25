@@ -1,4 +1,5 @@
 import { Pressable, Switch, View } from 'react-native';
+import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
 import { formatActiveDays } from '../../../shared/days';
@@ -24,7 +25,7 @@ export function FocusBlockRow({
   const { selection } = block;
 
   return (
-    <View className="bg-surface-raised rounded-[32px] p-card gap-3">
+    <Card>
       <View className="flex-row justify-between items-start">
         <Pressable onPress={onPress} disabled={locked} className="flex-1 gap-2">
           <View className="flex-row items-center gap-2">
@@ -74,7 +75,7 @@ export function FocusBlockRow({
           trackColor={{ true: colors.signal, false: colors.divider }}
         />
       </View>
-    </View>
+    </Card>
   );
 }
 

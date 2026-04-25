@@ -3,7 +3,6 @@ import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
@@ -13,7 +12,6 @@ import { attachCloudSync } from '../src/shared/storage';
 async function rehydrateAll(): Promise<void> {
   await useFocusBlockStore.persist.rehydrate();
   await useSettingsStore.persist.rehydrate();
-  await useBlockerStore.persist.rehydrate();
   await useTamperSetupStore.persist.rehydrate();
 }
 

@@ -1,6 +1,7 @@
 import { View } from 'react-native';
+import { Card } from '../../../shared/components/Card';
 import { NotifyRow } from '../../../shared/components/NotifyRow';
-import { Typography } from '../../../shared/components/Typography';
+import { Section } from '../../../shared/components/Section';
 
 interface NotificationsCardProps {
   readonly notifyOnStart: boolean;
@@ -16,11 +17,8 @@ export function NotificationsCard({
   onChangeEnd,
 }: NotificationsCardProps): JSX.Element {
   return (
-    <View className="gap-3">
-      <Typography variant="label" tone="faint">
-        Notifications
-      </Typography>
-      <View className="bg-surface-raised rounded-3xl p-card gap-3 shadow-sm border border-divider/10">
+    <Section title="Notifications">
+      <Card>
         <NotifyRow
           title="Start Notification"
           subtitle="Alert when this block begins."
@@ -34,7 +32,7 @@ export function NotificationsCard({
           value={notifyOnEnd}
           onChange={onChangeEnd}
         />
-      </View>
-    </View>
+      </Card>
+    </Section>
   );
 }

@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
 import { formatRelative, nextOccurrenceOf } from '../../../shared/days';
@@ -14,7 +15,7 @@ export function ActiveSessionCard({
   now,
 }: ActiveSessionCardProps): JSX.Element {
   return (
-    <View className="bg-ink rounded-[32px] p-5 gap-3 shadow-xl">
+    <Card tone="ink">
       <View className="flex-row items-center justify-between">
         <Typography variant="label" tone="surface" className="opacity-70">
           Active Session
@@ -36,6 +37,6 @@ export function ActiveSessionCard({
         Ends at {block.endTime} ·{' '}
         {formatRelative(nextOccurrenceOf(block.endTime, now), now)}
       </Typography>
-    </View>
+    </Card>
   );
 }
