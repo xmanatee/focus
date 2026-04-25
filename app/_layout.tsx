@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
+import { useEmergencyStore } from '../src/features/protection/useEmergencyStore';
+import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
@@ -13,6 +15,8 @@ async function rehydrateAll(): Promise<void> {
   await useFocusBlockStore.persist.rehydrate();
   await useSettingsStore.persist.rehydrate();
   await useBlockerStore.persist.rehydrate();
+  await useTamperSetupStore.persist.rehydrate();
+  await useEmergencyStore.persist.rehydrate();
 }
 
 export default function RootLayout(): JSX.Element {
@@ -57,6 +61,20 @@ export default function RootLayout(): JSX.Element {
             name="settings"
             options={{
               presentation: 'formSheet',
+              sheetGrabberVisible: true,
+            }}
+          />
+          <Stack.Screen
+            name="protection"
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+            }}
+          />
+          <Stack.Screen
+            name="emergency"
+            options={{
+              presentation: 'modal',
               sheetGrabberVisible: true,
             }}
           />

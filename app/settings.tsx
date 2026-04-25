@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { protectionCopy } from '../src/features/protection/copy';
+import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import type { DayOfWeek } from '../src/features/schedule/types';
 import type {
   AdminState,
@@ -10,6 +12,7 @@ import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { Button } from '../src/shared/components/Button';
 import { DayPicker } from '../src/shared/components/DayPicker';
+import { Icon } from '../src/shared/components/Icon';
 import { NotifyRow } from '../src/shared/components/NotifyRow';
 import { Screen } from '../src/shared/components/Screen';
 import { TimeRangePicker } from '../src/shared/components/TimeRangePicker';
@@ -56,6 +59,16 @@ export default function SettingsScreen(): JSX.Element {
     existing?.notifyOnStart ?? true,
   );
   const { error, isPending, run } = useAsyncAction();
+
+  const posture = useProtectionPosture();
+  const okCount = posture.defenses.filter((d) => d.ok).length;
+  const totalDefenses = posture.defenses.length;
+  const protectionSubtitle =
+    posture.score === 'none'
+      ? protectionCopy.settingsRow.none
+      : posture.score === 'full'
+        ? protectionCopy.settingsRow.full
+        : protectionCopy.settingsRow.partial(okCount, totalDefenses);
 
   useEffect(() => {
     if (!existing) {
@@ -141,6 +154,31 @@ export default function SettingsScreen(): JSX.Element {
             focus blocks when you are most likely to be distracted.
           </Typography>
         </View>
+
+        <Pressable
+          onPress={() => {
+            void haptic.select();
+            router.push('/protection');
+          }}
+          className="bg-surface-raised rounded-3xl p-card flex-row items-center justify-between shadow-sm border border-divider/10"
+        >
+          <View className="flex-row items-center gap-3 flex-1">
+            <Icon
+              name="shield.fill"
+              size={22}
+              tone={posture.score === 'none' ? 'muted' : 'signal'}
+            />
+            <View className="flex-1 gap-0.5">
+              <Typography variant="body-md" tone="ink">
+                {protectionCopy.settingsRow.title}
+              </Typography>
+              <Typography variant="caption" tone="muted">
+                {protectionSubtitle}
+              </Typography>
+            </View>
+          </View>
+          <Icon name="chevron.right" size={16} tone="faint" />
+        </Pressable>
 
         <View className="gap-3 bg-surface-raised rounded-3xl p-card shadow-sm border border-divider/10">
           <View className="flex-row items-center justify-between">

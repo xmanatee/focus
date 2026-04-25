@@ -14,6 +14,7 @@ function baseInput(overrides: Partial<FocusBlockInput> = {}): FocusBlockInput {
     selection: EMPTY_BLOCK_SELECTION,
     notifyOnStart: true,
     notifyOnEnd: true,
+    strict: false,
     ...overrides,
   };
 }
@@ -69,5 +70,22 @@ describe('validateFocusBlockInput', () => {
     expect(() =>
       validateFocusBlockInput(baseInput({ days: ['mon', 'mon'] })),
     ).toThrow(/unique/i);
+  });
+
+  it('rejects strict block without any blocked targets', () => {
+    expect(() => validateFocusBlockInput(baseInput({ strict: true }))).toThrow(
+      /strict block must block/i,
+    );
+  });
+
+  it('accepts strict block when web domains are present', () => {
+    expect(() =>
+      validateFocusBlockInput(
+        baseInput({
+          strict: true,
+          selection: { ...EMPTY_BLOCK_SELECTION, webDomains: ['example.com'] },
+        }),
+      ),
+    ).not.toThrow();
   });
 });

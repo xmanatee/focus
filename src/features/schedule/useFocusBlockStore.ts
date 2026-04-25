@@ -13,6 +13,7 @@ interface FocusBlockState {
   updateFocusBlock: (id: string, input: FocusBlockInput) => void;
   toggleFocusBlock: (id: string, isEnabled: boolean) => void;
   deleteFocusBlock: (id: string) => void;
+  forceDisable: (id: string) => void;
 }
 
 function assertNotActive(block: FocusBlock, message: string): void {
@@ -74,6 +75,17 @@ export const useFocusBlockStore = create<FocusBlockState>()(
         clearSlot(selectionIdForBlock(id));
         set((state) => ({
           focusBlocks: state.focusBlocks.filter((b) => b.id !== id),
+        }));
+      },
+
+      // Used only by the emergency-exit modal — assertNotActive deliberately
+      // blocks user-initiated disables, which is the rule the emergency code
+      // is designed to bypass.
+      forceDisable: (id) => {
+        set((state) => ({
+          focusBlocks: state.focusBlocks.map((b) =>
+            b.id === id ? { ...b, isEnabled: false } : b,
+          ),
         }));
       },
     }),

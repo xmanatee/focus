@@ -38,6 +38,14 @@ export function FocusBlockRow({
                 </Typography>
               </View>
             )}
+            {block.strict && (
+              <View className="bg-ink/10 px-2 py-0.5 rounded-md flex-row items-center gap-1">
+                <Icon name="lock.fill" size={10} tone="muted" />
+                <Typography variant="caption" tone="muted">
+                  Strict
+                </Typography>
+              </View>
+            )}
           </View>
           <Typography variant="caption" tone="muted">
             {formatActiveDays(block.days)} · {block.startTime}–{block.endTime}

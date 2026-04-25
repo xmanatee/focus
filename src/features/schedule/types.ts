@@ -22,6 +22,7 @@ export interface FocusBlock {
   selection: BlockSelection;
   notifyOnStart: boolean;
   notifyOnEnd: boolean;
+  strict: boolean;
 }
 
 export interface FocusBlockInput {
@@ -33,4 +34,5 @@ export interface FocusBlockInput {
   selection: BlockSelection;
   notifyOnStart: boolean;
   notifyOnEnd: boolean;
+  strict: boolean;
 }

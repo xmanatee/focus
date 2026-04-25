@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,22 +13,21 @@ import {
   EMPTY_BLOCK_SELECTION,
   selectionHasBlockedTargets,
 } from '../src/features/blocker/types';
+import { protectionCopy } from '../src/features/protection/copy';
+import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
 import { FormActions } from '../src/features/schedule/components/FormActions';
+import { LockInCard } from '../src/features/schedule/components/LockInCard';
 import { NotificationsCard } from '../src/features/schedule/components/NotificationsCard';
 import { PresetRow } from '../src/features/schedule/components/PresetRow';
 import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
-import type { DayOfWeek } from '../src/features/schedule/types';
+import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
 import { useActivitySelection } from '../src/features/schedule/useActivitySelection';
+import { useFocusBlockForm } from '../src/features/schedule/useFocusBlockForm';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
-import {
-  DAY_ORDER,
-  dateToTimeString,
-  timeStringToDate,
-} from '../src/shared/days';
 import { haptic } from '../src/shared/design/haptics';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 import { requestNotificationPermissions } from '../src/shared/notifications';
@@ -40,6 +39,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const editId = params.id ?? null;
   const isEditing = editId !== null;
 
+  const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const addFocusBlock = useFocusBlockStore((s) => s.addFocusBlock);
   const updateFocusBlock = useFocusBlockStore((s) => s.updateFocusBlock);
   const deleteFocusBlock = useFocusBlockStore((s) => s.deleteFocusBlock);
@@ -48,32 +48,16 @@ export default function AddFocusBlockScreen(): JSX.Element {
   );
 
   const [blockId] = useState<string>(() => editId ?? newId());
+  const [newDomain, setNewDomain] = useState('');
   const [templatePromptKind, setTemplatePromptKind] =
     useState<PresetKind | null>(null);
 
   const { state: adminState } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
+  const { isStrict } = useActiveBlock(focusBlocks);
+  const tamperReady = useTamperSetupStore((s) => s.setup.completedAt) !== null;
 
-  const [name, setName] = useState<string>(existing?.name ?? 'Focus block');
-  const [startDate, setStartDate] = useState<Date>(() =>
-    timeStringToDate(existing?.startTime ?? '09:00'),
-  );
-  const [endDate, setEndDate] = useState<Date>(() =>
-    timeStringToDate(existing?.endTime ?? '17:00'),
-  );
-  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(
-    existing ? [...existing.days] : ['mon', 'tue', 'wed', 'thu', 'fri'],
-  );
-  const [newDomain, setNewDomain] = useState('');
-  const [notifyOnStart, setNotifyOnStart] = useState(
-    existing?.notifyOnStart ?? true,
-  );
-  const [notifyOnEnd, setNotifyOnEnd] = useState(
-    existing?.notifyOnEnd ?? false,
-  );
-  const [webDomains, setWebDomains] = useState<string[]>(
-    existing ? [...existing.selection.webDomains] : [],
-  );
+  const form = useFocusBlockForm(existing);
 
   const selection = useActivitySelection(
     blockId,
@@ -86,37 +70,14 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const { error, isPending, run } = useAsyncAction();
 
   useEffect(() => {
-    if (isAdminLocked) router.back();
-  }, [isAdminLocked, router]);
+    if (isAdminLocked || isStrict) router.back();
+  }, [isAdminLocked, isStrict, router]);
 
-  const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
-  const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
-
-  const applyPreset = (kind: PresetKind): void => {
+  const handleApplyPreset = (kind: PresetKind): void => {
     void haptic.select();
-    const preset = PRESETS[kind];
-    setName(preset.name);
-    setStartDate(timeStringToDate(preset.startTime));
-    setEndDate(timeStringToDate(preset.endTime));
-    setSelectedDays(preset.days);
-    setNotifyOnStart(preset.notifyOnStart);
-    setNotifyOnEnd(preset.notifyOnEnd);
-    setWebDomains(preset.webDomains);
-
-    const templateSelection = selection.applyTemplate(kind);
-    if (templateSelection === 'needs-setup') {
-      setTemplatePromptKind(kind);
-      return;
-    }
-    setTemplatePromptKind(null);
-  };
-
-  const toggleDay = (day: DayOfWeek): void => {
-    setSelectedDays((current) =>
-      current.includes(day)
-        ? current.filter((d) => d !== day)
-        : [...current, day].sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]),
-    );
+    form.applyPreset(kind);
+    const result = selection.applyTemplate(kind);
+    setTemplatePromptKind(result === 'needs-setup' ? kind : null);
   };
 
   const addDomain = (): void => {
@@ -127,32 +88,57 @@ export default function AddFocusBlockScreen(): JSX.Element {
       if (domain === null) {
         throw new Error('Enter a valid domain like example.com.');
       }
-      setWebDomains((current) =>
-        current.includes(domain) ? current : [...current, domain],
-      );
+      if (!form.webDomains.includes(domain)) {
+        form.setWebDomains([...form.webDomains, domain]);
+      }
       setNewDomain('');
       void haptic.select();
     }, 'Invalid domain.');
   };
 
   const removeDomain = (domain: string): void => {
-    setWebDomains((current) => current.filter((d) => d !== domain));
+    form.setWebDomains(form.webDomains.filter((d) => d !== domain));
     void haptic.select();
+  };
+
+  const handleStrictChange = (next: boolean): void => {
+    void haptic.select();
+    if (!next || tamperReady) {
+      form.setStrict(next);
+      return;
+    }
+    Alert.alert(
+      protectionCopy.lockInCard.softBlockTitle,
+      protectionCopy.lockInCard.softBlockBody,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: protectionCopy.lockInCard.softBlockSetup,
+          onPress: () => router.push('/protection'),
+        },
+        {
+          text: protectionCopy.lockInCard.softBlockAnyway,
+          style: 'destructive',
+          onPress: () => form.setStrict(true),
+        },
+      ],
+    );
   };
 
   const handleSave = async (): Promise<void> => {
     const input = {
-      name,
-      startTime,
-      endTime,
-      days: selectedDays,
+      name: form.name,
+      startTime: form.startTime,
+      endTime: form.endTime,
+      days: [...form.selectedDays],
       isEnabled: existing?.isEnabled ?? true,
       selection: {
         activitySelection: selection.activitySelection,
-        webDomains,
+        webDomains: [...form.webDomains],
       },
-      notifyOnStart,
-      notifyOnEnd,
+      notifyOnStart: form.notifyOnStart,
+      notifyOnEnd: form.notifyOnEnd,
+      strict: form.strict,
     };
 
     const success = await run(async () => {
@@ -220,28 +206,34 @@ export default function AddFocusBlockScreen(): JSX.Element {
 
           {!isEditing && (
             <PresetRow
-              onSelect={applyPreset}
+              onSelect={handleApplyPreset}
               onLongPress={selection.openTemplatePicker}
             />
           )}
           <BlockFormCard
-            name={name}
-            onNameChange={setName}
-            startDate={startDate}
-            endDate={endDate}
-            onStartChange={setStartDate}
-            onEndChange={setEndDate}
-            selectedDays={selectedDays}
-            onToggleDay={toggleDay}
+            name={form.name}
+            onNameChange={form.setName}
+            startDate={form.startDate}
+            endDate={form.endDate}
+            onStartChange={form.setStartDate}
+            onEndChange={form.setEndDate}
+            selectedDays={form.selectedDays}
+            onToggleDay={form.toggleDay}
           />
           <BlockingCard
             activitySelection={selection.activitySelection}
             onOpenAppsPicker={selection.openBlockPicker}
-            webDomains={webDomains}
+            webDomains={form.webDomains}
             newDomain={newDomain}
             onNewDomainChange={setNewDomain}
             onAddDomain={addDomain}
             onRemoveDomain={removeDomain}
+          />
+
+          <LockInCard
+            value={form.strict}
+            onChange={handleStrictChange}
+            tamperReady={tamperReady}
           />
 
           {templatePromptKind !== null ? (
@@ -252,15 +244,15 @@ export default function AddFocusBlockScreen(): JSX.Element {
           ) : null}
 
           <NotificationsCard
-            notifyOnStart={notifyOnStart}
-            notifyOnEnd={notifyOnEnd}
+            notifyOnStart={form.notifyOnStart}
+            notifyOnEnd={form.notifyOnEnd}
             onChangeStart={(v) => {
               void haptic.select();
-              setNotifyOnStart(v);
+              form.setNotifyOnStart(v);
             }}
             onChangeEnd={(v) => {
               void haptic.select();
-              setNotifyOnEnd(v);
+              form.setNotifyOnEnd(v);
             }}
           />
 

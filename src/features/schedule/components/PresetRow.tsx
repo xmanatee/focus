@@ -1,4 +1,5 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import { Chip } from '../../../shared/components/Chip';
 import { Typography } from '../../../shared/components/Typography';
 import type { PresetKind } from '../presets';
 
@@ -6,6 +7,12 @@ interface PresetRowProps {
   readonly onSelect: (kind: PresetKind) => void;
   readonly onLongPress: (kind: PresetKind) => void;
 }
+
+const ENTRIES: readonly { kind: PresetKind; label: string }[] = [
+  { kind: 'work', label: 'Deep Work' },
+  { kind: 'evening', label: 'Evening' },
+  { kind: 'weekend', label: 'Weekend' },
+];
 
 export function PresetRow({
   onSelect,
@@ -17,44 +24,15 @@ export function PresetRow({
         Presets
       </Typography>
       <View className="flex-row gap-2">
-        <Chip
-          label="Deep Work"
-          onPress={() => onSelect('work')}
-          onLongPress={() => onLongPress('work')}
-        />
-        <Chip
-          label="Evening"
-          onPress={() => onSelect('evening')}
-          onLongPress={() => onLongPress('evening')}
-        />
-        <Chip
-          label="Weekend"
-          onPress={() => onSelect('weekend')}
-          onLongPress={() => onLongPress('weekend')}
-        />
+        {ENTRIES.map(({ kind, label }) => (
+          <Chip
+            key={kind}
+            label={label}
+            onPress={() => onSelect(kind)}
+            onLongPress={() => onLongPress(kind)}
+          />
+        ))}
       </View>
     </View>
-  );
-}
-
-function Chip({
-  label,
-  onPress,
-  onLongPress,
-}: {
-  label: string;
-  onPress: () => void;
-  onLongPress: () => void;
-}): JSX.Element {
-  return (
-    <Pressable
-      onPress={onPress}
-      onLongPress={onLongPress}
-      className="bg-surface-raised px-4 py-3 rounded-full border border-divider/50"
-    >
-      <Typography variant="body-md" tone="muted">
-        {label}
-      </Typography>
-    </Pressable>
   );
 }
