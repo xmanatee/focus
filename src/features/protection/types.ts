@@ -11,30 +11,6 @@ export interface TamperSetup {
   readonly completedAt: number | null;
 }
 
-export type WeeklyLimit = 0 | 1 | 2 | 3;
-export type EnabledWeeklyLimit = Exclude<WeeklyLimit, 0>;
-
-export type EmergencyMode =
-  | { readonly kind: 'disabled' }
-  | {
-      readonly kind: 'enabled';
-      readonly weeklyLimit: EnabledWeeklyLimit;
-      readonly cooldownMinutes: number;
-      readonly codeLength: number;
-      readonly currentCode: string;
-      readonly history: readonly { readonly usedAt: number }[];
-    };
-
-export type EmergencyQuota =
-  | { readonly kind: 'disabled' }
-  | { readonly kind: 'exhausted'; readonly resetsAt: Date }
-  | { readonly kind: 'cooldown'; readonly unlocksAt: Date }
-  | {
-      readonly kind: 'ready';
-      readonly remainingThisWeek: number;
-      readonly codeLength: number;
-    };
-
 export interface Defense {
   readonly id: DefenseId;
   readonly ok: boolean;

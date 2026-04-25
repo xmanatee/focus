@@ -1,5 +1,5 @@
 import * as Linking from 'expo-linking';
-import { ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { Button } from '../../../../shared/components/Button';
 import { Checklist } from '../../../../shared/components/Checklist';
 import { Screen } from '../../../../shared/components/Screen';
@@ -44,16 +44,14 @@ export function RestrictionsStep({
           {protectionCopy.restrictions.body}
         </Typography>
 
-        <View>
-          <Button
-            title={protectionCopy.restrictions.open}
-            variant="ghost"
-            onPress={() => {
-              void haptic.commit();
-              void Linking.openSettings();
-            }}
-          />
-        </View>
+        <Button
+          title={protectionCopy.restrictions.open}
+          variant="commit"
+          onPress={() => {
+            void haptic.commit();
+            void Linking.openSettings();
+          }}
+        />
 
         <Checklist
           items={[

@@ -1,5 +1,5 @@
 import * as Linking from 'expo-linking';
-import { ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { Button } from '../../../../shared/components/Button';
 import { Checklist } from '../../../../shared/components/Checklist';
 import { InfoBanner } from '../../../../shared/components/InfoBanner';
@@ -21,11 +21,6 @@ export function PasscodeStep({
 }: PasscodeStepProps): JSX.Element {
   const passcodeAck = useTamperSetupStore((s) => s.setup.passcode);
   const toggle = useTamperSetupStore((s) => s.toggle);
-
-  const openSettings = (): void => {
-    void haptic.commit();
-    void Linking.openSettings();
-  };
 
   return (
     <Screen padded={false} edges={['bottom']}>
@@ -49,21 +44,20 @@ export function PasscodeStep({
           {protectionCopy.passcode.body}
         </Typography>
 
-        <View className="gap-3">
-          <Button
-            title={protectionCopy.passcode.selfPrimary}
-            variant="commit"
-            onPress={openSettings}
-          />
-          <Button
-            title={protectionCopy.passcode.friendPrimary}
-            variant="ghost"
-            onPress={openSettings}
-          />
-        </View>
+        <Button
+          title={protectionCopy.passcode.open}
+          variant="commit"
+          onPress={() => {
+            void haptic.commit();
+            void Linking.openSettings();
+          }}
+        />
 
-        <InfoBanner variant="info">
-          {protectionCopy.passcode.friendBody}
+        <InfoBanner
+          variant="info"
+          title={protectionCopy.passcode.trustedFriendTitle}
+        >
+          {protectionCopy.passcode.trustedFriendBody}
         </InfoBanner>
 
         <Checklist

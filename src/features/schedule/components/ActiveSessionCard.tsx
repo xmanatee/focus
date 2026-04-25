@@ -1,20 +1,17 @@
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
 import { formatRelative, nextOccurrenceOf } from '../../../shared/days';
-import { haptic } from '../../../shared/design/haptics';
 import type { FocusBlock } from '../types';
 
 interface ActiveSessionCardProps {
   readonly block: FocusBlock;
   readonly now: Date;
-  readonly onEmergencyExit?: () => void;
 }
 
 export function ActiveSessionCard({
   block,
   now,
-  onEmergencyExit,
 }: ActiveSessionCardProps): JSX.Element {
   return (
     <View className="bg-ink rounded-[32px] p-5 gap-3 shadow-xl">
@@ -39,20 +36,6 @@ export function ActiveSessionCard({
         Ends at {block.endTime} ·{' '}
         {formatRelative(nextOccurrenceOf(block.endTime, now), now)}
       </Typography>
-
-      {onEmergencyExit ? (
-        <Pressable
-          onPress={() => {
-            void haptic.select();
-            onEmergencyExit();
-          }}
-          className="self-start mt-2 px-4 py-2 rounded-full border border-surface/30"
-        >
-          <Typography variant="body-md" tone="surface">
-            Emergency exit
-          </Typography>
-        </Pressable>
-      ) : null}
     </View>
   );
 }

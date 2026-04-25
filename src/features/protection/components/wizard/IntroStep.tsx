@@ -5,7 +5,6 @@ import { Screen } from '../../../../shared/components/Screen';
 import { StepHeader } from '../../../../shared/components/StepHeader';
 import { Typography } from '../../../../shared/components/Typography';
 import { PROTECTION_WIZARD_STEPS, protectionCopy } from '../../copy';
-import { HonestDisclosures } from '../HonestDisclosures';
 import { PostureStatusPanel } from '../PostureStatusPanel';
 
 interface IntroStepProps {
@@ -37,12 +36,10 @@ export function IntroStep({ onNext, onClose }: IntroStepProps): JSX.Element {
         </Typography>
 
         <InfoBanner variant="info">
-          {`${protectionCopy.intro.timeEstimate} ${protectionCopy.intro.iosVersionNote}`}
+          {protectionCopy.intro.timeEstimate}
         </InfoBanner>
 
         <PostureStatusPanel />
-
-        <HonestDisclosures title={protectionCopy.intro.cannotPreventTitle} />
 
         <View className="gap-2 pt-2">
           <Button

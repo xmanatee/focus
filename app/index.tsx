@@ -123,15 +123,7 @@ export default function MainFeedScreen(): JSX.Element {
           </View>
         )}
 
-        {active && (
-          <ActiveSessionCard
-            block={active}
-            now={now}
-            onEmergencyExit={
-              isStrict ? () => router.push('/emergency') : undefined
-            }
-          />
-        )}
+        {active && <ActiveSessionCard block={active} now={now} />}
 
         {showProtectionCard && (
           <ProtectionStatusCard

@@ -2,8 +2,8 @@ import { ScrollView } from 'react-native';
 import { Button } from '../../../../shared/components/Button';
 import { Screen } from '../../../../shared/components/Screen';
 import { StepHeader } from '../../../../shared/components/StepHeader';
+import { Typography } from '../../../../shared/components/Typography';
 import { PROTECTION_WIZARD_STEPS, protectionCopy } from '../../copy';
-import { HonestDisclosures } from '../HonestDisclosures';
 import { PostureStatusPanel } from '../PostureStatusPanel';
 
 interface ConfirmStepProps {
@@ -23,7 +23,7 @@ export function ConfirmStep({ onClose }: ConfirmStepProps): JSX.Element {
         }}
       >
         <StepHeader
-          step={5}
+          step={4}
           total={PROTECTION_WIZARD_STEPS}
           title={protectionCopy.confirm.title}
           onClose={onClose}
@@ -31,7 +31,9 @@ export function ConfirmStep({ onClose }: ConfirmStepProps): JSX.Element {
 
         <PostureStatusPanel />
 
-        <HonestDisclosures title={protectionCopy.confirm.cannotPreventTitle} />
+        <Typography variant="body" tone="muted">
+          {protectionCopy.confirm.body}
+        </Typography>
 
         <Button
           title={protectionCopy.confirm.done}
