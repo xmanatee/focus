@@ -21,15 +21,15 @@ vi.mock('../../shared/storage', () => {
 
 const { useTamperSetupStore } = await import('./useTamperSetupStore');
 const { resolveProtectionPosture } = await import('./posture');
-const { DEFENSE_IDS } = await import('./types');
 
 function reset(): void {
   memoryMap.clear();
   useTamperSetupStore.setState({
     setup: {
-      acks: Object.fromEntries(
-        DEFENSE_IDS.map((id) => [id, { kind: 'unset' }] as const),
-      ) as never,
+      acks: {
+        screenTimeLock: { kind: 'unset' },
+        appDeletion: { kind: 'unset' },
+      },
     },
   });
 }

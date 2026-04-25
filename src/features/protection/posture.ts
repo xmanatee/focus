@@ -11,6 +11,15 @@ function scoreFor(okCount: number): ProtectionPosture['score'] {
   return 'partial';
 }
 
+function latestAckTimestamp(setup: TamperSetup): number {
+  let latest = 0;
+  for (const id of DEFENSE_IDS) {
+    const ack = setup.acks[id];
+    if (ack.kind === 'set' && ack.at > latest) latest = ack.at;
+  }
+  return latest;
+}
+
 export function resolveProtectionPosture(
   setup: TamperSetup,
 ): ProtectionPosture {
@@ -19,18 +28,10 @@ export function resolveProtectionPosture(
     ok: setup.acks[id].kind === 'set',
   }));
   const okCount = defenses.filter((d) => d.ok).length;
-  const completedAt =
-    okCount === DEFENSE_IDS.length
-      ? Math.max(
-          ...DEFENSE_IDS.map((id) => {
-            const ack = setup.acks[id];
-            return ack.kind === 'set' ? ack.at : 0;
-          }),
-        )
-      : null;
   return {
     defenses,
     score: scoreFor(okCount),
-    completedAt,
+    completedAt:
+      okCount === DEFENSE_IDS.length ? latestAckTimestamp(setup) : null,
   };
 }

@@ -1,9 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { AppDeletionStep } from '../src/features/protection/components/wizard/AppDeletionStep';
 import { ConfirmStep } from '../src/features/protection/components/wizard/ConfirmStep';
+import { DefenseSetupStep } from '../src/features/protection/components/wizard/DefenseSetupStep';
 import { IntroStep } from '../src/features/protection/components/wizard/IntroStep';
-import { ScreenTimeLockStep } from '../src/features/protection/components/wizard/ScreenTimeLockStep';
+import { protectionCopy } from '../src/features/protection/copy';
+import { InfoBanner } from '../src/shared/components/InfoBanner';
 
 type WizardStep = 'intro' | 'screenTimeLock' | 'appDeletion' | 'confirm';
 
@@ -25,9 +26,30 @@ export default function ProtectionWizardScreen(): JSX.Element {
     case 'intro':
       return <IntroStep onNext={onNext} onClose={onClose} />;
     case 'screenTimeLock':
-      return <ScreenTimeLockStep onNext={onNext} onClose={onClose} />;
+      return (
+        <DefenseSetupStep
+          defense="screenTimeLock"
+          step={2}
+          onNext={onNext}
+          onClose={onClose}
+        >
+          <InfoBanner
+            variant="info"
+            title={protectionCopy.screenTimeLock.trustedFriendTitle}
+          >
+            {protectionCopy.screenTimeLock.trustedFriendBody}
+          </InfoBanner>
+        </DefenseSetupStep>
+      );
     case 'appDeletion':
-      return <AppDeletionStep onNext={onNext} onClose={onClose} />;
+      return (
+        <DefenseSetupStep
+          defense="appDeletion"
+          step={3}
+          onNext={onNext}
+          onClose={onClose}
+        />
+      );
     case 'confirm':
       return <ConfirmStep onClose={onClose} />;
   }

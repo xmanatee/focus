@@ -1,11 +1,9 @@
-import { ScrollView } from 'react-native';
 import { Button } from '../../../../shared/components/Button';
 import { InfoBanner } from '../../../../shared/components/InfoBanner';
-import { Screen } from '../../../../shared/components/Screen';
-import { StepHeader } from '../../../../shared/components/StepHeader';
 import { Typography } from '../../../../shared/components/Typography';
-import { PROTECTION_WIZARD_STEPS, protectionCopy } from '../../copy';
+import { protectionCopy } from '../../copy';
 import { PostureStatusPanel } from '../PostureStatusPanel';
+import { WizardStepShell } from './WizardStepShell';
 
 interface ConfirmStepProps {
   readonly onClose: () => void;
@@ -13,39 +11,26 @@ interface ConfirmStepProps {
 
 export function ConfirmStep({ onClose }: ConfirmStepProps): JSX.Element {
   return (
-    <Screen padded={false} edges={['bottom']}>
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 32,
-          paddingBottom: 60,
-          gap: 20,
-        }}
-      >
-        <StepHeader
-          step={4}
-          total={PROTECTION_WIZARD_STEPS}
-          title={protectionCopy.confirm.title}
-          onClose={onClose}
-        />
+    <WizardStepShell
+      step={4}
+      title={protectionCopy.confirm.title}
+      onClose={onClose}
+    >
+      <PostureStatusPanel />
 
-        <PostureStatusPanel />
+      <Typography variant="body" tone="muted">
+        {protectionCopy.confirm.body}
+      </Typography>
 
-        <Typography variant="body" tone="muted">
-          {protectionCopy.confirm.body}
-        </Typography>
+      <InfoBanner variant="warn" title={protectionCopy.confirm.bypassTitle}>
+        {protectionCopy.confirm.bypass}
+      </InfoBanner>
 
-        <InfoBanner variant="warn" title={protectionCopy.confirm.bypassTitle}>
-          {protectionCopy.confirm.bypass}
-        </InfoBanner>
-
-        <Button
-          title={protectionCopy.confirm.done}
-          variant="commit"
-          onPress={onClose}
-        />
-      </ScrollView>
-    </Screen>
+      <Button
+        title={protectionCopy.confirm.done}
+        variant="commit"
+        onPress={onClose}
+      />
+    </WizardStepShell>
   );
 }

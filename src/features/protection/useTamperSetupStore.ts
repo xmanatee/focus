@@ -1,12 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { persistedStorage } from '../../shared/storage';
-import {
-  type Ack,
-  DEFENSE_IDS,
-  type DefenseId,
-  type TamperSetup,
-} from './types';
+import type { Ack, DefenseId, TamperSetup } from './types';
 
 interface TamperSetupState {
   setup: TamperSetup;
@@ -14,9 +9,10 @@ interface TamperSetupState {
 }
 
 const EMPTY_SETUP: TamperSetup = {
-  acks: Object.fromEntries(
-    DEFENSE_IDS.map((id) => [id, { kind: 'unset' }] as const),
-  ) as Record<DefenseId, Ack>,
+  acks: {
+    screenTimeLock: { kind: 'unset' },
+    appDeletion: { kind: 'unset' },
+  },
 };
 
 export const useTamperSetupStore = create<TamperSetupState>()(
