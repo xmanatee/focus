@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { persistedStorage } from '../../shared/storage';
-import { clearSelectionSlot } from '../blocker/selectionSlot';
+import { clearSlot } from '../blocker/selectionSlot';
+import { selectionIdForBlock } from '../blocker/types';
 import { isFocusBlockActiveAt } from './activeness';
 import type { FocusBlock, FocusBlockInput } from './types';
+import { validateFocusBlockInput } from './validation';
 
 interface FocusBlockState {
   focusBlocks: FocusBlock[];
@@ -24,25 +26,18 @@ export const useFocusBlockStore = create<FocusBlockState>()(
     (set, get) => ({
       focusBlocks: [],
 
-      addFocusBlock: (id, input) =>
+      addFocusBlock: (id, input) => {
+        validateFocusBlockInput(input);
         set((state) => ({
           focusBlocks: [
             ...state.focusBlocks,
-            {
-              id,
-              name: input.name.trim(),
-              startTime: input.startTime,
-              endTime: input.endTime,
-              days: input.days,
-              isEnabled: input.isEnabled,
-              selection: input.selection,
-              notifyOnStart: input.notifyOnStart,
-              notifyOnEnd: input.notifyOnEnd,
-            },
+            { ...input, id, name: input.name.trim() },
           ],
-        })),
+        }));
+      },
 
       updateFocusBlock: (id, input) => {
+        validateFocusBlockInput(input);
         const existing = get().focusBlocks.find((b) => b.id === id);
         if (!existing) {
           throw new Error('Focus block not found.');
@@ -50,18 +45,7 @@ export const useFocusBlockStore = create<FocusBlockState>()(
         assertNotActive(existing, 'Cannot change a block while it is active.');
         set((state) => ({
           focusBlocks: state.focusBlocks.map((b) =>
-            b.id === id
-              ? {
-                  ...b,
-                  name: input.name.trim(),
-                  startTime: input.startTime,
-                  endTime: input.endTime,
-                  days: input.days,
-                  selection: input.selection,
-                  notifyOnStart: input.notifyOnStart,
-                  notifyOnEnd: input.notifyOnEnd,
-                }
-              : b,
+            b.id === id ? { ...input, id, name: input.name.trim() } : b,
           ),
         }));
       },
@@ -87,7 +71,7 @@ export const useFocusBlockStore = create<FocusBlockState>()(
             'Cannot delete a block while it is active.',
           );
         }
-        clearSelectionSlot(id);
+        clearSlot(selectionIdForBlock(id));
         set((state) => ({
           focusBlocks: state.focusBlocks.filter((b) => b.id !== id),
         }));

@@ -19,8 +19,8 @@ export function NotifyRow({
 }: NotifyRowProps): JSX.Element {
   const colors = useThemeColors();
   return (
-    <View className="flex-row items-center justify-between">
-      <View className="gap-1 flex-1 mr-4">
+    <View className="flex-row items-center justify-between gap-4">
+      <View className="gap-1 flex-1">
         <Typography variant="body-md" tone="ink">
           {title}
         </Typography>

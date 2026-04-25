@@ -20,7 +20,7 @@ export function NotificationsCard({
       <Typography variant="label" tone="faint">
         Notifications
       </Typography>
-      <View className="bg-surface-raised rounded-3xl p-5 gap-4 shadow-sm border border-divider/10">
+      <View className="bg-surface-raised rounded-3xl p-card gap-3 shadow-sm border border-divider/10">
         <NotifyRow
           title="Start Notification"
           subtitle="Alert when this block begins."

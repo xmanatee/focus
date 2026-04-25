@@ -1,37 +1,26 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  View,
 } from 'react-native';
-import {
-  type ActivitySelectionMetadata,
-  DeviceActivitySelectionSheetViewPersisted,
-} from 'react-native-device-activity';
+import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
-import { clearSelectionSlot } from '../src/features/blocker/selectionSlot';
 import {
   EMPTY_BLOCK_SELECTION,
-  type PersistedActivitySelection,
-  createActivitySelectionFromMetadata,
   selectionHasBlockedTargets,
-  selectionIdForBlock,
 } from '../src/features/blocker/types';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
 import { FormActions } from '../src/features/schedule/components/FormActions';
 import { NotificationsCard } from '../src/features/schedule/components/NotificationsCard';
 import { PresetRow } from '../src/features/schedule/components/PresetRow';
 import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
-import type {
-  DayOfWeek,
-  FocusBlockInput,
-} from '../src/features/schedule/types';
+import type { DayOfWeek } from '../src/features/schedule/types';
+import { useActivitySelection } from '../src/features/schedule/useActivitySelection';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
-import { validateFocusBlockInput } from '../src/features/schedule/validation';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
@@ -58,17 +47,9 @@ export default function AddFocusBlockScreen(): JSX.Element {
     editId ? s.focusBlocks.find((item) => item.id === editId) ?? null : null,
   );
 
-  // The iOS picker writes its selection into a UserDefaults slot keyed by this
-  // id from inside the sheet, before save — so the id must exist beforehand.
   const [blockId] = useState<string>(() => editId ?? newId());
-  const wasSavedRef = useRef(false);
-
-  useEffect(
-    () => () => {
-      if (!editId && !wasSavedRef.current) clearSelectionSlot(blockId);
-    },
-    [blockId, editId],
-  );
+  const [templatePromptKind, setTemplatePromptKind] =
+    useState<PresetKind | null>(null);
 
   const { state: adminState } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
@@ -84,21 +65,23 @@ export default function AddFocusBlockScreen(): JSX.Element {
     existing ? [...existing.days] : ['mon', 'tue', 'wed', 'thu', 'fri'],
   );
   const [newDomain, setNewDomain] = useState('');
-  const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [notifyOnStart, setNotifyOnStart] = useState(
     existing?.notifyOnStart ?? true,
   );
   const [notifyOnEnd, setNotifyOnEnd] = useState(
     existing?.notifyOnEnd ?? false,
   );
-  const [activitySelection, setActivitySelection] =
-    useState<PersistedActivitySelection>(
-      existing?.selection.activitySelection ??
-        EMPTY_BLOCK_SELECTION.activitySelection,
-    );
   const [webDomains, setWebDomains] = useState<string[]>(
     existing ? [...existing.selection.webDomains] : [],
   );
+
+  const selection = useActivitySelection(
+    blockId,
+    editId,
+    existing?.selection.activitySelection ??
+      EMPTY_BLOCK_SELECTION.activitySelection,
+  );
+  const { pickerSession } = selection;
 
   const { error, isPending, run } = useAsyncAction();
 
@@ -119,6 +102,13 @@ export default function AddFocusBlockScreen(): JSX.Element {
     setNotifyOnStart(preset.notifyOnStart);
     setNotifyOnEnd(preset.notifyOnEnd);
     setWebDomains(preset.webDomains);
+
+    const templateSelection = selection.applyTemplate(kind);
+    if (templateSelection === 'needs-setup') {
+      setTemplatePromptKind(kind);
+      return;
+    }
+    setTemplatePromptKind(null);
   };
 
   const toggleDay = (day: DayOfWeek): void => {
@@ -127,15 +117,6 @@ export default function AddFocusBlockScreen(): JSX.Element {
         ? current.filter((d) => d !== day)
         : [...current, day].sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]),
     );
-  };
-
-  const handleToggleNotify = async (
-    value: boolean,
-    setter: (next: boolean) => void,
-  ): Promise<void> => {
-    void haptic.select();
-    if (value && !(await requestNotificationPermissions())) return;
-    setter(value);
   };
 
   const addDomain = (): void => {
@@ -159,24 +140,17 @@ export default function AddFocusBlockScreen(): JSX.Element {
     void haptic.select();
   };
 
-  const handleSelectionChange = (event: {
-    nativeEvent: ActivitySelectionMetadata;
-  }): Promise<boolean> =>
-    run(async () => {
-      void haptic.select();
-      setActivitySelection(
-        createActivitySelectionFromMetadata(event.nativeEvent),
-      );
-    }, 'Could not save selection.');
-
   const handleSave = async (): Promise<void> => {
-    const input: FocusBlockInput = {
+    const input = {
       name,
       startTime,
       endTime,
       days: selectedDays,
       isEnabled: existing?.isEnabled ?? true,
-      selection: { activitySelection, webDomains },
+      selection: {
+        activitySelection: selection.activitySelection,
+        webDomains,
+      },
       notifyOnStart,
       notifyOnEnd,
     };
@@ -185,11 +159,18 @@ export default function AddFocusBlockScreen(): JSX.Element {
       if (!selectionHasBlockedTargets(input.selection)) {
         throw new Error('Pick at least one app or site to block.');
       }
-      validateFocusBlockInput(input);
+      if (input.notifyOnStart || input.notifyOnEnd) {
+        const granted = await requestNotificationPermissions();
+        if (!granted) {
+          throw new Error(
+            'Notifications permission is required for this block. Enable it in Settings or turn off the notification toggles.',
+          );
+        }
+      }
       void haptic.commit();
       if (editId) updateFocusBlock(editId, input);
       else addFocusBlock(blockId, input);
-      wasSavedRef.current = true;
+      selection.markSaved();
     }, 'Could not save block.');
 
     if (success) router.back();
@@ -225,7 +206,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
         <ScrollView
           className="flex-1"
           contentContainerStyle={{
-            paddingHorizontal: 20,
+            paddingHorizontal: 16,
             paddingBottom: 60,
             paddingTop: 32,
             gap: 20,
@@ -237,8 +218,12 @@ export default function AddFocusBlockScreen(): JSX.Element {
             {isEditing ? 'Edit block.' : 'Set your rules.'}
           </Typography>
 
-          {!isEditing && <PresetRow onSelect={applyPreset} />}
-
+          {!isEditing && (
+            <PresetRow
+              onSelect={applyPreset}
+              onLongPress={selection.openTemplatePicker}
+            />
+          )}
           <BlockFormCard
             name={name}
             onNameChange={setName}
@@ -249,10 +234,9 @@ export default function AddFocusBlockScreen(): JSX.Element {
             selectedDays={selectedDays}
             onToggleDay={toggleDay}
           />
-
           <BlockingCard
-            activitySelection={activitySelection}
-            onOpenAppsPicker={() => setIsPickerVisible(true)}
+            activitySelection={selection.activitySelection}
+            onOpenAppsPicker={selection.openBlockPicker}
             webDomains={webDomains}
             newDomain={newDomain}
             onNewDomainChange={setNewDomain}
@@ -260,11 +244,24 @@ export default function AddFocusBlockScreen(): JSX.Element {
             onRemoveDomain={removeDomain}
           />
 
+          {templatePromptKind !== null ? (
+            <Typography variant="caption" tone="muted">
+              Hold "{PRESETS[templatePromptKind].name}" to choose which apps it
+              blocks.
+            </Typography>
+          ) : null}
+
           <NotificationsCard
             notifyOnStart={notifyOnStart}
             notifyOnEnd={notifyOnEnd}
-            onChangeStart={(v) => void handleToggleNotify(v, setNotifyOnStart)}
-            onChangeEnd={(v) => void handleToggleNotify(v, setNotifyOnEnd)}
+            onChangeStart={(v) => {
+              void haptic.select();
+              setNotifyOnStart(v);
+            }}
+            onChangeEnd={(v) => {
+              void haptic.select();
+              setNotifyOnEnd(v);
+            }}
           />
 
           {error ? (
@@ -283,15 +280,15 @@ export default function AddFocusBlockScreen(): JSX.Element {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {isPickerVisible && (
+      {pickerSession ? (
         <DeviceActivitySelectionSheetViewPersisted
-          familyActivitySelectionId={selectionIdForBlock(blockId)}
-          onSelectionChange={(event) => {
-            void handleSelectionChange(event);
-          }}
-          onDismissRequest={() => setIsPickerVisible(false)}
+          familyActivitySelectionId={pickerSession.slotId}
+          onSelectionChange={(event) =>
+            pickerSession.onSelectionChange(event.nativeEvent)
+          }
+          onDismissRequest={selection.closePicker}
         />
-      )}
+      ) : null}
     </Screen>
   );
 }

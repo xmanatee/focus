@@ -29,12 +29,12 @@ describe('validateFocusBlockInput', () => {
     ).not.toThrow();
   });
 
-  it('accepts a cross-midnight block (start later than end)', () => {
+  it('rejects a cross-midnight block', () => {
     expect(() =>
       validateFocusBlockInput(
-        baseInput({ startTime: '22:00', endTime: '06:00' }),
+        baseInput({ startTime: '22:00', endTime: '02:00' }),
       ),
-    ).not.toThrow();
+    ).toThrow(/later than start/i);
   });
 
   it('rejects empty name', () => {
@@ -44,11 +44,19 @@ describe('validateFocusBlockInput', () => {
   });
 
   it('rejects identical start and end', () => {
-    const startTime = '09:00';
-    const endTime = '09:00';
+    const startTime = '22:00';
+    const endTime = '22:00';
     expect(() =>
       validateFocusBlockInput(baseInput({ startTime, endTime })),
-    ).toThrow(/differ/i);
+    ).toThrow(/later than start/i);
+  });
+
+  it('accepts one-minute range', () => {
+    expect(() =>
+      validateFocusBlockInput(
+        baseInput({ startTime: '22:00', endTime: '22:01' }),
+      ),
+    ).not.toThrow();
   });
 
   it('rejects empty days', () => {

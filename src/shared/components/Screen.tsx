@@ -15,7 +15,7 @@ export function Screen({
 }: ScreenProps): JSX.Element {
   return (
     <SafeAreaView edges={edges} className="flex-1 bg-surface">
-      <View className={`flex-1 ${padded ? 'px-6' : ''}`}>{children}</View>
+      <View className={`flex-1 ${padded ? 'px-screen' : ''}`}>{children}</View>
     </SafeAreaView>
   );
 }

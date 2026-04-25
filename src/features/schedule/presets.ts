@@ -1,3 +1,4 @@
+import type { SelectionSlotId } from '../blocker/types';
 import type { DayOfWeek } from './types';
 
 export type PresetKind = 'work' | 'evening' | 'weekend';
@@ -70,3 +71,7 @@ export const PRESETS: Record<PresetKind, PresetData> = {
     ],
   },
 };
+
+export function selectionIdForTemplate(kind: PresetKind): SelectionSlotId {
+  return `template.${kind}` as SelectionSlotId;
+}

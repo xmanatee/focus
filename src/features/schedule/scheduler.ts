@@ -6,33 +6,21 @@ import {
   startMonitoring,
   stopMonitoring,
 } from 'react-native-device-activity';
+import { iosWeekday } from '../../shared/days';
 import {
-  type BlockSelection,
   hasSavedActivitySelection,
   selectionIdForBlock,
 } from '../blocker/types';
-import type { DayOfWeek } from './types';
+import type { DayOfWeek, FocusBlock } from './types';
 
-interface FocusBlockSpec {
-  id: string;
-  name: string;
-  days: DayOfWeek[];
-  startTime: string; // HH:mm, validated upstream
-  endTime: string; // HH:mm, validated upstream
-  isEnabled: boolean;
-  profileSelection: BlockSelection;
-  notifyOnStart: boolean;
-  notifyOnEnd: boolean;
-}
-
-const ACTIVITY_PREFIX = 'focusblocks.block.';
-const SETUP_ACTIVITY_NAME = 'focusblocks.setup';
+const FOCUS_ACTIVITY_PREFIX = 'focusblocks.block.';
+const SETUP_ACTIVITY_PREFIX = 'focusblocks.setup.';
 
 interface MonitorPlan {
   activityName: string;
   schedule: {
-    intervalStart: { hour: number; minute: number };
-    intervalEnd: { hour: number; minute: number };
+    intervalStart: { hour: number; minute: number; weekday: number };
+    intervalEnd: { hour: number; minute: number; weekday: number };
     repeats: boolean;
   };
   startActions: Action[];
@@ -44,16 +32,16 @@ function parseHM(time: string): { hour: number; minute: number } {
   return { hour: h, minute: m };
 }
 
-function materializeFocusBlock(spec: FocusBlockSpec): MonitorPlan[] {
-  if (!spec.isEnabled || spec.days.length === 0) {
+function materializeFocusBlock(block: FocusBlock): MonitorPlan[] {
+  if (!block.isEnabled || block.days.length === 0) {
     return [];
   }
 
   const startActions: Action[] = [];
   const endActions: Action[] = [];
 
-  if (hasSavedActivitySelection(spec.profileSelection.activitySelection)) {
-    const selectionId = selectionIdForBlock(spec.id);
+  if (hasSavedActivitySelection(block.selection.activitySelection)) {
+    const selectionId = selectionIdForBlock(block.id);
     startActions.push({
       type: 'blockSelection',
       familyActivitySelectionId: selectionId,
@@ -64,47 +52,43 @@ function materializeFocusBlock(spec: FocusBlockSpec): MonitorPlan[] {
     });
   }
 
-  if (spec.profileSelection.webDomains.length > 0) {
+  if (block.selection.webDomains.length > 0) {
     startActions.push({
       type: 'setWebContentFilterPolicy',
       policy: {
         type: 'specific',
-        domains: [...spec.profileSelection.webDomains],
+        domains: [...block.selection.webDomains],
       },
     });
     endActions.push({ type: 'clearWebContentFilterPolicy' });
   }
 
-  if (spec.notifyOnStart) {
+  if (block.notifyOnStart) {
     startActions.push({
       type: 'sendNotification',
       payload: {
         title: 'Focus Block Started',
-        body: `"${spec.name}" is now active. Distractions are blocked.`,
+        body: `"${block.name}" is now active. Distractions are blocked.`,
         sound: 'default',
         interruptionLevel: 'active',
       },
     });
   }
 
-  if (spec.notifyOnEnd) {
+  if (block.notifyOnEnd) {
     endActions.push({
       type: 'sendNotification',
       payload: {
         title: 'Focus Block Ended',
-        body: `"${spec.name}" has finished.`,
+        body: `"${block.name}" has finished.`,
         sound: 'default',
       },
     });
   }
 
-  return spec.days.map((day) => ({
-    activityName: `${ACTIVITY_PREFIX}${spec.id}.${day}`,
-    schedule: {
-      intervalStart: parseHM(spec.startTime),
-      intervalEnd: parseHM(spec.endTime),
-      repeats: true,
-    },
+  return block.days.map((day) => ({
+    activityName: `${FOCUS_ACTIVITY_PREFIX}${block.id}.${day}`,
+    schedule: scheduleForDay(block.startTime, block.endTime, day),
     startActions,
     endActions,
   }));
@@ -133,15 +117,24 @@ function materializeSetupBlock(
   ];
 
   return days.map((day) => ({
-    activityName: `${SETUP_ACTIVITY_NAME}.${day}`,
-    schedule: {
-      intervalStart: parseHM(startTime),
-      intervalEnd: parseHM(endTime),
-      repeats: true,
-    },
+    activityName: `${SETUP_ACTIVITY_PREFIX}${day}`,
+    schedule: scheduleForDay(startTime, endTime, day),
     startActions,
     endActions: [],
   }));
+}
+
+function scheduleForDay(
+  startTime: string,
+  endTime: string,
+  day: DayOfWeek,
+): MonitorPlan['schedule'] {
+  const weekday = iosWeekday(day);
+  return {
+    intervalStart: { ...parseHM(startTime), weekday },
+    intervalEnd: { ...parseHM(endTime), weekday },
+    repeats: true,
+  };
 }
 
 async function applyPlan(plan: MonitorPlan): Promise<void> {
@@ -159,7 +152,7 @@ async function applyPlan(plan: MonitorPlan): Promise<void> {
 }
 
 export async function reconcileFocusBlocks(
-  specs: readonly FocusBlockSpec[],
+  blocks: readonly FocusBlock[],
   setupBlock: {
     days: readonly DayOfWeek[];
     startTime: string;
@@ -168,8 +161,8 @@ export async function reconcileFocusBlocks(
   } | null,
 ): Promise<void> {
   const desired = new Map<string, MonitorPlan>();
-  for (const spec of specs) {
-    for (const plan of materializeFocusBlock(spec)) {
+  for (const block of blocks) {
+    for (const plan of materializeFocusBlock(block)) {
       desired.set(plan.activityName, plan);
     }
   }
@@ -187,8 +180,8 @@ export async function reconcileFocusBlocks(
 
   const current = getActivities().filter(
     (name) =>
-      name?.startsWith(ACTIVITY_PREFIX) ||
-      name?.startsWith(SETUP_ACTIVITY_NAME),
+      name?.startsWith(FOCUS_ACTIVITY_PREFIX) ||
+      name?.startsWith(SETUP_ACTIVITY_PREFIX),
   );
 
   const toStop = current.filter((name) => !desired.has(name));

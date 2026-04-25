@@ -37,7 +37,7 @@ export function BlockingCard({
             void haptic.select();
             onOpenAppsPicker();
           }}
-          className="bg-surface-raised rounded-3xl p-5 flex-row items-center justify-between shadow-sm border border-divider/10"
+          className="bg-surface-raised rounded-3xl p-card flex-row items-center justify-between shadow-sm border border-divider/10"
         >
           <View className="flex-row items-center gap-4">
             <Icon name="app.badge" size={24} tone="muted" />
@@ -55,7 +55,7 @@ export function BlockingCard({
           <Icon name="chevron.right" size={18} tone="faint" />
         </Pressable>
 
-        <View className="bg-surface-raised rounded-3xl p-5 gap-4 shadow-sm border border-divider/10">
+        <View className="bg-surface-raised rounded-3xl p-card gap-3 shadow-sm border border-divider/10">
           <View className="flex-row items-center gap-4">
             <Icon name="globe" size={24} tone="muted" />
             <Typography variant="body-md" tone="ink" className="flex-1">

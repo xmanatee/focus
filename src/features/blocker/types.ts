@@ -1,4 +1,6 @@
-interface ActivitySelectionMetadata {
+export type SelectionSlotId = string & { readonly __brand: 'SelectionSlotId' };
+
+export interface ActivitySelectionMetadata {
   applicationCount: number;
   categoryCount: number;
   webDomainCount: number;
@@ -23,8 +25,8 @@ export const EMPTY_BLOCK_SELECTION: BlockSelection = {
   webDomains: [],
 };
 
-export function selectionIdForBlock(blockId: string): string {
-  return `block.${blockId}`;
+export function selectionIdForBlock(blockId: string): SelectionSlotId {
+  return `block.${blockId}` as SelectionSlotId;
 }
 
 export function createActivitySelectionFromMetadata(

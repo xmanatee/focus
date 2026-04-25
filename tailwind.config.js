@@ -16,6 +16,10 @@ module.exports = {
         divider: 'rgb(var(--divider) / <alpha-value>)',
         danger: 'rgb(var(--danger) / <alpha-value>)',
       },
+      spacing: {
+        screen: '16px',
+        card: '16px',
+      },
       borderRadius: {
         lg: '18px',
         xl: '24px',

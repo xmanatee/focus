@@ -16,7 +16,6 @@ import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { formatRelative, nextOccurrenceOf } from '../src/shared/days';
 import { haptic } from '../src/shared/design/haptics';
-import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 
 export default function MainFeedScreen(): JSX.Element {
   const router = useRouter();
@@ -34,56 +33,27 @@ export default function MainFeedScreen(): JSX.Element {
   const isAdminLocked = adminState.kind === 'locked';
   const setupBlock = useSettingsStore((s) => s.setupBlock);
 
-  const { run } = useAsyncAction();
-
   useEffect(() => {
     void initialize();
   }, [initialize]);
 
   useEffect(() => {
-    void reconcileFocusBlocks(
-      focusBlocks.map((b) => ({
-        id: b.id,
-        name: b.name,
-        days: b.days,
-        startTime: b.startTime,
-        endTime: b.endTime,
-        isEnabled: b.isEnabled,
-        profileSelection: b.selection,
-        notifyOnStart: b.notifyOnStart,
-        notifyOnEnd: b.notifyOnEnd,
-      })),
-      setupBlock,
-    );
+    void reconcileFocusBlocks(focusBlocks, setupBlock);
   }, [focusBlocks, setupBlock]);
 
-  const handleGrant = (): Promise<boolean> =>
-    run(async () => {
-      void haptic.commit();
-      const granted = await requestPermissions();
-      if (!granted) {
-        throw new Error('Screen Time permission was not granted.');
-      }
-    }, 'Could not request Screen Time permission.');
+  const handleGrant = async (): Promise<void> => {
+    void haptic.commit();
+    await requestPermissions();
+  };
 
-  const handleToggle = (
-    blockId: string,
-    nextIsEnabled: boolean,
-  ): Promise<boolean> => {
+  const handleToggle = (blockId: string, nextIsEnabled: boolean): void => {
     void haptic.select();
-    return run(async () => {
-      toggleFocusBlock(blockId, nextIsEnabled);
-    }, 'Could not update focus block.');
+    toggleFocusBlock(blockId, nextIsEnabled);
   };
 
   if (authorizationStatus === 'denied') {
     return (
       <Screen>
-        <View className="flex-row justify-between items-center py-3 mb-2">
-          <Typography variant="label" tone="signal">
-            Focus Blocks
-          </Typography>
-        </View>
         <View className="flex-1 justify-center gap-5">
           <Typography variant="label" tone="danger">
             Permission denied
@@ -112,26 +82,19 @@ export default function MainFeedScreen(): JSX.Element {
 
   return (
     <Screen padded={false}>
-      <View className="px-6">
-        <View className="flex-row justify-between items-center py-3 mb-2">
-          <Typography variant="label" tone="signal">
-            Focus Blocks
-          </Typography>
-        </View>
-      </View>
-
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 24,
+          paddingHorizontal: 16,
+          paddingTop: 16,
           paddingBottom: 40,
-          gap: 24,
+          gap: 20,
         }}
         showsVerticalScrollIndicator={false}
       >
         {!hasPermissions && (
-          <View className="bg-signal/10 rounded-[32px] p-6 gap-4 border border-signal/20">
-            <View className="flex-row items-center gap-3">
+          <View className="bg-signal/10 rounded-[32px] p-card gap-3 border border-signal/20">
+            <View className="flex-row items-center gap-2">
               <Icon name="lock.shield.fill" size={24} tone="signal" />
               <Typography variant="h3" tone="signal">
                 Grant Access
@@ -152,7 +115,7 @@ export default function MainFeedScreen(): JSX.Element {
         )}
 
         {active && (
-          <View className="bg-ink rounded-[32px] p-7 gap-3 shadow-xl">
+          <View className="bg-ink rounded-[32px] p-5 gap-3 shadow-xl">
             <Typography variant="label" tone="surface" className="opacity-70">
               Active Session
             </Typography>
@@ -172,10 +135,10 @@ export default function MainFeedScreen(): JSX.Element {
           </Typography>
           <Pressable
             onPress={() => router.push('/settings')}
-            className="bg-surface-raised rounded-[32px] p-6 gap-3"
+            className="bg-surface-raised rounded-[32px] p-card gap-3"
           >
             <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-3">
+              <View className="flex-row items-center gap-2">
                 <Icon
                   name={isAdminLocked ? 'lock.fill' : 'lock.open.fill'}
                   size={20}
@@ -208,7 +171,6 @@ export default function MainFeedScreen(): JSX.Element {
             </Typography>
             <Pressable
               onPress={() => {
-                if (isAdminLocked) return;
                 void haptic.select();
                 router.push('/add-focus-block');
               }}
@@ -222,7 +184,7 @@ export default function MainFeedScreen(): JSX.Element {
           </View>
 
           {focusBlocks.length === 0 ? (
-            <View className="bg-surface-raised/50 rounded-[32px] py-12 items-center gap-4 border border-divider/30 border-dashed">
+            <View className="bg-surface-raised/50 rounded-[32px] py-12 items-center gap-3 border border-divider/30 border-dashed">
               <Typography variant="body" tone="muted" align="center">
                 Your focus calendar is empty.
               </Typography>
@@ -251,7 +213,7 @@ export default function MainFeedScreen(): JSX.Element {
                         params: { id: block.id },
                       });
                     }}
-                    onToggle={(next) => void handleToggle(block.id, next)}
+                    onToggle={(next) => handleToggle(block.id, next)}
                   />
                 );
               })}

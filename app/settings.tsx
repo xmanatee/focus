@@ -71,19 +71,11 @@ export default function SettingsScreen(): JSX.Element {
   const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
 
   const toggleDay = (day: DayOfWeek): void => {
-    if (!isUnlocked) return;
     setSelectedDays((current) =>
       current.includes(day)
         ? current.filter((d) => d !== day)
         : [...current, day].sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]),
     );
-  };
-
-  const handleToggleNotify = async (value: boolean): Promise<void> => {
-    if (!isUnlocked) return;
-    void haptic.select();
-    if (value && !(await requestNotificationPermissions())) return;
-    setNotifyOnStart(value);
   };
 
   const handleSave = async (): Promise<void> => {
@@ -94,6 +86,14 @@ export default function SettingsScreen(): JSX.Element {
       notifyOnStart,
     };
     const success = await run(async () => {
+      if (nextBlock.notifyOnStart) {
+        const granted = await requestNotificationPermissions();
+        if (!granted) {
+          throw new Error(
+            'Notifications permission is required for this block. Enable it in Settings or turn off the notification toggles.',
+          );
+        }
+      }
       void haptic.commit();
       setSetupBlock(nextBlock);
     }, 'Could not save setup block.');
@@ -113,9 +113,7 @@ export default function SettingsScreen(): JSX.Element {
           style: 'destructive',
           onPress: () => {
             void haptic.abandon();
-            void run(async () => {
-              clearSetupBlock();
-            }, 'Could not remove setup block.');
+            clearSetupBlock();
           },
         },
       ],
@@ -127,7 +125,7 @@ export default function SettingsScreen(): JSX.Element {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 20,
+          paddingHorizontal: 16,
           paddingBottom: 60,
           paddingTop: 32,
           gap: 20,
@@ -144,7 +142,7 @@ export default function SettingsScreen(): JSX.Element {
           </Typography>
         </View>
 
-        <View className="gap-4 bg-surface-raised rounded-3xl p-5 shadow-sm border border-divider/10">
+        <View className="gap-3 bg-surface-raised rounded-3xl p-card shadow-sm border border-divider/10">
           <View className="flex-row items-center justify-between">
             <Typography variant="h3" tone="ink">
               Setup Block
@@ -198,7 +196,10 @@ export default function SettingsScreen(): JSX.Element {
             title="Setup Reminder"
             subtitle="Alert when this setup block begins."
             value={notifyOnStart}
-            onChange={(v) => void handleToggleNotify(v)}
+            onChange={(v) => {
+              void haptic.select();
+              setNotifyOnStart(v);
+            }}
             disabled={!isUnlocked}
           />
 

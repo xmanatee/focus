@@ -29,7 +29,7 @@ export function BlockFormCard({
   const colors = useThemeColors();
 
   return (
-    <View className="gap-4 bg-surface-raised rounded-3xl p-5 shadow-sm border border-divider/10">
+    <View className="gap-3 bg-surface-raised rounded-3xl p-card shadow-sm border border-divider/10">
       <View className="gap-2">
         <Typography variant="label" tone="faint">
           Block Name
