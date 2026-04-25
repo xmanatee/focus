@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Focus Blocks</title>
+<style>
+  :root {
+    --bg: #F8F2E8;
+    --ink: #2A1F12;
+    --ink-dim: #6B5A45;
+    --accent: #B8612E;
+    --rule: #E5D8C2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1A1510; --ink: #F0E6D6; --ink-dim: #A89880; --rule: #2E2418; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    padding: 48px 24px 96px;
+  }
+  main { max-width: 680px; margin: 0 auto; }
+  a.back { color: var(--ink-dim); text-decoration: none; font-size: 14px; display: inline-block; margin-bottom: 32px; }
+  a.back:hover { color: var(--accent); }
+  h1 { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; font-weight: 700; }
+  h2 { font-size: 22px; line-height: 1.25; margin: 40px 0 12px; font-weight: 600; }
+  h3 { font-size: 18px; line-height: 1.3; margin: 28px 0 8px; font-weight: 600; }
+  p, li { font-size: 17px; line-height: 1.6; color: var(--ink); }
+  p.meta { color: var(--ink-dim); font-size: 15px; margin: 0 0 24px; }
+  ul { padding-left: 22px; }
+  li { margin-bottom: 6px; }
+  code { background: var(--rule); padding: 1px 6px; border-radius: 4px; font-size: 15px; }
+  a { color: var(--accent); }
+  hr { border: none; border-top: 1px solid var(--rule); margin: 40px 0; }
+  strong { font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <a href="../" class="back">&larr; Focus Blocks</a>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Effective date: 2026-04-25</p>
+
+  <h2>Summary</h2>
+  <p>Focus Blocks does not collect, transmit, or share personal data. There is no account, no analytics, and no server. Everything happens on your device and, optionally, syncs between your own devices via your own Apple ID.</p>
+
+  <h2>What data is handled</h2>
+
+  <h3>On your device</h3>
+  <ul>
+    <li><strong>App and category selections</strong> you choose through Apple's <code>FamilyActivityPicker</code>. Stored in your app's local storage and used only to determine what to shield.</li>
+    <li><strong>Schedules</strong> you create (start and end times, which selections they apply to).</li>
+    <li><strong>Screen Time authorization state</strong> granted by iOS.</li>
+  </ul>
+  <p>Focus Blocks does not read, count, log, or transmit app usage. The Screen Time framework performs shielding on the operating-system side based on the rules you set.</p>
+
+  <h3>In your own iCloud</h3>
+  <ul>
+    <li>Your schedules and preferences are written to Apple's <strong>iCloud Key-Value Store</strong> (container <code>iCloud.love.nemi.focus</code>) so that your setup is the same on your iPhone and iPad.</li>
+    <li>This data is stored in <strong>your</strong> iCloud account, under <strong>your</strong> Apple ID. The developer of Focus Blocks has no access to it, cannot read it, and cannot enumerate users.</li>
+    <li>You can stop this sync at any time by turning off iCloud Drive for Focus Blocks in <strong>Settings &rarr; [your name] &rarr; iCloud</strong>.</li>
+  </ul>
+
+  <h2>What Focus Blocks never does</h2>
+  <ul>
+    <li>Does not create an account or require one.</li>
+    <li>Does not include analytics, crash reporters, advertising SDKs, or any third-party SDKs that transmit data.</li>
+    <li>Does not send any data to our servers. There are no servers.</li>
+    <li>Does not monitor or log which apps you use, when, or for how long.</li>
+    <li>Does not manage other people's devices. Focus Blocks is self-directed, not a parental-control product.</li>
+  </ul>
+
+  <h2>Children's privacy</h2>
+  <p>Focus Blocks is rated 4+ and safe for all ages. Because it does not collect any data, it complies with children's privacy rules (COPPA, GDPR-K) by design.</p>
+
+  <h2>Security</h2>
+  <p>All on-device data is protected by iOS's standard app-sandbox and data-protection mechanisms. iCloud Key-Value sync is encrypted in transit and at rest by Apple.</p>
+
+  <h2>Your rights</h2>
+  <p>Because we do not collect personal data, we have nothing to export, correct, or delete on our end. To remove all Focus Blocks data:</p>
+  <ol>
+    <li>Delete the app — this removes local storage.</li>
+    <li>Settings &rarr; [your name] &rarr; iCloud &rarr; Manage Account Storage &rarr; Focus Blocks &rarr; Delete Data — this removes the iCloud Key-Value entries.</li>
+  </ol>
+
+  <h2>Changes</h2>
+  <p>If we ever change this policy — for example, if we add an optional analytics feature — we will update this page and bump the effective date. If we ever begin collecting any data, we will ship a new app version with a clearly documented disclosure and an in-app opt-in.</p>
+
+  <h2>Contact</h2>
+  <p>Questions or concerns: <a href="mailto:support@nemi.love">support@nemi.love</a></p>
+</main>
+</body>
+</html>

@@ -54,6 +54,53 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F8F2E8"
       }
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "bundleIdentifier": "love.nemi.focus.ShieldConfiguration",
+                  "targetName": "ShieldConfiguration",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": [
+                      "group.love.nemi.focus"
+                    ]
+                  }
+                },
+                {
+                  "bundleIdentifier": "love.nemi.focus.ShieldAction",
+                  "targetName": "ShieldAction",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": [
+                      "group.love.nemi.focus"
+                    ]
+                  }
+                },
+                {
+                  "bundleIdentifier": "love.nemi.focus.ActivityMonitorExtension",
+                  "targetName": "ActivityMonitorExtension",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": [
+                      "group.love.nemi.focus"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "2d1c3dbd-6c6d-4d6c-8dfa-edb6681c54f8"
+      }
+    },
+    "owner": "xmanatee"
   }
 }

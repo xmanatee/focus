@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Focus Blocks</title>
+<style>
+  :root {
+    --bg: #F8F2E8;
+    --bg-dark: #1A1510;
+    --ink: #2A1F12;
+    --ink-dim: #6B5A45;
+    --accent: #B8612E;
+    --rule: #E5D8C2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #1A1510; --ink: #F0E6D6; --ink-dim: #A89880; --rule: #2E2418; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    padding: 64px 24px;
+  }
+  main { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 12px; font-weight: 700; }
+  p.lede { color: var(--ink-dim); font-size: 18px; margin: 0 0 40px; }
+  nav { display: flex; gap: 24px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--rule); }
+  nav a { color: var(--accent); text-decoration: none; font-weight: 500; }
+  nav a:hover { text-decoration: underline; }
+  footer { margin-top: 64px; color: var(--ink-dim); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Focus Blocks</h1>
+  <p class="lede">Block distracting apps on a schedule. Private by design.</p>
+
+  <nav>
+    <a href="./privacy/">Privacy Policy</a>
+    <a href="./support/">Support</a>
+  </nav>
+
+  <footer>support@nemi.love</footer>
+</main>
+</body>
+</html>
