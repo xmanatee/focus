@@ -49,7 +49,11 @@
       "typedRoutes": true
     },
     "android": {
-      "package": "love.nemi.focus"
+      "package": "love.nemi.focus",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#F8F2E8"
+      }
     }
   }
 }

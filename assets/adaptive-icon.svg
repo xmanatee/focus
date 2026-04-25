@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Android Adaptive Foreground: Text must stay within 66% safe zone (center 675px) -->
+  <g transform="translate(0, -15)"> <!-- Optical lift -->
+    <text 
+      x="50%" 
+      y="475" 
+      text-anchor="middle" 
+      font-family="system-ui, -apple-system, sans-serif" 
+      font-weight="900" 
+      font-size="175" 
+      fill="#2B221A"
+      style="letter-spacing: -4px;"
+    >FOCUS</text>
+    <text 
+      x="50%" 
+      y="645" 
+      text-anchor="middle" 
+      font-family="system-ui, -apple-system, sans-serif" 
+      font-weight="900" 
+      font-size="175" 
+      fill="#2B221A"
+      style="letter-spacing: -4px;"
+    >BLOCKS</text>
+  </g>
+</svg>
