@@ -24,6 +24,7 @@ type PickerTarget =
 
 interface PickerSession {
   readonly slotId: SelectionSlotId;
+  readonly includeEntireCategory: boolean;
   readonly onSelectionChange: (metadata: ActivitySelectionMetadata) => void;
 }
 
@@ -54,9 +55,16 @@ export function useActivitySelection(
 
   const pickerSession = useMemo<PickerSession | null>(() => {
     if (pickerTarget === null) return null;
+
+    const currentIncludeEntireCategory =
+      activitySelection.status === 'saved'
+        ? activitySelection.includeEntireCategory
+        : true;
+
     if (pickerTarget.mode === 'block') {
       return {
         slotId: blockSlot,
+        includeEntireCategory: currentIncludeEntireCategory,
         onSelectionChange: (metadata) =>
           setActivitySelection(createActivitySelectionFromMetadata(metadata)),
       };
@@ -65,13 +73,14 @@ export function useActivitySelection(
     const templateSlot = selectionIdForTemplate(kind);
     return {
       slotId: templateSlot,
+      includeEntireCategory: currentIncludeEntireCategory,
       onSelectionChange: (metadata) => {
         setTemplateMetadata(kind, metadata);
         copySlot(templateSlot, blockSlot);
         setActivitySelection(createActivitySelectionFromMetadata(metadata));
       },
     };
-  }, [pickerTarget, blockSlot, setTemplateMetadata]);
+  }, [pickerTarget, blockSlot, setTemplateMetadata, activitySelection]);
 
   useEffect(() => {
     if (editId === null) {
