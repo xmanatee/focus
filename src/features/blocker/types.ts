@@ -1,5 +1,3 @@
-export const BLOCK_ACTIVITY_SELECTION_ID = 'main-block-selection';
-
 interface ActivitySelectionMetadata {
   applicationCount: number;
   categoryCount: number;
@@ -9,10 +7,7 @@ interface ActivitySelectionMetadata {
 
 export type PersistedActivitySelection =
   | { status: 'empty' }
-  | ({
-      status: 'saved';
-      selectionId: string;
-    } & ActivitySelectionMetadata);
+  | ({ status: 'saved' } & ActivitySelectionMetadata);
 
 export interface BlockSelection {
   activitySelection: PersistedActivitySelection;
@@ -28,6 +23,10 @@ export const EMPTY_BLOCK_SELECTION: BlockSelection = {
   webDomains: [],
 };
 
+export function selectionIdForBlock(blockId: string): string {
+  return `block.${blockId}`;
+}
+
 export function createActivitySelectionFromMetadata(
   metadata: ActivitySelectionMetadata,
 ): PersistedActivitySelection {
@@ -40,7 +39,6 @@ export function createActivitySelectionFromMetadata(
   }
   return {
     status: 'saved',
-    selectionId: BLOCK_ACTIVITY_SELECTION_ID,
     ...metadata,
   };
 }

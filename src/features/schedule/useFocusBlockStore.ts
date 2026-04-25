@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { newId, persistedStorage } from '../../shared/storage';
+import { persistedStorage } from '../../shared/storage';
+import { clearSelectionSlot } from '../blocker/selectionSlot';
 import { isFocusBlockActiveAt } from './activeness';
 import type { FocusBlock, FocusBlockInput } from './types';
 
 interface FocusBlockState {
   focusBlocks: FocusBlock[];
-  addFocusBlock: (input: FocusBlockInput) => void;
+  addFocusBlock: (id: string, input: FocusBlockInput) => void;
   updateFocusBlock: (id: string, input: FocusBlockInput) => void;
   toggleFocusBlock: (id: string, isEnabled: boolean) => void;
   deleteFocusBlock: (id: string) => void;
@@ -23,12 +24,12 @@ export const useFocusBlockStore = create<FocusBlockState>()(
     (set, get) => ({
       focusBlocks: [],
 
-      addFocusBlock: (input) =>
+      addFocusBlock: (id, input) =>
         set((state) => ({
           focusBlocks: [
             ...state.focusBlocks,
             {
-              id: newId(),
+              id,
               name: input.name.trim(),
               startTime: input.startTime,
               endTime: input.endTime,
@@ -86,6 +87,7 @@ export const useFocusBlockStore = create<FocusBlockState>()(
             'Cannot delete a block while it is active.',
           );
         }
+        clearSelectionSlot(id);
         set((state) => ({
           focusBlocks: state.focusBlocks.filter((b) => b.id !== id),
         }));

@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,12 +13,13 @@ import {
 } from 'react-native-device-activity';
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
+import { clearSelectionSlot } from '../src/features/blocker/selectionSlot';
 import {
-  BLOCK_ACTIVITY_SELECTION_ID,
   EMPTY_BLOCK_SELECTION,
   type PersistedActivitySelection,
   createActivitySelectionFromMetadata,
   selectionHasBlockedTargets,
+  selectionIdForBlock,
 } from '../src/features/blocker/types';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
 import { FormActions } from '../src/features/schedule/components/FormActions';
@@ -42,6 +43,7 @@ import {
 import { haptic } from '../src/shared/design/haptics';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 import { requestNotificationPermissions } from '../src/shared/notifications';
+import { newId } from '../src/shared/storage';
 
 export default function AddFocusBlockScreen(): JSX.Element {
   const router = useRouter();
@@ -54,6 +56,18 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const deleteFocusBlock = useFocusBlockStore((s) => s.deleteFocusBlock);
   const existing = useFocusBlockStore((s) =>
     editId ? s.focusBlocks.find((item) => item.id === editId) ?? null : null,
+  );
+
+  // The iOS picker writes its selection into a UserDefaults slot keyed by this
+  // id from inside the sheet, before save — so the id must exist beforehand.
+  const [blockId] = useState<string>(() => editId ?? newId());
+  const wasSavedRef = useRef(false);
+
+  useEffect(
+    () => () => {
+      if (!editId && !wasSavedRef.current) clearSelectionSlot(blockId);
+    },
+    [blockId, editId],
   );
 
   const { state: adminState } = useAdminState();
@@ -89,9 +103,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const { error, isPending, run } = useAsyncAction();
 
   useEffect(() => {
-    if (isAdminLocked) {
-      router.back();
-    }
+    if (isAdminLocked) router.back();
   }, [isAdminLocked, router]);
 
   const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
@@ -175,16 +187,12 @@ export default function AddFocusBlockScreen(): JSX.Element {
       }
       validateFocusBlockInput(input);
       void haptic.commit();
-      if (editId) {
-        updateFocusBlock(editId, input);
-      } else {
-        addFocusBlock(input);
-      }
+      if (editId) updateFocusBlock(editId, input);
+      else addFocusBlock(blockId, input);
+      wasSavedRef.current = true;
     }, 'Could not save block.');
 
-    if (success) {
-      router.back();
-    }
+    if (success) router.back();
   };
 
   const handleDelete = (): void => {
@@ -277,7 +285,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
 
       {isPickerVisible && (
         <DeviceActivitySelectionSheetViewPersisted
-          familyActivitySelectionId={BLOCK_ACTIVITY_SELECTION_ID}
+          familyActivitySelectionId={selectionIdForBlock(blockId)}
           onSelectionChange={(event) => {
             void handleSelectionChange(event);
           }}

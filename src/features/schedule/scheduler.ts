@@ -6,8 +6,11 @@ import {
   startMonitoring,
   stopMonitoring,
 } from 'react-native-device-activity';
-import { hasSavedActivitySelection } from '../blocker/types';
-import type { BlockSelection } from '../blocker/types';
+import {
+  type BlockSelection,
+  hasSavedActivitySelection,
+  selectionIdForBlock,
+} from '../blocker/types';
 import type { DayOfWeek } from './types';
 
 interface FocusBlockSpec {
@@ -50,7 +53,7 @@ function materializeFocusBlock(spec: FocusBlockSpec): MonitorPlan[] {
   const endActions: Action[] = [];
 
   if (hasSavedActivitySelection(spec.profileSelection.activitySelection)) {
-    const selectionId = spec.profileSelection.activitySelection.selectionId;
+    const selectionId = selectionIdForBlock(spec.id);
     startActions.push({
       type: 'blockSelection',
       familyActivitySelectionId: selectionId,
