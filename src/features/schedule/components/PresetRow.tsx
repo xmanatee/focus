@@ -6,6 +6,7 @@ import type { PresetKind } from '../presets';
 interface PresetRowProps {
   readonly onSelect: (kind: PresetKind) => void;
   readonly onLongPress: (kind: PresetKind) => void;
+  readonly disabled?: boolean;
 }
 
 const ENTRIES: readonly { kind: PresetKind; label: string }[] = [
@@ -17,6 +18,7 @@ const ENTRIES: readonly { kind: PresetKind; label: string }[] = [
 export function PresetRow({
   onSelect,
   onLongPress,
+  disabled = false,
 }: PresetRowProps): JSX.Element {
   return (
     <Section title="Presets">
@@ -27,6 +29,7 @@ export function PresetRow({
             label={label}
             onPress={() => onSelect(kind)}
             onLongPress={() => onLongPress(kind)}
+            disabled={disabled}
           />
         ))}
       </View>

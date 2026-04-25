@@ -57,3 +57,23 @@ export function selectionHasBlockedTargets(selection: BlockSelection): boolean {
     selection.webDomains.length > 0
   );
 }
+
+export function summarizeActivitySelection(
+  selection: PersistedActivitySelection,
+): string {
+  if (selection.status !== 'saved') return 'None';
+  const parts: string[] = [];
+  if (selection.applicationCount > 0) {
+    const noun = selection.applicationCount === 1 ? 'app' : 'apps';
+    parts.push(`${selection.applicationCount} ${noun}`);
+  }
+  if (selection.categoryCount > 0) {
+    const noun = selection.categoryCount === 1 ? 'category' : 'categories';
+    parts.push(`${selection.categoryCount} ${noun}`);
+  }
+  if (selection.webDomainCount > 0) {
+    const noun = selection.webDomainCount === 1 ? 'domain' : 'domains';
+    parts.push(`${selection.webDomainCount} ${noun}`);
+  }
+  return parts.length === 0 ? 'None' : parts.join(', ');
+}

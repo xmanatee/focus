@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { persistedStorage } from '../../shared/storage';
+import { useFocusBlockStore } from '../schedule/useFocusBlockStore';
 import type { SetupBlock } from './adminState';
 import { validateSetupBlock } from './validation';
 
@@ -17,6 +18,7 @@ export const useSettingsStore = create<SettingsState>()(
       setSetupBlock: (block) => {
         validateSetupBlock(block);
         set({ setupBlock: block });
+        useFocusBlockStore.getState().clearAllStrict();
       },
       clearSetupBlock: () => set({ setupBlock: null }),
     }),

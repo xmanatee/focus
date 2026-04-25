@@ -39,7 +39,7 @@ export const protectionCopy = {
     partial: 'Partial protection. Finish setup for full coverage.',
     full: 'iOS defenses configured.',
   },
-  lockInCard: {
+  strictMode: {
     title: 'Strict mode',
     body: 'While this block is active, you cannot disable, edit, or delete it. The only way out is to wait, or to enter the Screen Time passcode.',
     needsSetup: 'Set up tamper protection first to make this meaningful.',

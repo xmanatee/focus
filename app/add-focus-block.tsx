@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
@@ -12,15 +12,17 @@ import { protectionCopy } from '../src/features/protection/copy';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
 import { FormActions } from '../src/features/schedule/components/FormActions';
-import { LockInCard } from '../src/features/schedule/components/LockInCard';
 import { NotificationsCard } from '../src/features/schedule/components/NotificationsCard';
 import { PresetRow } from '../src/features/schedule/components/PresetRow';
+import { StrictModeCard } from '../src/features/schedule/components/StrictModeCard';
+import { resolveEditPolicy } from '../src/features/schedule/editPolicy';
 import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
-import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
 import { useActivitySelection } from '../src/features/schedule/useActivitySelection';
 import { useFocusBlockForm } from '../src/features/schedule/useFocusBlockForm';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useAdminState } from '../src/features/settings/useAdminState';
+import { useSettingsStore } from '../src/features/settings/useSettingsStore';
+import { InfoBanner } from '../src/shared/components/InfoBanner';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
@@ -35,7 +37,6 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const editId = params.id ?? null;
   const isEditing = editId !== null;
 
-  const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const addFocusBlock = useFocusBlockStore((s) => s.addFocusBlock);
   const updateFocusBlock = useFocusBlockStore((s) => s.updateFocusBlock);
   const deleteFocusBlock = useFocusBlockStore((s) => s.deleteFocusBlock);
@@ -48,10 +49,16 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const [templatePromptKind, setTemplatePromptKind] =
     useState<PresetKind | null>(null);
 
-  const { state: adminState } = useAdminState();
-  const isAdminLocked = adminState.kind === 'locked';
-  const { isStrict } = useActiveBlock(focusBlocks);
+  const { state: adminState, now } = useAdminState();
+  const setupBlock = useSettingsStore((s) => s.setupBlock);
   const tamperReady = useProtectionPosture().score === 'full';
+
+  const policy = resolveEditPolicy(
+    adminState,
+    isEditing ? existing : null,
+    now,
+  );
+  const readOnly = policy.readOnly;
 
   const form = useFocusBlockForm(existing);
 
@@ -65,10 +72,6 @@ export default function AddFocusBlockScreen(): JSX.Element {
 
   const { error, isPending, run } = useAsyncAction();
   const dismiss = useDismiss();
-
-  useEffect(() => {
-    if (isAdminLocked || isStrict) dismiss();
-  }, [isAdminLocked, isStrict, dismiss]);
 
   const handleApplyPreset = (kind: PresetKind): void => {
     void haptic.select();
@@ -105,16 +108,16 @@ export default function AddFocusBlockScreen(): JSX.Element {
       return;
     }
     Alert.alert(
-      protectionCopy.lockInCard.softBlockTitle,
-      protectionCopy.lockInCard.softBlockBody,
+      protectionCopy.strictMode.softBlockTitle,
+      protectionCopy.strictMode.softBlockBody,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: protectionCopy.lockInCard.softBlockSetup,
+          text: protectionCopy.strictMode.softBlockSetup,
           onPress: () => router.push('/protection'),
         },
         {
-          text: protectionCopy.lockInCard.softBlockAnyway,
+          text: protectionCopy.strictMode.softBlockAnyway,
           style: 'destructive',
           onPress: () => form.setStrict(true),
         },
@@ -197,6 +200,12 @@ export default function AddFocusBlockScreen(): JSX.Element {
           {isEditing ? 'Edit block.' : 'Set your rules.'}
         </Typography>
 
+        {policy.message && (
+          <InfoBanner variant="info" title="Read-only">
+            {policy.message}
+          </InfoBanner>
+        )}
+
         {!isEditing && (
           <PresetRow
             onSelect={handleApplyPreset}
@@ -212,6 +221,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
           onEndChange={form.setEndDate}
           selectedDays={form.selectedDays}
           onToggleDay={form.toggleDay}
+          disabled={readOnly}
         />
         <BlockingCard
           activitySelection={selection.activitySelection}
@@ -221,13 +231,17 @@ export default function AddFocusBlockScreen(): JSX.Element {
           onNewDomainChange={setNewDomain}
           onAddDomain={addDomain}
           onRemoveDomain={removeDomain}
+          disabled={readOnly}
         />
 
-        <LockInCard
-          value={form.strict}
-          onChange={handleStrictChange}
-          tamperReady={tamperReady}
-        />
+        {setupBlock === null && (
+          <StrictModeCard
+            value={form.strict}
+            onChange={handleStrictChange}
+            tamperReady={tamperReady}
+            disabled={readOnly}
+          />
+        )}
 
         {templatePromptKind !== null ? (
           <Typography variant="caption" tone="muted">
@@ -247,6 +261,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
             void haptic.select();
             form.setNotifyOnEnd(v);
           }}
+          disabled={readOnly}
         />
 
         {error ? (
@@ -258,6 +273,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
         <FormActions
           isEditing={isEditing}
           isPending={isPending}
+          readOnly={readOnly}
           onSave={() => void handleSave()}
           onDelete={handleDelete}
           onCancel={dismiss}

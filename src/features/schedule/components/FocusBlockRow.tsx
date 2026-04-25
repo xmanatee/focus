@@ -4,12 +4,13 @@ import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
 import { formatActiveDays } from '../../../shared/days';
 import { useThemeColors } from '../../../shared/design/theme';
+import { summarizeActivitySelection } from '../../blocker/types';
 import type { FocusBlock } from '../types';
 
 interface FocusBlockRowProps {
   readonly block: FocusBlock;
   readonly isActive: boolean;
-  readonly locked: boolean;
+  readonly toggleDisabled: boolean;
   readonly onPress: () => void;
   readonly onToggle: (next: boolean) => void;
 }
@@ -17,7 +18,7 @@ interface FocusBlockRowProps {
 export function FocusBlockRow({
   block,
   isActive,
-  locked,
+  toggleDisabled,
   onPress,
   onToggle,
 }: FocusBlockRowProps): JSX.Element {
@@ -27,7 +28,7 @@ export function FocusBlockRow({
   return (
     <Card>
       <View className="flex-row justify-between items-start">
-        <Pressable onPress={onPress} disabled={locked} className="flex-1 gap-2">
+        <Pressable onPress={onPress} className="flex-1 gap-2">
           <View className="flex-row items-center gap-2">
             <Typography variant="h3" tone="ink">
               {block.name}
@@ -51,27 +52,31 @@ export function FocusBlockRow({
           <Typography variant="caption" tone="muted">
             {formatActiveDays(block.days)} · {block.startTime}–{block.endTime}
           </Typography>
-          <View className="flex-row items-center gap-2">
-            <SelectionPill
-              icon="app.badge"
-              label={
-                selection.activitySelection.status === 'saved'
-                  ? `${selection.activitySelection.applicationCount} apps`
-                  : '0 apps'
-              }
-            />
+          <View className="flex-row items-center gap-2 flex-wrap">
+            {selection.activitySelection.status === 'saved' && (
+              <SelectionPill
+                icon="square.grid.2x2.fill"
+                label={summarizeActivitySelection(selection.activitySelection)}
+              />
+            )}
             {selection.webDomains.length > 0 && (
               <SelectionPill
                 icon="globe"
-                label={`${selection.webDomains.length} sites`}
+                label={`${selection.webDomains.length} ${
+                  selection.webDomains.length === 1 ? 'site' : 'sites'
+                }`}
               />
             )}
+            {selection.activitySelection.status !== 'saved' &&
+              selection.webDomains.length === 0 && (
+                <SelectionPill icon="app.badge" label="None" />
+              )}
           </View>
         </Pressable>
         <Switch
           value={block.isEnabled}
           onValueChange={onToggle}
-          disabled={locked}
+          disabled={toggleDisabled}
           trackColor={{ true: colors.signal, false: colors.divider }}
         />
       </View>
@@ -83,7 +88,7 @@ function SelectionPill({
   icon,
   label,
 }: {
-  icon: 'app.badge' | 'globe';
+  icon: 'app.badge' | 'globe' | 'square.grid.2x2.fill';
   label: string;
 }): JSX.Element {
   return (

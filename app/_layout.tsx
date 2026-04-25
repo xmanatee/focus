@@ -13,6 +13,9 @@ async function rehydrateAll(): Promise<void> {
   await useFocusBlockStore.persist.rehydrate();
   await useSettingsStore.persist.rehydrate();
   await useTamperSetupStore.persist.rehydrate();
+  if (useSettingsStore.getState().setupBlock !== null) {
+    useFocusBlockStore.getState().clearAllStrict();
+  }
 }
 
 export default function RootLayout(): JSX.Element {

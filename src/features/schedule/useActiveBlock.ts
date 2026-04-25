@@ -4,7 +4,6 @@ import type { FocusBlock } from './types';
 
 interface ActiveBlockView {
   readonly active: FocusBlock | null;
-  readonly isStrict: boolean;
   readonly now: Date;
 }
 
@@ -23,10 +22,6 @@ export function useActiveBlock(
   return useMemo<ActiveBlockView>(() => {
     const active =
       focusBlocks.find((b) => isFocusBlockActiveAt(b, now)) ?? null;
-    return {
-      active,
-      isStrict: active?.strict ?? false,
-      now,
-    };
+    return { active, now };
   }, [now, focusBlocks]);
 }

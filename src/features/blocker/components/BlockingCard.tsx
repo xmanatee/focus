@@ -4,7 +4,10 @@ import { Icon } from '../../../shared/components/Icon';
 import { Section } from '../../../shared/components/Section';
 import { Typography } from '../../../shared/components/Typography';
 import { useThemeColors } from '../../../shared/design/theme';
-import type { PersistedActivitySelection } from '../types';
+import {
+  type PersistedActivitySelection,
+  summarizeActivitySelection,
+} from '../types';
 
 interface BlockingCardProps {
   readonly activitySelection: PersistedActivitySelection;
@@ -14,6 +17,7 @@ interface BlockingCardProps {
   readonly onNewDomainChange: (next: string) => void;
   readonly onAddDomain: () => void;
   readonly onRemoveDomain: (domain: string) => void;
+  readonly disabled?: boolean;
 }
 
 export function BlockingCard({
@@ -24,12 +28,13 @@ export function BlockingCard({
   onNewDomainChange,
   onAddDomain,
   onRemoveDomain,
+  disabled = false,
 }: BlockingCardProps): JSX.Element {
   const colors = useThemeColors();
 
   return (
     <Section title="Blocking">
-      <Card onPress={onOpenAppsPicker}>
+      <Card onPress={disabled ? undefined : onOpenAppsPicker}>
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-4">
             <Icon name="app.badge" size={24} tone="muted" />
@@ -38,13 +43,14 @@ export function BlockingCard({
                 Apps & Categories
               </Typography>
               <Typography variant="caption" tone="muted">
-                {activitySelection.status === 'saved'
-                  ? `${activitySelection.applicationCount} apps selected`
-                  : 'None selected'}
+                {(() => {
+                  const summary = summarizeActivitySelection(activitySelection);
+                  return summary === 'None' ? 'None selected' : `${summary} selected`;
+                })()}
               </Typography>
             </View>
           </View>
-          <Icon name="chevron.right" size={18} tone="faint" />
+          {!disabled && <Icon name="chevron.right" size={18} tone="faint" />}
         </View>
       </Card>
 
@@ -56,25 +62,27 @@ export function BlockingCard({
           </Typography>
         </View>
 
-        <View className="flex-row gap-2">
-          <TextInput
-            placeholder="example.com"
-            placeholderTextColor={colors.inkFaint}
-            value={newDomain}
-            onChangeText={onNewDomainChange}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            className="flex-1 bg-surface-sunken rounded-xl px-4 py-3"
-            style={{ color: colors.ink }}
-          />
-          <Pressable
-            onPress={onAddDomain}
-            className="bg-signal w-12 h-12 items-center justify-center rounded-xl"
-          >
-            <Icon name="plus" size={20} tone="surface" />
-          </Pressable>
-        </View>
+        {!disabled && (
+          <View className="flex-row gap-2">
+            <TextInput
+              placeholder="example.com"
+              placeholderTextColor={colors.inkFaint}
+              value={newDomain}
+              onChangeText={onNewDomainChange}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              className="flex-1 bg-surface-sunken rounded-xl px-4 py-3"
+              style={{ color: colors.ink }}
+            />
+            <Pressable
+              onPress={onAddDomain}
+              className="bg-signal w-12 h-12 items-center justify-center rounded-xl"
+            >
+              <Icon name="plus" size={20} tone="surface" />
+            </Pressable>
+          </View>
+        )}
 
         {webDomains.length > 0 && (
           <View className="gap-2">
@@ -86,9 +94,11 @@ export function BlockingCard({
                 <Typography variant="body" tone="ink">
                   {domain}
                 </Typography>
-                <Pressable onPress={() => onRemoveDomain(domain)}>
-                  <Icon name="xmark.circle.fill" size={18} tone="faint" />
-                </Pressable>
+                {!disabled && (
+                  <Pressable onPress={() => onRemoveDomain(domain)}>
+                    <Icon name="xmark.circle.fill" size={18} tone="faint" />
+                  </Pressable>
+                )}
               </View>
             ))}
           </View>

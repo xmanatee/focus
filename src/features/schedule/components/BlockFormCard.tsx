@@ -15,6 +15,7 @@ interface BlockFormCardProps {
   readonly onEndChange: (next: Date) => void;
   readonly selectedDays: readonly DayOfWeek[];
   readonly onToggleDay: (day: DayOfWeek) => void;
+  readonly disabled?: boolean;
 }
 
 export function BlockFormCard({
@@ -26,6 +27,7 @@ export function BlockFormCard({
   onEndChange,
   selectedDays,
   onToggleDay,
+  disabled = false,
 }: BlockFormCardProps): JSX.Element {
   const colors = useThemeColors();
 
@@ -40,6 +42,7 @@ export function BlockFormCard({
           onChangeText={onNameChange}
           placeholder="e.g. Morning Deep Work"
           placeholderTextColor={colors.inkFaint}
+          editable={!disabled}
           className="text-[22px] font-semibold"
           style={{ color: colors.ink }}
         />
@@ -52,6 +55,7 @@ export function BlockFormCard({
         end={endDate}
         onStartChange={onStartChange}
         onEndChange={onEndChange}
+        disabled={disabled}
       />
 
       <View className="h-[1px] bg-divider" />
@@ -60,7 +64,11 @@ export function BlockFormCard({
         <Typography variant="label" tone="faint">
           Repeat
         </Typography>
-        <DayPicker selected={selectedDays} onToggle={onToggleDay} />
+        <DayPicker
+          selected={selectedDays}
+          onToggle={onToggleDay}
+          disabled={disabled}
+        />
       </View>
     </Card>
   );

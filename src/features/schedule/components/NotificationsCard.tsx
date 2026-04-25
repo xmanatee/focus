@@ -8,6 +8,7 @@ interface NotificationsCardProps {
   readonly notifyOnEnd: boolean;
   readonly onChangeStart: (next: boolean) => void;
   readonly onChangeEnd: (next: boolean) => void;
+  readonly disabled?: boolean;
 }
 
 export function NotificationsCard({
@@ -15,6 +16,7 @@ export function NotificationsCard({
   notifyOnEnd,
   onChangeStart,
   onChangeEnd,
+  disabled = false,
 }: NotificationsCardProps): JSX.Element {
   return (
     <Section title="Notifications">
@@ -24,6 +26,7 @@ export function NotificationsCard({
           subtitle="Alert when this block begins."
           value={notifyOnStart}
           onChange={onChangeStart}
+          disabled={disabled}
         />
         <View className="h-[1px] bg-divider/10" />
         <NotifyRow
@@ -31,6 +34,7 @@ export function NotificationsCard({
           subtitle="Alert when this block finishes."
           value={notifyOnEnd}
           onChange={onChangeEnd}
+          disabled={disabled}
         />
       </Card>
     </Section>

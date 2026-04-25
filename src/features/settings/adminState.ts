@@ -38,3 +38,14 @@ export function resolveAdminState(
     nextUnlock: next,
   };
 }
+
+export function assertAdminUnlocked(
+  setupBlock: SetupBlock | null,
+  now: Date,
+): void {
+  if (resolveAdminState(setupBlock, now).kind === 'locked') {
+    throw new Error(
+      'Lock-in is active. Edits unlock during your setup window.',
+    );
+  }
+}

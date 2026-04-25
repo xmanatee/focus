@@ -4,6 +4,7 @@ import { Button } from '../../../shared/components/Button';
 interface FormActionsProps {
   readonly isEditing: boolean;
   readonly isPending: boolean;
+  readonly readOnly: boolean;
   readonly onSave: () => void;
   readonly onDelete: () => void;
   readonly onCancel: () => void;
@@ -12,10 +13,19 @@ interface FormActionsProps {
 export function FormActions({
   isEditing,
   isPending,
+  readOnly,
   onSave,
   onDelete,
   onCancel,
 }: FormActionsProps): JSX.Element {
+  if (readOnly) {
+    return (
+      <View className="gap-3">
+        <Button title="Close" variant="commit" onPress={onCancel} />
+      </View>
+    );
+  }
+
   return (
     <View className="gap-3">
       <Button

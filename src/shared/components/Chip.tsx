@@ -6,6 +6,7 @@ interface ChipProps {
   readonly onPress: () => void;
   readonly onLongPress?: () => void;
   readonly active?: boolean;
+  readonly disabled?: boolean;
 }
 
 export function Chip({
@@ -13,16 +14,18 @@ export function Chip({
   onPress,
   onLongPress,
   active = false,
+  disabled = false,
 }: ChipProps): JSX.Element {
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
+      disabled={disabled}
       className={`px-4 py-3 rounded-full border ${
         active
           ? 'bg-signal border-signal'
           : 'bg-surface-raised border-divider/50'
-      }`}
+      } ${disabled ? 'opacity-40' : ''}`}
     >
       <Typography variant="body-md" tone={active ? 'surface' : 'muted'}>
         {label}

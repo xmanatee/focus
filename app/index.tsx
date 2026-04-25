@@ -31,7 +31,7 @@ export default function MainFeedScreen(): JSX.Element {
 
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const toggleFocusBlock = useFocusBlockStore((s) => s.toggleFocusBlock);
-  const { active, isStrict, now } = useActiveBlock(focusBlocks);
+  const { active, now } = useActiveBlock(focusBlocks);
 
   const { state: adminState } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
@@ -39,8 +39,6 @@ export default function MainFeedScreen(): JSX.Element {
 
   const posture = useProtectionPosture();
   const showProtectionCard = posture.score !== 'full';
-
-  const lockedAll = isAdminLocked || isStrict;
 
   useEffect(() => {
     void reconcileFocusBlocks(focusBlocks, setupBlock);
@@ -57,15 +55,15 @@ export default function MainFeedScreen(): JSX.Element {
   };
 
   const lockInTitle = !setupBlock
-    ? 'Lock-in'
+    ? 'Set up Lock-in'
     : isAdminLocked
-      ? 'Lock-in active'
-      : 'Lock-in unlocked';
+      ? 'Locked'
+      : 'Editable now';
   const lockInSubtitle = !setupBlock
-    ? 'Set a weekly setup window to lock your focus blocks and prevent yourself from disabling them.'
+    ? 'Set a weekly setup window so you can edit blocks only during it.'
     : isAdminLocked
-      ? `Focus blocks are locked. Changes only allowed during your setup block (${setupBlock.startTime}–${setupBlock.endTime}).`
-      : 'Focus blocks are unlocked. You can edit them right now.';
+      ? `Editable next during your setup block (${setupBlock.startTime}–${setupBlock.endTime}).`
+      : 'You are inside your setup window — edits are allowed.';
 
   return (
     <Screen padded={false}>
@@ -133,7 +131,7 @@ export default function MainFeedScreen(): JSX.Element {
             />
           )}
 
-          <Card onPress={() => router.push('/settings')} disabled={isStrict}>
+          <Card onPress={() => router.push('/settings')}>
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
                 <Icon
@@ -161,10 +159,7 @@ export default function MainFeedScreen(): JSX.Element {
                 void haptic.select();
                 router.push('/add-focus-block');
               }}
-              disabled={lockedAll}
-              className={`h-10 w-10 items-center justify-center rounded-full bg-signal ${
-                lockedAll ? 'opacity-40' : ''
-              }`}
+              className="h-10 w-10 items-center justify-center rounded-full bg-signal"
             >
               <Icon name="plus" size={20} tone="surface" />
             </Pressable>
@@ -179,19 +174,17 @@ export default function MainFeedScreen(): JSX.Element {
                 title="Add a block"
                 variant="commit"
                 onPress={() => router.push('/add-focus-block')}
-                disabled={lockedAll}
               />
             </Card>
           ) : (
             focusBlocks.map((block) => {
               const isActive = isFocusBlockActiveAt(block, now);
-              const isRowLocked = isActive || lockedAll;
               return (
                 <FocusBlockRow
                   key={block.id}
                   block={block}
                   isActive={isActive}
-                  locked={isRowLocked}
+                  toggleDisabled={isActive || isAdminLocked}
                   onPress={() => {
                     void haptic.select();
                     router.push({
