@@ -26,6 +26,7 @@ import {
 } from '../src/shared/days';
 import { haptic } from '../src/shared/design/haptics';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
+import { useDismiss } from '../src/shared/hooks/useDismiss';
 import { requestNotificationPermissions } from '../src/shared/notifications';
 
 function nextUnlockLabel(state: AdminState, now: Date): string {
@@ -40,6 +41,7 @@ function nextUnlockLabel(state: AdminState, now: Date): string {
 
 export default function SettingsScreen(): JSX.Element {
   const router = useRouter();
+  const dismiss = useDismiss();
   const existing = useSettingsStore((s) => s.setupBlock);
   const setSetupBlock = useSettingsStore((s) => s.setSetupBlock);
   const clearSetupBlock = useSettingsStore((s) => s.clearSetupBlock);
@@ -111,9 +113,7 @@ export default function SettingsScreen(): JSX.Element {
       void haptic.commit();
       setSetupBlock(nextBlock);
     }, 'Could not save setup block.');
-    if (success) {
-      router.back();
-    }
+    if (success) dismiss();
   };
 
   const confirmClear = (): void => {

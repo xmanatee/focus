@@ -1,10 +1,10 @@
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ConfirmStep } from '../src/features/protection/components/wizard/ConfirmStep';
 import { DefenseSetupStep } from '../src/features/protection/components/wizard/DefenseSetupStep';
 import { IntroStep } from '../src/features/protection/components/wizard/IntroStep';
 import { protectionCopy } from '../src/features/protection/copy';
 import { InfoBanner } from '../src/shared/components/InfoBanner';
+import { useDismiss } from '../src/shared/hooks/useDismiss';
 
 type WizardStep = 'intro' | 'screenTimeLock' | 'appDeletion' | 'confirm';
 
@@ -16,10 +16,9 @@ const NEXT: Record<WizardStep, WizardStep> = {
 };
 
 export default function ProtectionWizardScreen(): JSX.Element {
-  const router = useRouter();
+  const onClose = useDismiss();
   const [step, setStep] = useState<WizardStep>('intro');
 
-  const onClose = (): void => router.back();
   const onNext = (): void => setStep((current) => NEXT[current]);
 
   switch (step) {

@@ -88,6 +88,16 @@ const rules = [
       'presentation, which adjusts for the keyboard natively. Use ' +
       'keyboardShouldPersistTaps + keyboardDismissMode on the ScrollView instead.',
   },
+  {
+    id: 'no-bare-router-back',
+    pattern: /\brouter\.back\s*\(/,
+    message:
+      'Use useDismiss() from src/shared/hooks/useDismiss.ts. Bare router.back() ' +
+      'warns "GO_BACK was not handled" when the stack is empty (deep link, or a ' +
+      'second pop racing with state-driven dismissal). useDismiss guards with ' +
+      'canGoBack().',
+    exceptions: new Set(['src/shared/hooks/useDismiss.ts']),
+  },
 ];
 
 const violations = [];

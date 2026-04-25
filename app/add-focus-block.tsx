@@ -25,6 +25,7 @@ import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
+import { useDismiss } from '../src/shared/hooks/useDismiss';
 import { requestNotificationPermissions } from '../src/shared/notifications';
 import { newId } from '../src/shared/storage';
 
@@ -63,10 +64,11 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const { pickerSession } = selection;
 
   const { error, isPending, run } = useAsyncAction();
+  const dismiss = useDismiss();
 
   useEffect(() => {
-    if (isAdminLocked || isStrict) router.back();
-  }, [isAdminLocked, isStrict, router]);
+    if (isAdminLocked || isStrict) dismiss();
+  }, [isAdminLocked, isStrict, dismiss]);
 
   const handleApplyPreset = (kind: PresetKind): void => {
     void haptic.select();
@@ -154,7 +156,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
       selection.markSaved();
     }, 'Could not save block.');
 
-    if (success) router.back();
+    if (success) dismiss();
   };
 
   const handleDelete = (): void => {
@@ -170,7 +172,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
           onPress: () => {
             void haptic.abandon();
             deleteFocusBlock(editId);
-            router.back();
+            dismiss();
           },
         },
       ],
@@ -258,7 +260,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
           isPending={isPending}
           onSave={() => void handleSave()}
           onDelete={handleDelete}
-          onCancel={() => router.back()}
+          onCancel={dismiss}
         />
       </ScrollView>
 
