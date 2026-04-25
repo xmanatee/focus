@@ -1,11 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from 'react-native';
+import { Alert, ScrollView } from 'react-native';
 import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
@@ -184,93 +179,88 @@ export default function AddFocusBlockScreen(): JSX.Element {
 
   return (
     <Screen padded={false} edges={['bottom']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      <ScrollView
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingBottom: 60,
+          paddingTop: 32,
+          gap: 20,
+        }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
       >
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingBottom: 60,
-            paddingTop: 32,
-            gap: 20,
-          }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Typography variant="display-md" tone="ink">
-            {isEditing ? 'Edit block.' : 'Set your rules.'}
+        <Typography variant="display-md" tone="ink">
+          {isEditing ? 'Edit block.' : 'Set your rules.'}
+        </Typography>
+
+        {!isEditing && (
+          <PresetRow
+            onSelect={handleApplyPreset}
+            onLongPress={selection.openTemplatePicker}
+          />
+        )}
+        <BlockFormCard
+          name={form.name}
+          onNameChange={form.setName}
+          startDate={form.startDate}
+          endDate={form.endDate}
+          onStartChange={form.setStartDate}
+          onEndChange={form.setEndDate}
+          selectedDays={form.selectedDays}
+          onToggleDay={form.toggleDay}
+        />
+        <BlockingCard
+          activitySelection={selection.activitySelection}
+          onOpenAppsPicker={selection.openBlockPicker}
+          webDomains={form.webDomains}
+          newDomain={newDomain}
+          onNewDomainChange={setNewDomain}
+          onAddDomain={addDomain}
+          onRemoveDomain={removeDomain}
+        />
+
+        <LockInCard
+          value={form.strict}
+          onChange={handleStrictChange}
+          tamperReady={tamperReady}
+        />
+
+        {templatePromptKind !== null ? (
+          <Typography variant="caption" tone="muted">
+            Hold "{PRESETS[templatePromptKind].name}" to choose which apps it
+            blocks.
           </Typography>
+        ) : null}
 
-          {!isEditing && (
-            <PresetRow
-              onSelect={handleApplyPreset}
-              onLongPress={selection.openTemplatePicker}
-            />
-          )}
-          <BlockFormCard
-            name={form.name}
-            onNameChange={form.setName}
-            startDate={form.startDate}
-            endDate={form.endDate}
-            onStartChange={form.setStartDate}
-            onEndChange={form.setEndDate}
-            selectedDays={form.selectedDays}
-            onToggleDay={form.toggleDay}
-          />
-          <BlockingCard
-            activitySelection={selection.activitySelection}
-            onOpenAppsPicker={selection.openBlockPicker}
-            webDomains={form.webDomains}
-            newDomain={newDomain}
-            onNewDomainChange={setNewDomain}
-            onAddDomain={addDomain}
-            onRemoveDomain={removeDomain}
-          />
+        <NotificationsCard
+          notifyOnStart={form.notifyOnStart}
+          notifyOnEnd={form.notifyOnEnd}
+          onChangeStart={(v) => {
+            void haptic.select();
+            form.setNotifyOnStart(v);
+          }}
+          onChangeEnd={(v) => {
+            void haptic.select();
+            form.setNotifyOnEnd(v);
+          }}
+        />
 
-          <LockInCard
-            value={form.strict}
-            onChange={handleStrictChange}
-            tamperReady={tamperReady}
-          />
+        {error ? (
+          <Typography variant="caption" tone="danger">
+            {error}
+          </Typography>
+        ) : null}
 
-          {templatePromptKind !== null ? (
-            <Typography variant="caption" tone="muted">
-              Hold "{PRESETS[templatePromptKind].name}" to choose which apps it
-              blocks.
-            </Typography>
-          ) : null}
-
-          <NotificationsCard
-            notifyOnStart={form.notifyOnStart}
-            notifyOnEnd={form.notifyOnEnd}
-            onChangeStart={(v) => {
-              void haptic.select();
-              form.setNotifyOnStart(v);
-            }}
-            onChangeEnd={(v) => {
-              void haptic.select();
-              form.setNotifyOnEnd(v);
-            }}
-          />
-
-          {error ? (
-            <Typography variant="caption" tone="danger">
-              {error}
-            </Typography>
-          ) : null}
-
-          <FormActions
-            isEditing={isEditing}
-            isPending={isPending}
-            onSave={() => void handleSave()}
-            onDelete={handleDelete}
-            onCancel={() => router.back()}
-          />
-        </ScrollView>
-      </KeyboardAvoidingView>
+        <FormActions
+          isEditing={isEditing}
+          isPending={isPending}
+          onSave={() => void handleSave()}
+          onDelete={handleDelete}
+          onCancel={() => router.back()}
+        />
+      </ScrollView>
 
       {pickerSession ? (
         <DeviceActivitySelectionSheetViewPersisted

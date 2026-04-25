@@ -79,6 +79,15 @@ const rules = [
     pattern: /catch\s*(?:\([^)]*\))?\s*\{\s*\}/,
     message: 'Empty catch block silently swallows errors.',
   },
+  {
+    id: 'no-keyboard-avoiding-view',
+    pattern: /\bKeyboardAvoidingView\b/,
+    message:
+      'KeyboardAvoidingView fights iOS formSheet keyboardLayoutGuide and freezes ' +
+      'the JS thread on TextInput focus. All form screens here use formSheet ' +
+      'presentation, which adjusts for the keyboard natively. Use ' +
+      'keyboardShouldPersistTaps + keyboardDismissMode on the ScrollView instead.',
+  },
 ];
 
 const violations = [];
