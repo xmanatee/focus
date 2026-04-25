@@ -3,32 +3,34 @@ export const PROTECTION_WIZARD_STEPS = 4;
 export const protectionCopy = {
   intro: {
     title: 'Tamper protection.',
-    body: 'iOS limits what an app can lock down on your behalf. This setup walks you through two iOS settings that, together, make Focus Blocks much harder to disable in a moment of weakness.',
-    timeEstimate: '3–5 minutes. iOS 26.4 or later recommended.',
+    body: 'iOS limits what an app can lock down on your behalf. Two settings inside iOS Screen Time, set with a passcode you do not know, are what give Focus Blocks any teeth.',
+    timeEstimate: 'Best on iOS 26.4 or later. About 3 minutes.',
     primary: 'Start setup',
     skip: 'Maybe later',
   },
-  passcode: {
-    title: 'Set a Screen Time passcode.',
-    body: 'In Settings, go to Screen Time → Lock Screen Time Settings, then tap "Use Screen Time Passcode" and pick a 4-digit code. On iOS 26.4+ this passcode also gates revoking Focus Blocks’ permission.',
-    trustedFriendTitle: 'Better: have a friend set it',
+  screenTimeLock: {
+    title: 'Lock Screen Time Settings.',
+    body: 'Open Settings → Screen Time → scroll down → tap Lock Screen Time Settings → set a 4-digit passcode. On iOS 26.4+ this passcode is also required to revoke Focus Blocks’ Screen Time access. That is the iron lock — without it, anything below can be undone with your phone passcode.',
+    trustedFriendTitle: 'Have a friend set the passcode',
     trustedFriendBody:
-      'Hand the phone to someone you trust. They tap through the steps, pick a code, and walk away without telling you. You can’t undo what you can’t remember.',
+      'Hand the phone over. They tap Lock Screen Time Settings, pick a passcode, and walk away without telling you. You cannot undo what you cannot remember.',
     open: 'Open Settings',
-    confirm: 'I have set the Screen Time passcode',
+    confirm: 'Screen Time Settings is locked with a passcode',
     continue: 'Continue',
   },
-  restrictions: {
-    title: 'Lock app deletion.',
-    body: 'In Settings, go to Screen Time → Content & Privacy Restrictions, turn it on, then under iTunes & App Store Purchases set both "Deleting Apps" and "Installing Apps" to "Don’t Allow". This stops Focus Blocks (and the apps it shields) from being uninstalled mid-session.',
+  appDeletion: {
+    title: 'Block app deletion.',
+    body: 'Open Settings → Screen Time → Content & Privacy Restrictions → enter the Screen Time passcode → turn the toggle on → tap iTunes & App Store Purchases → set Deleting Apps to Don’t Allow. This stops Focus Blocks from being uninstalled with a long-press on its icon.',
     open: 'Open Settings',
-    deleteConfirm: 'Deleting apps is blocked',
-    installConfirm: 'Installing apps is blocked',
+    confirm: 'Deleting apps is set to Don’t Allow',
     continue: 'Continue',
   },
   confirm: {
     title: 'You’re set.',
-    body: 'Strict focus blocks now have something to lean on. While a strict block is active, the only way out is to wait for it to end — or to enter the Screen Time passcode in iOS Settings.',
+    body: 'While a strict block is active, Focus Blocks cannot be edited or disabled in-app, and cannot be deleted from the home screen. The only way out is to wait for it to end, or to enter the Screen Time passcode.',
+    bypassTitle: 'The single bypass path',
+    bypass:
+      'Anyone with the Screen Time passcode can revoke Focus Blocks’ access in Settings and then delete the app. That is by design — and the reason a friend should set the passcode.',
     done: 'Done',
   },
   statusCard: {
@@ -39,7 +41,7 @@ export const protectionCopy = {
   },
   lockInCard: {
     title: 'Strict mode',
-    body: 'While this block is active, you cannot disable, edit, or delete it. The only way out is to wait, or to revoke Focus Blocks’ permission with the Screen Time passcode.',
+    body: 'While this block is active, you cannot disable, edit, or delete it. The only way out is to wait, or to enter the Screen Time passcode.',
     needsSetup: 'Set up tamper protection first to make this meaningful.',
     softBlockTitle: 'Tamper protection isn’t set up',
     softBlockBody:

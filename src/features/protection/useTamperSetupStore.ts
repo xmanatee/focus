@@ -14,17 +14,10 @@ interface TamperSetupState {
 }
 
 const EMPTY_SETUP: TamperSetup = {
-  passcode: { kind: 'unset' },
-  deleteLock: { kind: 'unset' },
-  installLock: { kind: 'unset' },
-  completedAt: null,
+  acks: Object.fromEntries(
+    DEFENSE_IDS.map((id) => [id, { kind: 'unset' }] as const),
+  ) as Record<DefenseId, Ack>,
 };
-
-function recompute(setup: TamperSetup, now: number): TamperSetup {
-  const allSet = DEFENSE_IDS.every((id) => setup[id].kind === 'set');
-  const completedAt = allSet ? setup.completedAt ?? now : null;
-  return { ...setup, completedAt };
-}
 
 export const useTamperSetupStore = create<TamperSetupState>()(
   persist(
@@ -33,13 +26,13 @@ export const useTamperSetupStore = create<TamperSetupState>()(
 
       toggle: (id) => {
         set((state) => {
-          const now = Date.now();
-          const nextAck: Ack =
-            state.setup[id].kind === 'set'
+          const current = state.setup.acks[id];
+          const next: Ack =
+            current.kind === 'set'
               ? { kind: 'unset' }
-              : { kind: 'set', at: now };
+              : { kind: 'set', at: Date.now() };
           return {
-            setup: recompute({ ...state.setup, [id]: nextAck }, now),
+            setup: { acks: { ...state.setup.acks, [id]: next } },
           };
         });
       },

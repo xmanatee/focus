@@ -4,7 +4,6 @@ import { useEffect } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
-import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
 import { isFocusBlockActiveAt } from '../src/features/schedule/activeness';
 import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSessionCard';
 import { FocusBlockRow } from '../src/features/schedule/components/FocusBlockRow';
@@ -36,9 +35,8 @@ export default function MainFeedScreen(): JSX.Element {
   const isAdminLocked = adminState.kind === 'locked';
   const setupBlock = useSettingsStore((s) => s.setupBlock);
 
-  const tamperCompletedAt = useTamperSetupStore((s) => s.setup.completedAt);
   const posture = useProtectionPosture();
-  const showProtectionCard = tamperCompletedAt === null;
+  const showProtectionCard = posture.score !== 'full';
 
   const lockedAll = isAdminLocked || isStrict;
 

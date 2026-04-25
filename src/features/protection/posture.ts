@@ -16,10 +16,21 @@ export function resolveProtectionPosture(
 ): ProtectionPosture {
   const defenses: Defense[] = DEFENSE_IDS.map((id) => ({
     id,
-    ok: setup[id].kind === 'set',
+    ok: setup.acks[id].kind === 'set',
   }));
+  const okCount = defenses.filter((d) => d.ok).length;
+  const completedAt =
+    okCount === DEFENSE_IDS.length
+      ? Math.max(
+          ...DEFENSE_IDS.map((id) => {
+            const ack = setup.acks[id];
+            return ack.kind === 'set' ? ack.at : 0;
+          }),
+        )
+      : null;
   return {
     defenses,
-    score: scoreFor(defenses.filter((d) => d.ok).length),
+    score: scoreFor(okCount),
+    completedAt,
   };
 }

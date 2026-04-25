@@ -1,16 +1,16 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import { AppDeletionStep } from '../src/features/protection/components/wizard/AppDeletionStep';
 import { ConfirmStep } from '../src/features/protection/components/wizard/ConfirmStep';
 import { IntroStep } from '../src/features/protection/components/wizard/IntroStep';
-import { PasscodeStep } from '../src/features/protection/components/wizard/PasscodeStep';
-import { RestrictionsStep } from '../src/features/protection/components/wizard/RestrictionsStep';
+import { ScreenTimeLockStep } from '../src/features/protection/components/wizard/ScreenTimeLockStep';
 
-type WizardStep = 'intro' | 'passcode' | 'restrictions' | 'confirm';
+type WizardStep = 'intro' | 'screenTimeLock' | 'appDeletion' | 'confirm';
 
 const NEXT: Record<WizardStep, WizardStep> = {
-  intro: 'passcode',
-  passcode: 'restrictions',
-  restrictions: 'confirm',
+  intro: 'screenTimeLock',
+  screenTimeLock: 'appDeletion',
+  appDeletion: 'confirm',
   confirm: 'confirm',
 };
 
@@ -24,10 +24,10 @@ export default function ProtectionWizardScreen(): JSX.Element {
   switch (step) {
     case 'intro':
       return <IntroStep onNext={onNext} onClose={onClose} />;
-    case 'passcode':
-      return <PasscodeStep onNext={onNext} onClose={onClose} />;
-    case 'restrictions':
-      return <RestrictionsStep onNext={onNext} onClose={onClose} />;
+    case 'screenTimeLock':
+      return <ScreenTimeLockStep onNext={onNext} onClose={onClose} />;
+    case 'appDeletion':
+      return <AppDeletionStep onNext={onNext} onClose={onClose} />;
     case 'confirm':
       return <ConfirmStep onClose={onClose} />;
   }

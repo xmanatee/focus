@@ -2,7 +2,6 @@ import * as Linking from 'expo-linking';
 import { ScrollView } from 'react-native';
 import { Button } from '../../../../shared/components/Button';
 import { Checklist } from '../../../../shared/components/Checklist';
-import { InfoBanner } from '../../../../shared/components/InfoBanner';
 import { Screen } from '../../../../shared/components/Screen';
 import { StepHeader } from '../../../../shared/components/StepHeader';
 import { Typography } from '../../../../shared/components/Typography';
@@ -10,16 +9,16 @@ import { haptic } from '../../../../shared/design/haptics';
 import { PROTECTION_WIZARD_STEPS, protectionCopy } from '../../copy';
 import { useTamperSetupStore } from '../../useTamperSetupStore';
 
-interface PasscodeStepProps {
+interface AppDeletionStepProps {
   readonly onNext: () => void;
   readonly onClose: () => void;
 }
 
-export function PasscodeStep({
+export function AppDeletionStep({
   onNext,
   onClose,
-}: PasscodeStepProps): JSX.Element {
-  const passcodeAck = useTamperSetupStore((s) => s.setup.passcode);
+}: AppDeletionStepProps): JSX.Element {
+  const ack = useTamperSetupStore((s) => s.setup.acks.appDeletion);
   const toggle = useTamperSetupStore((s) => s.toggle);
 
   return (
@@ -34,18 +33,18 @@ export function PasscodeStep({
         }}
       >
         <StepHeader
-          step={2}
+          step={3}
           total={PROTECTION_WIZARD_STEPS}
-          title={protectionCopy.passcode.title}
+          title={protectionCopy.appDeletion.title}
           onClose={onClose}
         />
 
         <Typography variant="body" tone="muted">
-          {protectionCopy.passcode.body}
+          {protectionCopy.appDeletion.body}
         </Typography>
 
         <Button
-          title={protectionCopy.passcode.open}
+          title={protectionCopy.appDeletion.open}
           variant="commit"
           onPress={() => {
             void haptic.commit();
@@ -53,26 +52,19 @@ export function PasscodeStep({
           }}
         />
 
-        <InfoBanner
-          variant="info"
-          title={protectionCopy.passcode.trustedFriendTitle}
-        >
-          {protectionCopy.passcode.trustedFriendBody}
-        </InfoBanner>
-
         <Checklist
           items={[
             {
-              id: 'passcode',
-              title: protectionCopy.passcode.confirm,
-              status: passcodeAck.kind,
+              id: 'appDeletion',
+              title: protectionCopy.appDeletion.confirm,
+              status: ack.kind,
             },
           ]}
-          onToggle={() => toggle('passcode')}
+          onToggle={() => toggle('appDeletion')}
         />
 
         <Button
-          title={protectionCopy.passcode.continue}
+          title={protectionCopy.appDeletion.continue}
           variant="commit"
           onPress={onNext}
         />

@@ -1,14 +1,11 @@
-export type DefenseId = 'passcode' | 'deleteLock' | 'installLock';
+export type DefenseId = 'screenTimeLock' | 'appDeletion';
 
 export type Ack =
   | { readonly kind: 'unset' }
   | { readonly kind: 'set'; readonly at: number };
 
 export interface TamperSetup {
-  readonly passcode: Ack;
-  readonly deleteLock: Ack;
-  readonly installLock: Ack;
-  readonly completedAt: number | null;
+  readonly acks: Readonly<Record<DefenseId, Ack>>;
 }
 
 export interface Defense {
@@ -19,10 +16,10 @@ export interface Defense {
 export interface ProtectionPosture {
   readonly defenses: readonly Defense[];
   readonly score: 'none' | 'partial' | 'full';
+  readonly completedAt: number | null;
 }
 
 export const DEFENSE_IDS: readonly DefenseId[] = [
-  'passcode',
-  'deleteLock',
-  'installLock',
+  'screenTimeLock',
+  'appDeletion',
 ];

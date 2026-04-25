@@ -2,24 +2,24 @@ import * as Linking from 'expo-linking';
 import { ScrollView } from 'react-native';
 import { Button } from '../../../../shared/components/Button';
 import { Checklist } from '../../../../shared/components/Checklist';
+import { InfoBanner } from '../../../../shared/components/InfoBanner';
 import { Screen } from '../../../../shared/components/Screen';
 import { StepHeader } from '../../../../shared/components/StepHeader';
 import { Typography } from '../../../../shared/components/Typography';
 import { haptic } from '../../../../shared/design/haptics';
 import { PROTECTION_WIZARD_STEPS, protectionCopy } from '../../copy';
-import type { DefenseId } from '../../types';
 import { useTamperSetupStore } from '../../useTamperSetupStore';
 
-interface RestrictionsStepProps {
+interface ScreenTimeLockStepProps {
   readonly onNext: () => void;
   readonly onClose: () => void;
 }
 
-export function RestrictionsStep({
+export function ScreenTimeLockStep({
   onNext,
   onClose,
-}: RestrictionsStepProps): JSX.Element {
-  const setup = useTamperSetupStore((s) => s.setup);
+}: ScreenTimeLockStepProps): JSX.Element {
+  const ack = useTamperSetupStore((s) => s.setup.acks.screenTimeLock);
   const toggle = useTamperSetupStore((s) => s.toggle);
 
   return (
@@ -34,18 +34,18 @@ export function RestrictionsStep({
         }}
       >
         <StepHeader
-          step={3}
+          step={2}
           total={PROTECTION_WIZARD_STEPS}
-          title={protectionCopy.restrictions.title}
+          title={protectionCopy.screenTimeLock.title}
           onClose={onClose}
         />
 
         <Typography variant="body" tone="muted">
-          {protectionCopy.restrictions.body}
+          {protectionCopy.screenTimeLock.body}
         </Typography>
 
         <Button
-          title={protectionCopy.restrictions.open}
+          title={protectionCopy.screenTimeLock.open}
           variant="commit"
           onPress={() => {
             void haptic.commit();
@@ -53,24 +53,26 @@ export function RestrictionsStep({
           }}
         />
 
+        <InfoBanner
+          variant="info"
+          title={protectionCopy.screenTimeLock.trustedFriendTitle}
+        >
+          {protectionCopy.screenTimeLock.trustedFriendBody}
+        </InfoBanner>
+
         <Checklist
           items={[
             {
-              id: 'deleteLock',
-              title: protectionCopy.restrictions.deleteConfirm,
-              status: setup.deleteLock.kind,
-            },
-            {
-              id: 'installLock',
-              title: protectionCopy.restrictions.installConfirm,
-              status: setup.installLock.kind,
+              id: 'screenTimeLock',
+              title: protectionCopy.screenTimeLock.confirm,
+              status: ack.kind,
             },
           ]}
-          onToggle={(id) => toggle(id as DefenseId)}
+          onToggle={() => toggle('screenTimeLock')}
         />
 
         <Button
-          title={protectionCopy.restrictions.continue}
+          title={protectionCopy.screenTimeLock.continue}
           variant="commit"
           onPress={onNext}
         />

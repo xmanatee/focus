@@ -14,7 +14,7 @@ import {
   selectionHasBlockedTargets,
 } from '../src/features/blocker/types';
 import { protectionCopy } from '../src/features/protection/copy';
-import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
+import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
 import { FormActions } from '../src/features/schedule/components/FormActions';
 import { LockInCard } from '../src/features/schedule/components/LockInCard';
@@ -55,7 +55,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const { state: adminState } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
   const { isStrict } = useActiveBlock(focusBlocks);
-  const tamperReady = useTamperSetupStore((s) => s.setup.completedAt) !== null;
+  const tamperReady = useProtectionPosture().score === 'full';
 
   const form = useFocusBlockForm(existing);
 
@@ -275,6 +275,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
       {pickerSession ? (
         <DeviceActivitySelectionSheetViewPersisted
           familyActivitySelectionId={pickerSession.slotId}
+          includeEntireCategory={pickerSession.includeEntireCategory}
           onSelectionChange={(event) =>
             pickerSession.onSelectionChange(event.nativeEvent)
           }

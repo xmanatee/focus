@@ -1,5 +1,6 @@
 import { ScrollView } from 'react-native';
 import { Button } from '../../../../shared/components/Button';
+import { InfoBanner } from '../../../../shared/components/InfoBanner';
 import { Screen } from '../../../../shared/components/Screen';
 import { StepHeader } from '../../../../shared/components/StepHeader';
 import { Typography } from '../../../../shared/components/Typography';
@@ -34,6 +35,10 @@ export function ConfirmStep({ onClose }: ConfirmStepProps): JSX.Element {
         <Typography variant="body" tone="muted">
           {protectionCopy.confirm.body}
         </Typography>
+
+        <InfoBanner variant="warn" title={protectionCopy.confirm.bypassTitle}>
+          {protectionCopy.confirm.bypass}
+        </InfoBanner>
 
         <Button
           title={protectionCopy.confirm.done}
