@@ -6,7 +6,11 @@ import {
   startMonitoring,
   stopMonitoring,
 } from 'react-native-device-activity';
-import { iosWeekday } from '../../shared/days';
+import {
+  iosWeekday,
+  isOvernightRange,
+  nextIosWeekday,
+} from '../../shared/days';
 import {
   hasSavedActivitySelection,
   selectionIdForBlock,
@@ -129,10 +133,13 @@ function scheduleForDay(
   endTime: string,
   day: DayOfWeek,
 ): MonitorPlan['schedule'] {
-  const weekday = iosWeekday(day);
+  const startWeekday = iosWeekday(day);
+  const endWeekday = isOvernightRange(startTime, endTime)
+    ? nextIosWeekday(startWeekday)
+    : startWeekday;
   return {
-    intervalStart: { ...parseHM(startTime), weekday },
-    intervalEnd: { ...parseHM(endTime), weekday },
+    intervalStart: { ...parseHM(startTime), weekday: startWeekday },
+    intervalEnd: { ...parseHM(endTime), weekday: endWeekday },
     repeats: true,
   };
 }

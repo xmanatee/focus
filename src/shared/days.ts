@@ -38,6 +38,10 @@ export function iosWeekday(day: DayOfWeek): number {
   return IOS_WEEKDAY[day];
 }
 
+export function nextIosWeekday(weekday: number): number {
+  return (weekday % 7) + 1;
+}
+
 const TIME_OF_DAY_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
 export function minutesOf(time: string): number {
@@ -66,9 +70,21 @@ export function validateTimeRange(startTime: string, endTime: string): void {
   ) {
     throw new Error('Times must use 24-hour HH:mm format.');
   }
-  if (minutesOf(endTime) <= minutesOf(startTime)) {
-    throw new Error('End time must be later than start time.');
+  if (minutesOf(endTime) === minutesOf(startTime)) {
+    throw new Error('End time must differ from start time.');
   }
+}
+
+export function isOvernightRange(startTime: string, endTime: string): boolean {
+  return minutesOf(endTime) < minutesOf(startTime);
+}
+
+export function rangeDurationMinutes(
+  startTime: string,
+  endTime: string,
+): number {
+  const diff = minutesOf(endTime) - minutesOf(startTime);
+  return diff > 0 ? diff : diff + 24 * 60;
 }
 
 export function timeStringToDate(value: string): Date {

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { DayOfWeek } from '../features/schedule/types';
-import { formatActiveDays, iosWeekday } from './days';
+import {
+  formatActiveDays,
+  iosWeekday,
+  isOvernightRange,
+  nextIosWeekday,
+  rangeDurationMinutes,
+  validateTimeRange,
+} from './days';
 
 describe('formatActiveDays', () => {
   it('formats weekdays as a range', () => {
@@ -47,5 +54,53 @@ describe('iosWeekday', () => {
     expect(iosWeekday('thu')).toBe(5);
     expect(iosWeekday('fri')).toBe(6);
     expect(iosWeekday('sat')).toBe(7);
+  });
+});
+
+describe('nextIosWeekday', () => {
+  it('advances within the week', () => {
+    expect(nextIosWeekday(2)).toBe(3);
+  });
+
+  it('wraps from saturday to sunday', () => {
+    expect(nextIosWeekday(7)).toBe(1);
+  });
+});
+
+describe('isOvernightRange', () => {
+  it('reports false for a same-day range', () => {
+    expect(isOvernightRange('09:00', '17:00')).toBe(false);
+  });
+
+  it('reports true when end is earlier than start', () => {
+    expect(isOvernightRange('22:00', '06:00')).toBe(true);
+  });
+});
+
+describe('rangeDurationMinutes', () => {
+  it('measures a same-day range', () => {
+    expect(rangeDurationMinutes('09:00', '17:00')).toBe(8 * 60);
+  });
+
+  it('wraps around midnight', () => {
+    expect(rangeDurationMinutes('22:00', '06:00')).toBe(8 * 60);
+  });
+});
+
+describe('validateTimeRange', () => {
+  it('accepts a same-day range', () => {
+    expect(() => validateTimeRange('09:00', '17:00')).not.toThrow();
+  });
+
+  it('accepts an overnight range', () => {
+    expect(() => validateTimeRange('22:00', '06:00')).not.toThrow();
+  });
+
+  it('rejects identical times', () => {
+    expect(() => validateTimeRange('09:00', '09:00')).toThrow(/differ/i);
+  });
+
+  it('rejects malformed times', () => {
+    expect(() => validateTimeRange('9:00', '17:00')).toThrow(/24-hour/i);
   });
 });

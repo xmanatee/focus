@@ -1,4 +1,4 @@
-import { minutesOf } from '../../shared/days';
+import { isOvernightRange, minutesOf } from '../../shared/days';
 import type { DayOfWeek } from './types';
 
 interface FocusBlockInternal {
@@ -27,12 +27,21 @@ export function isFocusBlockActiveAt(
   at: Date,
 ): boolean {
   if (!block.isEnabled) return false;
-  if (!block.days.includes(DAY_BY_INDEX[at.getDay()])) return false;
 
   const current = minuteOfDay(at);
-  return (
-    current >= minutesOf(block.startTime) && current < minutesOf(block.endTime)
-  );
+  const start = minutesOf(block.startTime);
+  const end = minutesOf(block.endTime);
+  const today = DAY_BY_INDEX[at.getDay()];
+
+  if (!isOvernightRange(block.startTime, block.endTime)) {
+    if (!block.days.includes(today)) return false;
+    return current >= start && current < end;
+  }
+
+  if (block.days.includes(today) && current >= start) return true;
+  const yesterdayIndex = (at.getDay() + 6) % 7;
+  const yesterday = DAY_BY_INDEX[yesterdayIndex];
+  return block.days.includes(yesterday) && current < end;
 }
 
 interface NextBlock {

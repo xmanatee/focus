@@ -8,6 +8,13 @@ const weekday = {
   isEnabled: true,
 };
 
+const overnight = {
+  days: ['mon'] as const,
+  startTime: '22:00',
+  endTime: '06:00',
+  isEnabled: true,
+};
+
 function at(iso: string): Date {
   return new Date(iso);
 }
@@ -42,6 +49,36 @@ describe('isFocusBlockActiveAt', () => {
         at('2026-04-27T10:30:00'),
       ),
     ).toBe(false);
+  });
+
+  it('overnight: active late on the originating day', () => {
+    expect(isFocusBlockActiveAt(overnight, at('2026-04-27T23:00:00'))).toBe(
+      true,
+    );
+  });
+
+  it('overnight: active early next morning', () => {
+    expect(isFocusBlockActiveAt(overnight, at('2026-04-28T05:30:00'))).toBe(
+      true,
+    );
+  });
+
+  it('overnight: inactive at exact end (exclusive)', () => {
+    expect(isFocusBlockActiveAt(overnight, at('2026-04-28T06:00:00'))).toBe(
+      false,
+    );
+  });
+
+  it('overnight: inactive before start on originating day', () => {
+    expect(isFocusBlockActiveAt(overnight, at('2026-04-27T21:00:00'))).toBe(
+      false,
+    );
+  });
+
+  it('overnight: inactive on next morning when previous day was not scheduled', () => {
+    expect(isFocusBlockActiveAt(overnight, at('2026-04-27T05:30:00'))).toBe(
+      false,
+    );
   });
 });
 

@@ -30,12 +30,12 @@ describe('validateFocusBlockInput', () => {
     ).not.toThrow();
   });
 
-  it('rejects a cross-midnight block', () => {
+  it('accepts a cross-midnight block', () => {
     expect(() =>
       validateFocusBlockInput(
         baseInput({ startTime: '22:00', endTime: '02:00' }),
       ),
-    ).toThrow(/later than start/i);
+    ).not.toThrow();
   });
 
   it('rejects empty name', () => {
@@ -49,7 +49,7 @@ describe('validateFocusBlockInput', () => {
     const endTime = '22:00';
     expect(() =>
       validateFocusBlockInput(baseInput({ startTime, endTime })),
-    ).toThrow(/later than start/i);
+    ).toThrow(/differ/i);
   });
 
   it('accepts one-minute range', () => {
