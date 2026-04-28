@@ -1,0 +1,82 @@
+name: Release iOS
+
+# Required GitHub Actions secrets:
+#   EXPO_TOKEN              — Expo robot-user token, project-scoped
+#   APPLE_TEAM_ID           — 10-char Apple Developer Team ID
+#   ASC_KEY_ID              — App Store Connect API Key ID
+#   ASC_ISSUER_ID           — App Store Connect API Issuer ID
+#   ASC_API_KEY_BASE64      — base64 of the ASC AuthKey_*.p8 file
+#   APPLE_REVIEW_FIRST_NAME — App Review contact, given name
+#   APPLE_REVIEW_LAST_NAME  — App Review contact, family name
+#   APPLE_REVIEW_EMAIL      — App Review contact email
+#   APPLE_REVIEW_PHONE      — App Review contact phone (E.164, e.g. +447…)
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      submit:
+        description: "Submit to TestFlight after build"
+        type: boolean
+        default: true
+      push_metadata:
+        description: "Sync ASC listing from store.config.js"
+        type: boolean
+        default: true
+
+concurrency:
+  group: release-ios
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      EXPO_APPLE_TEAM_TYPE: COMPANY_OR_ORGANIZATION
+      EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      APPLE_REVIEW_FIRST_NAME: ${{ secrets.APPLE_REVIEW_FIRST_NAME }}
+      APPLE_REVIEW_LAST_NAME: ${{ secrets.APPLE_REVIEW_LAST_NAME }}
+      APPLE_REVIEW_EMAIL: ${{ secrets.APPLE_REVIEW_EMAIL }}
+      APPLE_REVIEW_PHONE: ${{ secrets.APPLE_REVIEW_PHONE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Decode ASC API key
+        run: |
+          mkdir -p "$RUNNER_TEMP/asc"
+          key_path="$RUNNER_TEMP/asc/AuthKey_${EXPO_ASC_KEY_ID}.p8"
+          printf '%s' "${{ secrets.ASC_API_KEY_BASE64 }}" | base64 -d > "$key_path"
+          chmod 600 "$key_path"
+          echo "EXPO_ASC_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
+
+      - name: Validate metadata
+        run: eas metadata:lint
+
+      - name: Push metadata to App Store Connect
+        if: ${{ github.event.inputs.push_metadata != 'false' }}
+        run: eas metadata:push --non-interactive
+
+      - name: Build iOS production
+        run: eas build --platform ios --profile production --non-interactive --wait
+
+      - name: Submit to TestFlight
+        if: ${{ github.event.inputs.submit != 'false' }}
+        run: eas submit --platform ios --latest --non-interactive --wait

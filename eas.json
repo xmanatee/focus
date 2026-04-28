@@ -30,7 +30,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleTeamId": "569HBLNQPC"
+        "appleTeamId": "569HBLNQPC",
+        "ascAppId": "6763754394",
+        "metadataPath": "store.config.js"
       }
     }
   }
