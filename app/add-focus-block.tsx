@@ -201,7 +201,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
         </Typography>
 
         {policy.message && (
-          <InfoBanner variant="info" title="Read-only">
+          <InfoBanner variant="info" title={policy.title ?? undefined}>
             {policy.message}
           </InfoBanner>
         )}
