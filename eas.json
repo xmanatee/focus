@@ -15,6 +15,7 @@
     "preview": {
       "distribution": "internal",
       "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2",
         "resourceClass": "m-medium",
         "autoIncrement": "buildNumber"
       }
@@ -22,6 +23,7 @@
     "production": {
       "autoIncrement": true,
       "ios": {
+        "image": "macos-sequoia-15.6-xcode-26.2",
         "resourceClass": "m-medium",
         "autoIncrement": "buildNumber"
       }

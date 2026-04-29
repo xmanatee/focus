@@ -4,13 +4,13 @@ export const protectionCopy = {
   intro: {
     title: 'Tamper protection.',
     body: 'iOS limits what an app can lock down on your behalf. Two settings inside iOS Screen Time, set with a passcode you do not know, are what give Focus Blocks any teeth.',
-    timeEstimate: 'Best on iOS 26.4 or later. About 3 minutes.',
+    timeEstimate: 'Best on iOS 18.0 or later. About 3 minutes.',
     primary: 'Start setup',
     skip: 'Maybe later',
   },
   screenTimeLock: {
     title: 'Lock Screen Time Settings.',
-    body: 'Open Settings → Screen Time → scroll down → tap Lock Screen Time Settings → set a 4-digit passcode. On iOS 26.4+ this passcode is also required to revoke Focus Blocks’ Screen Time access. That is the iron lock — without it, anything below can be undone with your phone passcode.',
+    body: 'Open Settings → Screen Time → scroll down → tap Lock Screen Time Settings → set a 4-digit passcode. On iOS 18+ this passcode is also required to revoke Focus Blocks’ Screen Time access. That is the iron lock — without it, anything below can be undone with your phone passcode.',
     trustedFriendTitle: 'Have a friend set the passcode',
     trustedFriendBody:
       'Hand the phone over. They tap Lock Screen Time Settings, pick a passcode, and walk away without telling you. You cannot undo what you cannot remember.',

@@ -1,12 +1,8 @@
 #!/usr/bin/env node
 /**
  * Compose App Store screenshots from raw device captures.
- *
- * 1. Capture each screen from iPhone 17 Pro Max simulator (Cmd+S) — or from
- *    a real iPhone 16 Pro Max — at the native 1320x2868 resolution.
- * 2. Save them as assets/screenshots/raw/{01..05}.png matching the SHOTS table.
- * 3. Run `npm run screenshots`. Designed PNGs land in
- *    assets/screenshots/final/ ready to upload to App Store Connect.
+ * Updated for April 2026 standards: iPhone 17 Pro Max (6.9"), iPad Pro 13".
+ * Preserves both iPhone and iPad sets using separate raw directories.
  */
 
 import { existsSync } from 'node:fs';
@@ -17,10 +13,17 @@ import sharp from 'sharp';
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 const RAW_DIR = join(ROOT, 'assets/screenshots/raw');
+const RAW_IPAD_DIR = join(ROOT, 'assets/screenshots/raw-ipad');
 const OUT_DIR = join(ROOT, 'assets/screenshots/final');
 
-const W = 1320;
-const H = 2868;
+const SIZES = [
+  { name: '6.9', w: 1320, h: 2868, type: 'phone', raw: RAW_DIR },
+  { name: '6.7', w: 1284, h: 2778, type: 'phone', raw: RAW_DIR },
+  { name: '6.5', w: 1242, h: 2688, type: 'phone', raw: RAW_DIR },
+  { name: 'iPad-13', w: 2064, h: 2752, type: 'tablet', raw: RAW_IPAD_DIR },
+  { name: 'iPad-12.9', w: 2048, h: 2732, type: 'tablet', raw: RAW_IPAD_DIR },
+];
+
 const BG_TOP = '#EFDDC0';
 const BG_BOTTOM = '#D9BF94';
 const FG = '#2A1F12';
@@ -58,17 +61,6 @@ const SHOTS = [
   },
 ];
 
-const SHOT_W = 1080;
-const SHOT_X = Math.round((W - SHOT_W) / 2);
-const SHOT_Y = 560;
-const RADIUS = 44;
-const CAPTION_TOP = 80;
-const CAPTION_H = 460;
-const HEAD_FONT_PX = 110;
-const HEAD_LINE_GAP = 120;
-const SUB_FONT_PX = 44;
-const BADGE_FONT_PX = 32;
-
 function escapeXml(s) {
   return s
     .replace(/&/g, '&amp;')
@@ -78,7 +70,7 @@ function escapeXml(s) {
     .replace(/"/g, '&quot;');
 }
 
-function backgroundSvg() {
+function backgroundSvg(W, H) {
   return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
@@ -90,15 +82,20 @@ function backgroundSvg() {
   </svg>`;
 }
 
-function captionSvg(shot) {
-  const head1Base = 125;
+function captionSvg(shot, W, CAPTION_H, HEAD_FONT_PX, HEAD_LINE_GAP, SUB_FONT_PX, BADGE_FONT_PX, type) {
+  const baseWidth = type === 'tablet' ? 2064 : 1320;
+  const scale = W / baseWidth;
+  
+  const head1Base = (type === 'tablet' ? 140 : 125) * scale;
   const head2Base = head1Base + HEAD_LINE_GAP;
-  const subBase = head2Base + 80;
-  const badgeBase = subBase + 85;
-  const badgeBoxW = 880;
-  const badgeBoxH = 70;
+  const subBase = head2Base + (type === 'tablet' ? 90 : 80) * scale;
+  const badgeBase = subBase + (type === 'tablet' ? 100 : 85) * scale;
+  
+  const badgeBoxW = (type === 'tablet' ? 1200 : 880) * scale;
+  const badgeBoxH = (type === 'tablet' ? 80 : 70) * scale;
   const badgeBoxX = (W - badgeBoxW) / 2;
-  const badgeBoxY = badgeBase - 50;
+  const badgeBoxY = badgeBase - (type === 'tablet' ? 60 : 50) * scale;
+  
   const badge = shot.badge
     ? `
     <rect x="${badgeBoxX}" y="${badgeBoxY}" width="${badgeBoxW}" height="${badgeBoxH}"
@@ -108,6 +105,7 @@ function captionSvg(shot) {
           font-family='${FONT}' font-weight="600" font-size="${BADGE_FONT_PX}"
           fill="${ACCENT}" letter-spacing="0.4">${escapeXml(shot.badge)}</text>`
     : '';
+    
   return `<svg width="${W}" height="${CAPTION_H}" xmlns="http://www.w3.org/2000/svg">
     <text x="50%" y="${head1Base}" text-anchor="middle"
           font-family='${FONT}' font-weight="800" font-size="${HEAD_FONT_PX}"
@@ -122,19 +120,19 @@ function captionSvg(shot) {
   </svg>`;
 }
 
-function shadowSvg(h) {
+function shadowSvg(SHOT_W, h, RADIUS) {
   return `<svg width="${SHOT_W + 160}" height="${h + 160}" xmlns="http://www.w3.org/2000/svg">
     <rect x="80" y="100" width="${SHOT_W}" height="${h}" rx="${RADIUS}" ry="${RADIUS}" fill="#000000" opacity="0.16"/>
   </svg>`;
 }
 
-function maskSvg(h) {
+function maskSvg(SHOT_W, h, RADIUS) {
   return `<svg width="${SHOT_W}" height="${h}" xmlns="http://www.w3.org/2000/svg">
     <rect width="100%" height="100%" rx="${RADIUS}" ry="${RADIUS}" fill="#FFFFFF"/>
   </svg>`;
 }
 
-function strokeSvg(h) {
+function strokeSvg(SHOT_W, h, RADIUS) {
   return `<svg width="${SHOT_W}" height="${h}" xmlns="http://www.w3.org/2000/svg">
     <rect x="1" y="1" width="${SHOT_W - 2}" height="${h - 2}"
           rx="${RADIUS}" ry="${RADIUS}"
@@ -142,62 +140,93 @@ function strokeSvg(h) {
   </svg>`;
 }
 
-async function compose(shot) {
-  const rawPath = join(RAW_DIR, shot.src);
+async function compose(shot, size, outDir) {
+  const { w: W, h: H, raw: rawDir, type } = size;
+  const baseWidth = type === 'tablet' ? 2064 : 1320;
+  const scale = W / baseWidth;
+
+  // Visual constants tuned for the primary canvases
+  const SHOT_W = Math.round((type === 'tablet' ? 1600 : 1080) * scale);
+  const SHOT_X = Math.round((W - SHOT_W) / 2);
+  const SHOT_Y = Math.round((type === 'tablet' ? 480 : 560) * scale);
+  const RADIUS = Math.round(44 * scale);
+  const CAPTION_TOP = Math.round(80 * scale);
+  const CAPTION_H = Math.round((type === 'tablet' ? 440 : 460) * scale);
+  const HEAD_FONT_PX = Math.round((type === 'tablet' ? 120 : 110) * scale);
+  const HEAD_LINE_GAP = Math.round((type === 'tablet' ? 130 : 120) * scale);
+  const SUB_FONT_PX = Math.round((type === 'tablet' ? 48 : 44) * scale);
+  const BADGE_FONT_PX = Math.round((type === 'tablet' ? 36 : 32) * scale);
+
+  const rawPath = join(rawDir, shot.src);
+  if (!existsSync(rawPath)) return;
+
+  const rawMeta = await sharp(rawPath).metadata();
+  if (rawMeta.width < SHOT_W) {
+    console.warn(
+      `  ! [${size.name}] Skipping ${shot.src}: Raw image is too small (${rawMeta.width}px) to resize to ${SHOT_W}px.`,
+    );
+    return;
+  }
+
   const screenshot = await sharp(rawPath).resize({ width: SHOT_W }).toBuffer();
   const meta = await sharp(screenshot).metadata();
   const actualH = meta.height;
+
+  if (actualH > H - SHOT_Y) {
+    console.warn(`  ! [${size.name}] Warning: ${shot.src} might be too tall.`);
+  }
+
   const rounded = await sharp(screenshot)
-    .composite([{ input: Buffer.from(maskSvg(actualH)), blend: 'dest-in' }])
+    .composite([{ input: Buffer.from(maskSvg(SHOT_W, actualH, RADIUS)), blend: 'dest-in' }])
     .png()
     .toBuffer();
   const framed = await sharp(rounded)
-    .composite([{ input: Buffer.from(strokeSvg(actualH)), top: 0, left: 0 }])
+    .composite([{ input: Buffer.from(strokeSvg(SHOT_W, actualH, RADIUS)), top: 0, left: 0 }])
     .png()
     .toBuffer();
-  const shadow = await sharp(Buffer.from(shadowSvg(actualH)))
-    .blur(60)
+  const shadow = await sharp(Buffer.from(shadowSvg(SHOT_W, actualH, RADIUS)))
+    .blur(Math.round(60 * scale))
     .png()
     .toBuffer();
-  const background = await sharp(Buffer.from(backgroundSvg())).png().toBuffer();
+  const background = await sharp(Buffer.from(backgroundSvg(W, H))).png().toBuffer();
 
   await sharp(background)
     .composite([
-      { input: Buffer.from(captionSvg(shot)), top: CAPTION_TOP, left: 0 },
-      { input: shadow, top: SHOT_Y - 80, left: SHOT_X - 80 },
+      {
+        input: Buffer.from(
+          captionSvg(shot, W, CAPTION_H, HEAD_FONT_PX, HEAD_LINE_GAP, SUB_FONT_PX, BADGE_FONT_PX, type),
+        ),
+        top: CAPTION_TOP,
+        left: 0,
+      },
+      { input: shadow, top: SHOT_Y - Math.round(80 * scale), left: SHOT_X - Math.round(80 * scale) },
       { input: framed, top: SHOT_Y, left: SHOT_X },
     ])
     .png({ compressionLevel: 9 })
-    .toFile(join(OUT_DIR, shot.src));
+    .toFile(join(outDir, shot.src));
 
-  console.log(`  ✓ ${shot.src}  "${shot.head.join(' ')}"`);
+  console.log(`  ✓ [${size.name}] ${shot.src}`);
 }
 
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
   await mkdir(RAW_DIR, { recursive: true });
+  await mkdir(RAW_IPAD_DIR, { recursive: true });
 
-  const present = SHOTS.filter((s) => existsSync(join(RAW_DIR, s.src)));
-  const missing = SHOTS.filter((s) => !existsSync(join(RAW_DIR, s.src)));
-
-  if (present.length === 0) {
-    console.log('No raw screenshots yet.\n');
-    console.log('Capture from the iPhone 17 Pro Max simulator (Cmd+S in the Simulator menu)');
-    console.log(`and save each PNG into ${RAW_DIR} as:\n`);
-    for (const s of SHOTS) {
-      console.log(`  ${s.src}  →  "${s.head.join(' ')}"`);
+  for (const size of SIZES) {
+    const present = SHOTS.filter((s) => existsSync(join(size.raw, s.src)));
+    if (present.length === 0) {
+      console.log(`No raw screenshots found for ${size.name}" in ${size.raw}`);
+      continue;
     }
-    console.log('\nThen re-run: npm run screenshots');
-    return;
-  }
-  if (missing.length > 0) {
-    console.log(`Missing ${missing.length}/${SHOTS.length} raw captures, skipping:`);
-    for (const s of missing) console.log(`  - ${s.src} (${s.head.join(' ')})`);
-    console.log('');
-  }
 
-  console.log(`Composing ${present.length} screenshot(s) → ${OUT_DIR}`);
-  for (const shot of present) await compose(shot);
+    const outDir = join(OUT_DIR, size.name);
+    await mkdir(outDir, { recursive: true });
+    console.log(`Composing for ${size.name}" (${size.w}x${size.h}) → ${outDir}`);
+    for (const shot of present) {
+      await compose(shot, size, outDir);
+    }
+  }
 }
 
 main().catch((err) => {
