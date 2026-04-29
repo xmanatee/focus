@@ -1,19 +1,19 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
+	objectVersion = 46;
 	classes = {
 	};
-	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		2D8FBBBC84587738DCE076EB /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8BF810416A250B033806FAD9 /* PrivacyInfo.xcprivacy */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		87BC42A232584734BADA5636 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 210C9D05876A49E48C9BB554 /* noop-file.swift */; };
 		96905EF65AED1B983A6B3ABC /* libPods-FocusBlocks.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 58EEBF8E8E6FB1BC6CAF49B5 /* libPods-FocusBlocks.a */; };
-		9A6267ADDF16698597EB1C2D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8E6B03A2F2A0A15A567CF0B6 /* PrivacyInfo.xcprivacy */; };
+		A9C86486BF97483D990A74C4 /* noop-file.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D31D1C7F88E463EAC65BEBB /* noop-file.swift */; };
 		B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		XX103037AC5A7B821341EBXX /* ShieldConfiguration.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = XXEC8F4A23169846583657XX /* ShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -70,14 +70,14 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = FocusBlocks/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = Info.plist; path = FocusBlocks/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.objc; name = main.m; path = FocusBlocks/main.m; sourceTree = "<group>"; };
-		210C9D05876A49E48C9BB554 /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "FocusBlocks/noop-file.swift"; sourceTree = "<group>"; };
+		3D31D1C7F88E463EAC65BEBB /* noop-file.swift */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.swift; name = "noop-file.swift"; path = "FocusBlocks/noop-file.swift"; sourceTree = "<group>"; };
 		58EEBF8E8E6FB1BC6CAF49B5 /* libPods-FocusBlocks.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; fileEncoding = 4; includeInIndex = 0; path = "libPods-FocusBlocks.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C2E3173556A471DD304B334 /* Pods-FocusBlocks.debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FocusBlocks.debug.xcconfig"; path = "Target Support Files/Pods-FocusBlocks/Pods-FocusBlocks.debug.xcconfig"; sourceTree = "<group>"; };
+		75767D2991604236B9DF7C94 /* FocusBlocks-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "FocusBlocks-Bridging-Header.h"; path = "FocusBlocks/FocusBlocks-Bridging-Header.h"; sourceTree = "<group>"; };
 		7A4D352CD337FB3A3BF06240 /* Pods-FocusBlocks.release.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FocusBlocks.release.xcconfig"; path = "Target Support Files/Pods-FocusBlocks/Pods-FocusBlocks.release.xcconfig"; sourceTree = "<group>"; };
-		8E6B03A2F2A0A15A567CF0B6 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = FocusBlocks/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		8BF810416A250B033806FAD9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = FocusBlocks/PrivacyInfo.xcprivacy; sourceTree = "<group>"; fileEncoding = 4; lastKnownFileType = undefined; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = FocusBlocks/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E2A2119A0B344643A7A1F489 /* FocusBlocks-Bridging-Header.h */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = sourcecode.c.h; name = "FocusBlocks-Bridging-Header.h"; path = "FocusBlocks/FocusBlocks-Bridging-Header.h"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = undefined; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		FAC715A2D49A985799AEE119 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-FocusBlocks/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		XX05E83E103BF49F57A457XX /* ShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; fileEncoding = 4; includeInIndex = 0; path = ShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,7 +88,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		XX12AD17D293545E132D30XX /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */ = {
+		XX12AD17D293545E132D30XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -96,7 +96,7 @@
 			);
 			target = XX8D9EA464CC9EFD45327CXX /* ActivityMonitorExtension */;
 		};
-		XX82CF4B46BCF7D56F11A7XX /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */ = {
+		XX82CF4B46BCF7D56F11A7XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -104,7 +104,7 @@
 			);
 			target = XX306A5CED84BF686A6BD2XX /* ShieldConfiguration */;
 		};
-		XX8C0049D8312C13610EA1XX /* Exceptions for "ShieldAction" folder in "ShieldAction" target */ = {
+		XX8C0049D8312C13610EA1XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -118,10 +118,9 @@
 		XX5FF143068CC95F25C4B2XX /* ActivityMonitorExtension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				XX12AD17D293545E132D30XX /* Exceptions for "ActivityMonitorExtension" folder in "ActivityMonitorExtension" target */,
+				XX12AD17D293545E132D30XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
-			explicitFileTypes = {
-			};
+			explicitFileTypes = {};
 			explicitFolders = (
 			);
 			path = ActivityMonitorExtension;
@@ -130,10 +129,9 @@
 		XX64951B331FEB648D6BACXX /* ShieldConfiguration */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				XX82CF4B46BCF7D56F11A7XX /* Exceptions for "ShieldConfiguration" folder in "ShieldConfiguration" target */,
+				XX82CF4B46BCF7D56F11A7XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
-			explicitFileTypes = {
-			};
+			explicitFileTypes = {};
 			explicitFolders = (
 			);
 			path = ShieldConfiguration;
@@ -142,10 +140,9 @@
 		XXF9E3AD67A814ADC3E562XX /* ShieldAction */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				XX8C0049D8312C13610EA1XX /* Exceptions for "ShieldAction" folder in "ShieldAction" target */,
+				XX8C0049D8312C13610EA1XX /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
-			explicitFileTypes = {
-			};
+			explicitFileTypes = {};
 			explicitFolders = (
 			);
 			path = ShieldAction;
@@ -191,9 +188,9 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				13B07FB71A68108700A75B9A /* main.m */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				210C9D05876A49E48C9BB554 /* noop-file.swift */,
-				E2A2119A0B344643A7A1F489 /* FocusBlocks-Bridging-Header.h */,
-				8E6B03A2F2A0A15A567CF0B6 /* PrivacyInfo.xcprivacy */,
+				3D31D1C7F88E463EAC65BEBB /* noop-file.swift */,
+				75767D2991604236B9DF7C94 /* FocusBlocks-Bridging-Header.h */,
+				8BF810416A250B033806FAD9 /* PrivacyInfo.xcprivacy */,
 			);
 			name = FocusBlocks;
 			sourceTree = "<group>";
@@ -284,7 +281,7 @@
 				XXF9E3AD67A814ADC3E562XX /* ShieldAction */,
 				XX64951B331FEB648D6BACXX /* ShieldConfiguration */,
 			);
-			name = "expo:targets";
+			name = expo:targets;
 			path = ../targets;
 			sourceTree = "<group>";
 		};
@@ -296,14 +293,14 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "FocusBlocks" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				FB2F2DCD925F0AD94164123D /* [Expo] Configure project */,
+				446C5F0E7BA5B69E09585DC5 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				XX72A8CFBF0FBA13A79902XX /* Embed Foundation Extensions */,
-				4293C8550E273CA6B3EFF2DF /* [CP] Embed Pods Frameworks */,
+				E472D8A0801A67F53430CBDB /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -319,7 +316,7 @@
 		};
 		XX306A5CED84BF686A6BD2XX /* ShieldConfiguration */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = XX06FA4756E35C62B74525XX /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */;
+			buildConfigurationList = XXFBE82DB851C1B5DFE209XX /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */;
 			buildPhases = (
 				XXE5EC32CD2D09C6C886C7XX /* Sources */,
 				XX00779A11A1B70B580100XX /* Resources */,
@@ -338,7 +335,7 @@
 		};
 		XX3809880ED109317F3D87XX /* ShieldAction */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = XX17638B0D84DA8813405BXX /* Build configuration list for PBXNativeTarget "ShieldAction" */;
+			buildConfigurationList = XX1763E5C2AD03C42A54D6XX /* Build configuration list for PBXNativeTarget "ShieldAction" */;
 			buildPhases = (
 				XXBA6CDF0021ABEEEDFCFBXX /* Frameworks */,
 				XXDC105B0E28F884B8E02DXX /* Sources */,
@@ -358,7 +355,7 @@
 		};
 		XX8D9EA464CC9EFD45327CXX /* ActivityMonitorExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = XX9B582CF5143E3FE50089XX /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */;
+			buildConfigurationList = XXB76D4E2A3DC95892D0B2XX /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */;
 			buildPhases = (
 				XX074B8811C1CF8E8A3D74XX /* Frameworks */,
 				XXE45443DC38DCFE1DB622XX /* Sources */,
@@ -433,7 +430,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				9A6267ADDF16698597EB1C2D /* PrivacyInfo.xcprivacy in Resources */,
+				2D8FBBBC84587738DCE076EB /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -502,23 +499,24 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		4293C8550E273CA6B3EFF2DF /* [CP] Embed Pods Frameworks */ = {
+		446C5F0E7BA5B69E09585DC5 /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-FocusBlocks/Pods-FocusBlocks-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			inputFileListPaths = (
 			);
-			name = "[CP] Embed Pods Frameworks";
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FocusBlocks/Pods-FocusBlocks-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-FocusBlocks/expo-configure-project.sh\"\n";
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -557,25 +555,32 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FocusBlocks/Pods-FocusBlocks-resources.sh\"\n";
 			showEnvVarsInLog = 0;
-		};
-		FB2F2DCD925F0AD94164123D /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
+			outputFileListPaths = (
 			);
 			inputFileListPaths = (
 			);
+		};
+		E472D8A0801A67F53430CBDB /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
 			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-FocusBlocks/Pods-FocusBlocks-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
+			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-FocusBlocks/expo-configure-project.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FocusBlocks/Pods-FocusBlocks-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+			outputFileListPaths = (
+			);
+			inputFileListPaths = (
+			);
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -587,7 +592,7 @@
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 				B18059E884C0ABDD17F3DC3D /* ExpoModulesProvider.swift in Sources */,
-				87BC42A232584734BADA5636 /* noop-file.swift in Sources */,
+				A9C86486BF97483D990A74C4 /* noop-file.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -819,45 +824,6 @@
 			};
 			name = Release;
 		};
-		XX70C34F27EBA23A07852AXX /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldAction/generated.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 569HBLNQPC;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ../targets/ShieldAction/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = ShieldAction;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
-				MARKETING_VERSION = 1.0.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = love.nemi.focus.ShieldAction;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
 		XX88E547696D71488085DBXX /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -892,11 +858,13 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.love.nemi.focus;
 			};
 			name = Release;
 		};
-		XXB6D46BB2125A7B6233CBXX /* Debug */ = {
+		XX8B1A06C009CCC1A1F05EXX /* Debug */ = {
 			isa = XCBuildConfiguration;
+			name = Debug;
 			buildSettings = {
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -905,37 +873,40 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldConfiguration/generated.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 569HBLNQPC;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = ../targets/ShieldConfiguration/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfiguration;
+				CURRENT_PROJECT_VERSION = 2;
+				INFOPLIST_FILE = ../targets/ShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldAction;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MARKETING_VERSION = 1.0.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = love.nemi.focus.ShieldConfiguration;
+				PRODUCT_BUNDLE_IDENTIFIER = love.nemi.focus.ShieldAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldAction/generated.entitlements;
+				DEVELOPMENT_TEAM = 569HBLNQPC;
 			};
-			name = Debug;
 		};
-		XXE09E8B12F466A256D1A5XX /* Debug */ = {
+		XX90F062639E2893D3F529XX /* Release */ = {
 			isa = XCBuildConfiguration;
+			name = Release;
 			buildSettings = {
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
@@ -944,34 +915,156 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CODE_SIGN_ENTITLEMENTS = ../targets/ActivityMonitorExtension/generated.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 1;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 569HBLNQPC;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GENERATE_INFOPLIST_FILE = YES;
+				CURRENT_PROJECT_VERSION = 2;
 				INFOPLIST_FILE = ../targets/ActivityMonitorExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ActivityMonitorExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
 				MARKETING_VERSION = 1.0.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
-				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = love.nemi.focus.ActivityMonitorExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				CODE_SIGN_ENTITLEMENTS = ../targets/ActivityMonitorExtension/generated.entitlements;
+				DEVELOPMENT_TEAM = 569HBLNQPC;
+			};
+		};
+		XX93D078738E4D2C034B2EXX /* Release */ = {
+			isa = XCBuildConfiguration;
+			name = Release;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				CURRENT_PROJECT_VERSION = 2;
+				INFOPLIST_FILE = ../targets/ShieldConfiguration/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfiguration;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = love.nemi.focus.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldConfiguration/generated.entitlements;
+				DEVELOPMENT_TEAM = 569HBLNQPC;
+			};
+		};
+		XXB044B894FB1436DE8CB2XX /* Release */ = {
+			isa = XCBuildConfiguration;
+			name = Release;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				CURRENT_PROJECT_VERSION = 2;
+				INFOPLIST_FILE = ../targets/ShieldAction/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldAction;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = love.nemi.focus.ShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldAction/generated.entitlements;
+				DEVELOPMENT_TEAM = 569HBLNQPC;
+			};
+		};
+		XXB8F58DDF51E62E2D09BBXX /* Debug */ = {
+			isa = XCBuildConfiguration;
+			name = Debug;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				CURRENT_PROJECT_VERSION = 2;
+				INFOPLIST_FILE = ../targets/ShieldConfiguration/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ShieldConfiguration;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = love.nemi.focus.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				CODE_SIGN_ENTITLEMENTS = ../targets/ShieldConfiguration/generated.entitlements;
+				DEVELOPMENT_TEAM = 569HBLNQPC;
 			};
-			name = Debug;
 		};
 		XXE2048FC92BCD1FCFE348XX /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1007,8 +1100,51 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.love.nemi.focus;
 			};
 			name = Release;
+		};
+		XXF697918043CC942543D3XX /* Debug */ = {
+			isa = XCBuildConfiguration;
+			name = Debug;
+			buildSettings = {
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GENERATE_INFOPLIST_FILE = YES;
+				CURRENT_PROJECT_VERSION = 2;
+				INFOPLIST_FILE = ../targets/ActivityMonitorExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ActivityMonitorExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = love.nemi.focus.ActivityMonitorExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				CODE_SIGN_ENTITLEMENTS = ../targets/ActivityMonitorExtension/generated.entitlements;
+				DEVELOPMENT_TEAM = 569HBLNQPC;
+			};
 		};
 		XXFDC3E8DD799BAC9C49DBXX /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -1044,6 +1180,7 @@
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+				REACT_NATIVE_DEVICE_ACTIVITY_APP_GROUP = group.love.nemi.focus;
 			};
 			name = Release;
 		};
@@ -1068,31 +1205,31 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		XX06FA4756E35C62B74525XX /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */ = {
+		XX1763E5C2AD03C42A54D6XX /* Build configuration list for PBXNativeTarget "ShieldAction" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (
-				XXB6D46BB2125A7B6233CBXX /* Debug */,
-				XX88E547696D71488085DBXX /* Release */,
-			);
 			defaultConfigurationIsVisible = 0;
+			buildConfigurations = (
+				XX8B1A06C009CCC1A1F05EXX /* Debug */,
+				XXB044B894FB1436DE8CB2XX /* Release */,
+			);
 			defaultConfigurationName = Release;
 		};
-		XX17638B0D84DA8813405BXX /* Build configuration list for PBXNativeTarget "ShieldAction" */ = {
+		XXB76D4E2A3DC95892D0B2XX /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (
-				XX70C34F27EBA23A07852AXX /* Debug */,
-				XXFDC3E8DD799BAC9C49DBXX /* Release */,
-			);
 			defaultConfigurationIsVisible = 0;
+			buildConfigurations = (
+				XXF697918043CC942543D3XX /* Debug */,
+				XX90F062639E2893D3F529XX /* Release */,
+			);
 			defaultConfigurationName = Release;
 		};
-		XX9B582CF5143E3FE50089XX /* Build configuration list for PBXNativeTarget "ActivityMonitorExtension" */ = {
+		XXFBE82DB851C1B5DFE209XX /* Build configuration list for PBXNativeTarget "ShieldConfiguration" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (
-				XXE09E8B12F466A256D1A5XX /* Debug */,
-				XXE2048FC92BCD1FCFE348XX /* Release */,
-			);
 			defaultConfigurationIsVisible = 0;
+			buildConfigurations = (
+				XXB8F58DDF51E62E2D09BBXX /* Debug */,
+				XX93D078738E4D2C034B2EXX /* Release */,
+			);
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */

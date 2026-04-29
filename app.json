@@ -6,12 +6,14 @@
     "icon": "./assets/icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "love.nemi.focus",
       "appleTeamId": "569HBLNQPC",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "NSFamilyControlsUsageDescription": "Focus Blocks uses Screen Time to block the apps you choose during the schedules you create.",
         "ITSAppUsesNonExemptEncryption": false
