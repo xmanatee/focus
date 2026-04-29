@@ -103,10 +103,26 @@ export default function AddFocusBlockScreen(): JSX.Element {
 
   const handleStrictChange = (next: boolean): void => {
     void haptic.select();
-    if (!next || tamperReady) {
-      form.setStrict(next);
+    if (!next) {
+      form.setStrict(false);
       return;
     }
+
+    if (tamperReady) {
+      Alert.alert(
+        'Enable Strict Mode?',
+        'While this block is active, you cannot disable or edit it. Please review your setup to make sure you are confident in the timing and blocked apps.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Turn on',
+            onPress: () => form.setStrict(true),
+          },
+        ],
+      );
+      return;
+    }
+
     Alert.alert(
       protectionCopy.strictMode.softBlockTitle,
       protectionCopy.strictMode.softBlockBody,

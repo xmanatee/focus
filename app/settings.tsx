@@ -101,19 +101,34 @@ export default function SettingsScreen(): JSX.Element {
       endTime,
       notifyOnStart,
     };
-    const success = await run(async () => {
-      if (nextBlock.notifyOnStart) {
-        const granted = await requestNotificationPermissions();
-        if (!granted) {
-          throw new Error(
-            'Notifications permission is required for this block. Enable it in Settings or turn off the notification toggles.',
-          );
+
+    const performSave = async (): Promise<void> => {
+      const success = await run(async () => {
+        if (nextBlock.notifyOnStart) {
+          const granted = await requestNotificationPermissions();
+          if (!granted) {
+            throw new Error(
+              'Notifications permission is required for this block. Enable it in Settings or turn off the notification toggles.',
+            );
+          }
         }
-      }
-      void haptic.commit();
-      setSetupBlock(nextBlock);
-    }, 'Could not save setup block.');
-    if (success) dismiss();
+        void haptic.commit();
+        setSetupBlock(nextBlock);
+      }, 'Could not save setup block.');
+      if (success) dismiss();
+    };
+
+    Alert.alert(
+      existing ? 'Update Lock-in?' : 'Turn on Lock-in?',
+      'You will only be able to edit your focus blocks during your setup window. Please review your existing blocks to make sure you are confident in the setup.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: existing ? 'Update' : 'Turn on',
+          onPress: () => void performSave(),
+        },
+      ],
+    );
   };
 
   const confirmClear = (): void => {

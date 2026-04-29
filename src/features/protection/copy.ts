@@ -45,7 +45,7 @@ export const protectionCopy = {
     needsSetup: 'Set up tamper protection first to make this meaningful.',
     softBlockTitle: 'Tamper protection isn’t set up',
     softBlockBody:
-      'Strict mode works without it, but it relies on iOS settings you haven’t configured yet. Set up first?',
+      'Strict mode works without it, but it relies on iOS settings you haven’t configured yet. We recommend reviewing your blocks to make sure you are confident in the setup. Set up first?',
     softBlockSetup: 'Set up first',
     softBlockAnyway: 'Turn on anyway',
   },
