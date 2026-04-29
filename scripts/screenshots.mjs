@@ -216,13 +216,13 @@ async function main() {
   for (const size of SIZES) {
     const present = SHOTS.filter((s) => existsSync(join(size.raw, s.src)));
     if (present.length === 0) {
-      console.log(`No raw screenshots found for ${size.name}" in ${size.raw}`);
+      console.log(`No raw screenshots found for ${size.name} in ${size.raw}`);
       continue;
     }
 
     const outDir = join(OUT_DIR, size.name);
     await mkdir(outDir, { recursive: true });
-    console.log(`Composing for ${size.name}" (${size.w}x${size.h}) → ${outDir}`);
+    console.log(`Composing for ${size.name} (${size.w}x${size.h}) → ${outDir}`);
     for (const shot of present) {
       await compose(shot, size, outDir);
     }
