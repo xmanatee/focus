@@ -18,14 +18,20 @@ import type { PresetKind } from './presets';
 import { useTemplateStore } from './useTemplateStore';
 
 type PickerTarget =
-  | { mode: 'block' }
-  | { mode: 'template'; kind: PresetKind }
+  | { mode: 'block'; includeEntireCategory: boolean }
+  | { mode: 'template'; kind: PresetKind; includeEntireCategory: boolean }
   | null;
 
 interface PickerSession {
   readonly slotId: SelectionSlotId;
   readonly includeEntireCategory: boolean;
   readonly onSelectionChange: (metadata: ActivitySelectionMetadata) => void;
+}
+
+function includeEntireCategoryFrom(
+  selection: PersistedActivitySelection,
+): boolean {
+  return selection.status === 'saved' ? selection.includeEntireCategory : true;
 }
 
 export function useActivitySelection(
@@ -47,6 +53,8 @@ export function useActivitySelection(
     useState<PersistedActivitySelection>(initialSelection);
   const [pickerTarget, setPickerTarget] = useState<PickerTarget>(null);
   const wasSavedRef = useRef(false);
+  const activitySelectionRef = useRef(activitySelection);
+  activitySelectionRef.current = activitySelection;
 
   const templateMetadata = useTemplateStore((state) => state.metadata);
   const setTemplateMetadata = useTemplateStore((state) => state.setMetadata);
@@ -56,15 +64,10 @@ export function useActivitySelection(
   const pickerSession = useMemo<PickerSession | null>(() => {
     if (pickerTarget === null) return null;
 
-    const currentIncludeEntireCategory =
-      activitySelection.status === 'saved'
-        ? activitySelection.includeEntireCategory
-        : true;
-
     if (pickerTarget.mode === 'block') {
       return {
         slotId: blockSlot,
-        includeEntireCategory: currentIncludeEntireCategory,
+        includeEntireCategory: pickerTarget.includeEntireCategory,
         onSelectionChange: (metadata) =>
           setActivitySelection(createActivitySelectionFromMetadata(metadata)),
       };
@@ -73,14 +76,14 @@ export function useActivitySelection(
     const templateSlot = selectionIdForTemplate(kind);
     return {
       slotId: templateSlot,
-      includeEntireCategory: currentIncludeEntireCategory,
+      includeEntireCategory: pickerTarget.includeEntireCategory,
       onSelectionChange: (metadata) => {
         setTemplateMetadata(kind, metadata);
         copySlot(templateSlot, blockSlot);
         setActivitySelection(createActivitySelectionFromMetadata(metadata));
       },
     };
-  }, [pickerTarget, blockSlot, setTemplateMetadata, activitySelection]);
+  }, [pickerTarget, blockSlot, setTemplateMetadata]);
 
   useEffect(() => {
     if (editId === null) {
@@ -104,8 +107,21 @@ export function useActivitySelection(
       if (result !== 'needs-setup') setActivitySelection(result);
       return result;
     },
-    openBlockPicker: () => setPickerTarget({ mode: 'block' }),
-    openTemplatePicker: (kind) => setPickerTarget({ mode: 'template', kind }),
+    openBlockPicker: () =>
+      setPickerTarget({
+        mode: 'block',
+        includeEntireCategory: includeEntireCategoryFrom(
+          activitySelectionRef.current,
+        ),
+      }),
+    openTemplatePicker: (kind) =>
+      setPickerTarget({
+        mode: 'template',
+        kind,
+        includeEntireCategory: includeEntireCategoryFrom(
+          activitySelectionRef.current,
+        ),
+      }),
     closePicker: () => setPickerTarget(null),
     markSaved: () => {
       wasSavedRef.current = true;
