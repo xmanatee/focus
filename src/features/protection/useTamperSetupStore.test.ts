@@ -1,29 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createJSONStorage } from 'zustand/middleware';
-
-const memoryMap = new Map<string, string>();
-
-vi.mock('../../shared/storage', () => {
-  return {
-    persistedStorage: createJSONStorage(() => ({
-      getItem: (key: string) => memoryMap.get(key) ?? null,
-      setItem: (key: string, value: string) => {
-        memoryMap.set(key, value);
-      },
-      removeItem: (key: string) => {
-        memoryMap.delete(key);
-      },
-    })),
-    attachCloudSync: () => () => {},
-    newId: () => 'test-id',
-  };
-});
-
-const { useTamperSetupStore } = await import('./useTamperSetupStore');
-const { resolveProtectionPosture } = await import('./posture');
+import { beforeEach, describe, expect, it } from 'vitest';
+import { storageMap } from '../../test-helpers/mockPersistedStorage';
+import { resolveProtectionPosture } from './posture';
+import { useTamperSetupStore } from './useTamperSetupStore';
 
 function reset(): void {
-  memoryMap.clear();
+  storageMap.clear();
   useTamperSetupStore.setState({
     setup: {
       acks: {

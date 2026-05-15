@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-interface AsyncAction {
+export interface AsyncAction {
   readonly error: string | null;
   readonly isPending: boolean;
   readonly run: (

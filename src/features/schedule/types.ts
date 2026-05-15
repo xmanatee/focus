@@ -13,26 +13,26 @@ export const DAY_OF_WEEK_VALUES = [
 export type DayOfWeek = (typeof DAY_OF_WEEK_VALUES)[number];
 
 export interface FocusBlock {
-  id: string;
-  name: string;
-  startTime: string;
-  endTime: string;
-  days: DayOfWeek[];
-  isEnabled: boolean;
-  selection: BlockSelection;
-  notifyOnStart: boolean;
-  notifyOnEnd: boolean;
-  strict: boolean;
+  readonly id: string;
+  readonly name: string;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly days: readonly DayOfWeek[];
+  readonly isEnabled: boolean;
+  readonly selection: BlockSelection;
+  readonly notifyOnStart: boolean;
+  readonly notifyOnEnd: boolean;
+  readonly strict: boolean;
 }
 
 export interface FocusBlockInput {
-  name: string;
-  startTime: string;
-  endTime: string;
-  days: DayOfWeek[];
-  isEnabled: boolean;
-  selection: BlockSelection;
-  notifyOnStart: boolean;
-  notifyOnEnd: boolean;
-  strict: boolean;
+  readonly name: string;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly days: readonly DayOfWeek[];
+  readonly isEnabled: boolean;
+  readonly selection: BlockSelection;
+  readonly notifyOnStart: boolean;
+  readonly notifyOnEnd: boolean;
+  readonly strict: boolean;
 }

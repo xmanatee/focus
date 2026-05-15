@@ -10,12 +10,12 @@ import type { FocusBlock, FocusBlockInput } from './types';
 import { validateFocusBlockInput } from './validation';
 
 interface FocusBlockState {
-  focusBlocks: FocusBlock[];
-  addFocusBlock: (id: string, input: FocusBlockInput) => void;
-  updateFocusBlock: (id: string, input: FocusBlockInput) => void;
-  toggleFocusBlock: (id: string, isEnabled: boolean) => void;
-  deleteFocusBlock: (id: string) => void;
-  clearAllStrict: () => void;
+  readonly focusBlocks: readonly FocusBlock[];
+  readonly addFocusBlock: (id: string, input: FocusBlockInput) => void;
+  readonly updateFocusBlock: (id: string, input: FocusBlockInput) => void;
+  readonly toggleFocusBlock: (id: string, isEnabled: boolean) => void;
+  readonly deleteFocusBlock: (id: string) => void;
+  readonly clearAllStrict: () => void;
 }
 
 function assertEditable(block: FocusBlock): void {

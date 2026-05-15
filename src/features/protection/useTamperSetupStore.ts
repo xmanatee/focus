@@ -4,8 +4,8 @@ import { persistedStorage } from '../../shared/storage';
 import type { Ack, DefenseId, TamperSetup } from './types';
 
 interface TamperSetupState {
-  setup: TamperSetup;
-  toggle: (id: DefenseId) => void;
+  readonly setup: TamperSetup;
+  readonly toggle: (id: DefenseId) => void;
 }
 
 const EMPTY_SETUP: TamperSetup = {

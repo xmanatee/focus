@@ -27,8 +27,12 @@ function mapAuthorizationStatus(status: number): AuthorizationStatus {
 
 class ScreenTimeBlockerBridge implements IBlockerBridge {
   async requestAuthorization(): Promise<boolean> {
-    await requestAuthorization('individual');
-    return this.readAuthorizationStatus() === 'authorized';
+    try {
+      await requestAuthorization('individual');
+      return this.readAuthorizationStatus() === 'authorized';
+    } catch {
+      return false;
+    }
   }
 
   readAuthorizationStatus(): AuthorizationStatus {

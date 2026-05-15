@@ -5,8 +5,11 @@ import type { ActivitySelectionMetadata } from '../blocker/types';
 import type { PresetKind } from './presets';
 
 interface TemplateState {
-  metadata: Partial<Record<PresetKind, ActivitySelectionMetadata>>;
-  setMetadata: (kind: PresetKind, metadata: ActivitySelectionMetadata) => void;
+  readonly metadata: Partial<Record<PresetKind, ActivitySelectionMetadata>>;
+  readonly setMetadata: (
+    kind: PresetKind,
+    metadata: ActivitySelectionMetadata,
+  ) => void;
 }
 
 export const useTemplateStore = create<TemplateState>()(

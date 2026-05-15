@@ -52,7 +52,7 @@ const SHOTS = [
   {
     src: '04.png',
     head: ['Stronger than', 'impulses.'],
-    sub: 'An optional strict mode that even you can’t undo.',
+    sub: 'Pair active blocks with iOS tamper protection.',
   },
   {
     src: '05.png',
@@ -82,20 +82,29 @@ function backgroundSvg(W, H) {
   </svg>`;
 }
 
-function captionSvg(shot, W, CAPTION_H, HEAD_FONT_PX, HEAD_LINE_GAP, SUB_FONT_PX, BADGE_FONT_PX, type) {
+function captionSvg(
+  shot,
+  W,
+  CAPTION_H,
+  HEAD_FONT_PX,
+  HEAD_LINE_GAP,
+  SUB_FONT_PX,
+  BADGE_FONT_PX,
+  type,
+) {
   const baseWidth = type === 'tablet' ? 2064 : 1320;
   const scale = W / baseWidth;
-  
+
   const head1Base = (type === 'tablet' ? 140 : 125) * scale;
   const head2Base = head1Base + HEAD_LINE_GAP;
   const subBase = head2Base + (type === 'tablet' ? 90 : 80) * scale;
   const badgeBase = subBase + (type === 'tablet' ? 100 : 85) * scale;
-  
+
   const badgeBoxW = (type === 'tablet' ? 1200 : 880) * scale;
   const badgeBoxH = (type === 'tablet' ? 80 : 70) * scale;
   const badgeBoxX = (W - badgeBoxW) / 2;
   const badgeBoxY = badgeBase - (type === 'tablet' ? 60 : 50) * scale;
-  
+
   const badge = shot.badge
     ? `
     <rect x="${badgeBoxX}" y="${badgeBoxY}" width="${badgeBoxW}" height="${badgeBoxH}"
@@ -105,7 +114,7 @@ function captionSvg(shot, W, CAPTION_H, HEAD_FONT_PX, HEAD_LINE_GAP, SUB_FONT_PX
           font-family='${FONT}' font-weight="600" font-size="${BADGE_FONT_PX}"
           fill="${ACCENT}" letter-spacing="0.4">${escapeXml(shot.badge)}</text>`
     : '';
-    
+
   return `<svg width="${W}" height="${CAPTION_H}" xmlns="http://www.w3.org/2000/svg">
     <text x="50%" y="${head1Base}" text-anchor="middle"
           font-family='${FONT}' font-weight="800" font-size="${HEAD_FONT_PX}"
@@ -146,7 +155,7 @@ async function compose(shot, size, outDir) {
   const scale = W / baseWidth;
 
   // Visual constants tuned for the primary canvases
-  const SHOT_W = Math.round((type === 'tablet' ? 1600 : 1080) * scale);
+  const SHOT_W = Math.round((type === 'tablet' ? 1600 : 1050) * scale);
   const SHOT_X = Math.round((W - SHOT_W) / 2);
   const SHOT_Y = Math.round((type === 'tablet' ? 480 : 560) * scale);
   const RADIUS = Math.round(44 * scale);
@@ -177,29 +186,55 @@ async function compose(shot, size, outDir) {
   }
 
   const rounded = await sharp(screenshot)
-    .composite([{ input: Buffer.from(maskSvg(SHOT_W, actualH, RADIUS)), blend: 'dest-in' }])
+    .composite([
+      {
+        input: Buffer.from(maskSvg(SHOT_W, actualH, RADIUS)),
+        blend: 'dest-in',
+      },
+    ])
     .png()
     .toBuffer();
   const framed = await sharp(rounded)
-    .composite([{ input: Buffer.from(strokeSvg(SHOT_W, actualH, RADIUS)), top: 0, left: 0 }])
+    .composite([
+      {
+        input: Buffer.from(strokeSvg(SHOT_W, actualH, RADIUS)),
+        top: 0,
+        left: 0,
+      },
+    ])
     .png()
     .toBuffer();
   const shadow = await sharp(Buffer.from(shadowSvg(SHOT_W, actualH, RADIUS)))
     .blur(Math.round(60 * scale))
     .png()
     .toBuffer();
-  const background = await sharp(Buffer.from(backgroundSvg(W, H))).png().toBuffer();
+  const background = await sharp(Buffer.from(backgroundSvg(W, H)))
+    .png()
+    .toBuffer();
 
   await sharp(background)
     .composite([
       {
         input: Buffer.from(
-          captionSvg(shot, W, CAPTION_H, HEAD_FONT_PX, HEAD_LINE_GAP, SUB_FONT_PX, BADGE_FONT_PX, type),
+          captionSvg(
+            shot,
+            W,
+            CAPTION_H,
+            HEAD_FONT_PX,
+            HEAD_LINE_GAP,
+            SUB_FONT_PX,
+            BADGE_FONT_PX,
+            type,
+          ),
         ),
         top: CAPTION_TOP,
         left: 0,
       },
-      { input: shadow, top: SHOT_Y - Math.round(80 * scale), left: SHOT_X - Math.round(80 * scale) },
+      {
+        input: shadow,
+        top: SHOT_Y - Math.round(80 * scale),
+        left: SHOT_X - Math.round(80 * scale),
+      },
       { input: framed, top: SHOT_Y, left: SHOT_X },
     ])
     .png({ compressionLevel: 9 })

@@ -7,9 +7,9 @@ import {
 type BusyState = 'idle' | 'authorizing';
 
 interface BlockerState {
-  busyState: BusyState;
-  authorizationStatus: AuthorizationStatus;
-  requestPermissions: () => Promise<boolean>;
+  readonly busyState: BusyState;
+  readonly authorizationStatus: AuthorizationStatus;
+  readonly requestPermissions: () => Promise<boolean>;
 }
 
 export const useBlockerStore = create<BlockerState>()((set) => ({
@@ -18,15 +18,12 @@ export const useBlockerStore = create<BlockerState>()((set) => ({
 
   requestPermissions: async () => {
     set({ busyState: 'authorizing' });
-    try {
-      const granted = await BlockerBridge.requestAuthorization();
-      set({
-        authorizationStatus: granted ? 'authorized' : 'denied',
-      });
-      return granted;
-    } finally {
-      set({ busyState: 'idle' });
-    }
+    const granted = await BlockerBridge.requestAuthorization();
+    set({
+      authorizationStatus: granted ? 'authorized' : 'denied',
+      busyState: 'idle',
+    });
+    return granted;
   },
 }));
 

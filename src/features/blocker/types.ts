@@ -1,19 +1,19 @@
 export type SelectionSlotId = string & { readonly __brand: 'SelectionSlotId' };
 
 export interface ActivitySelectionMetadata {
-  applicationCount: number;
-  categoryCount: number;
-  webDomainCount: number;
-  includeEntireCategory: boolean;
+  readonly applicationCount: number;
+  readonly categoryCount: number;
+  readonly webDomainCount: number;
+  readonly includeEntireCategory: boolean;
 }
 
 export type PersistedActivitySelection =
-  | { status: 'empty' }
-  | ({ status: 'saved' } & ActivitySelectionMetadata);
+  | { readonly status: 'empty' }
+  | ({ readonly status: 'saved' } & ActivitySelectionMetadata);
 
 export interface BlockSelection {
-  activitySelection: PersistedActivitySelection;
-  webDomains: string[];
+  readonly activitySelection: PersistedActivitySelection;
+  readonly webDomains: readonly string[];
 }
 
 const EMPTY_ACTIVITY_SELECTION: PersistedActivitySelection = {

@@ -41,8 +41,13 @@ export const protectionCopy = {
   },
   strictMode: {
     title: 'Strict mode',
-    body: 'While this block is active, you cannot disable, edit, or delete it. The only way out is to wait, or to enter the Screen Time passcode.',
-    needsSetup: 'Set up tamper protection first to make this meaningful.',
+    body: 'Mark this as a high-stakes block and pair it with iOS tamper protection. Active blocks are read-only until they end.',
+    needsSetup:
+      'Set up tamper protection first to make strict blocks meaningful.',
+    enableTitle: 'Enable Strict Mode?',
+    enableBody:
+      'Strict blocks should be paired with iOS tamper protection. Please review the timing and blocked apps before you turn this on.',
+    enableConfirm: 'Turn on',
     softBlockTitle: 'Tamper protection isn’t set up',
     softBlockBody:
       'Strict mode works without it, but it relies on iOS settings you haven’t configured yet. We recommend reviewing your blocks to make sure you are confident in the setup. Set up first?',

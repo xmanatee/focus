@@ -1,14 +1,10 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
-import {
-  EMPTY_BLOCK_SELECTION,
-  selectionHasBlockedTargets,
-} from '../src/features/blocker/types';
-import { protectionCopy } from '../src/features/protection/copy';
+import { EMPTY_BLOCK_SELECTION } from '../src/features/blocker/types';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
 import { FormActions } from '../src/features/schedule/components/FormActions';
@@ -17,8 +13,10 @@ import { PresetRow } from '../src/features/schedule/components/PresetRow';
 import { StrictModeCard } from '../src/features/schedule/components/StrictModeCard';
 import { resolveEditPolicy } from '../src/features/schedule/editPolicy';
 import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
+import { confirmStrictModeOn } from '../src/features/schedule/strictModeConfirm';
 import { useActivitySelection } from '../src/features/schedule/useActivitySelection';
 import { useFocusBlockForm } from '../src/features/schedule/useFocusBlockForm';
+import { useFocusBlockSave } from '../src/features/schedule/useFocusBlockSave';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
@@ -26,9 +24,7 @@ import { InfoBanner } from '../src/shared/components/InfoBanner';
 import { Screen } from '../src/shared/components/Screen';
 import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
-import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 import { useDismiss } from '../src/shared/hooks/useDismiss';
-import { requestNotificationPermissions } from '../src/shared/notifications';
 import { newId } from '../src/shared/storage';
 
 export default function AddFocusBlockScreen(): JSX.Element {
@@ -37,9 +33,6 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const editId = params.id ?? null;
   const isEditing = editId !== null;
 
-  const addFocusBlock = useFocusBlockStore((s) => s.addFocusBlock);
-  const updateFocusBlock = useFocusBlockStore((s) => s.updateFocusBlock);
-  const deleteFocusBlock = useFocusBlockStore((s) => s.deleteFocusBlock);
   const existing = useFocusBlockStore((s) =>
     editId ? s.focusBlocks.find((item) => item.id === editId) ?? null : null,
   );
@@ -61,7 +54,6 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const readOnly = policy.readOnly;
 
   const form = useFocusBlockForm(existing);
-
   const selection = useActivitySelection(
     blockId,
     editId,
@@ -69,9 +61,28 @@ export default function AddFocusBlockScreen(): JSX.Element {
       EMPTY_BLOCK_SELECTION.activitySelection,
   );
   const { pickerSession } = selection;
-
-  const { error, isPending, run } = useAsyncAction();
   const dismiss = useDismiss();
+
+  const { error, isPending, run, save, requestDelete } = useFocusBlockSave({
+    editId,
+    newBlockId: blockId,
+    buildInput: () => ({
+      name: form.name,
+      startTime: form.startTime,
+      endTime: form.endTime,
+      days: form.selectedDays,
+      isEnabled: existing?.isEnabled ?? true,
+      selection: {
+        activitySelection: selection.activitySelection,
+        webDomains: form.webDomains,
+      },
+      notifyOnStart: form.notifyOnStart,
+      notifyOnEnd: form.notifyOnEnd,
+      strict: form.strict,
+    }),
+    markSelectionSaved: selection.markSaved,
+    dismiss,
+  });
 
   const handleApplyPreset = (kind: PresetKind): void => {
     void haptic.select();
@@ -107,95 +118,11 @@ export default function AddFocusBlockScreen(): JSX.Element {
       form.setStrict(false);
       return;
     }
-
-    if (tamperReady) {
-      Alert.alert(
-        'Enable Strict Mode?',
-        'While this block is active, you cannot disable or edit it. Please review your setup to make sure you are confident in the timing and blocked apps.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Turn on',
-            onPress: () => form.setStrict(true),
-          },
-        ],
-      );
-      return;
-    }
-
-    Alert.alert(
-      protectionCopy.strictMode.softBlockTitle,
-      protectionCopy.strictMode.softBlockBody,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: protectionCopy.strictMode.softBlockSetup,
-          onPress: () => router.push('/protection'),
-        },
-        {
-          text: protectionCopy.strictMode.softBlockAnyway,
-          style: 'destructive',
-          onPress: () => form.setStrict(true),
-        },
-      ],
-    );
-  };
-
-  const handleSave = async (): Promise<void> => {
-    const input = {
-      name: form.name,
-      startTime: form.startTime,
-      endTime: form.endTime,
-      days: [...form.selectedDays],
-      isEnabled: existing?.isEnabled ?? true,
-      selection: {
-        activitySelection: selection.activitySelection,
-        webDomains: [...form.webDomains],
-      },
-      notifyOnStart: form.notifyOnStart,
-      notifyOnEnd: form.notifyOnEnd,
-      strict: form.strict,
-    };
-
-    const success = await run(async () => {
-      if (!selectionHasBlockedTargets(input.selection)) {
-        throw new Error('Pick at least one app or site to block.');
-      }
-      if (input.notifyOnStart || input.notifyOnEnd) {
-        const granted = await requestNotificationPermissions();
-        if (!granted) {
-          throw new Error(
-            'Notifications permission is required for this block. Enable it in Settings or turn off the notification toggles.',
-          );
-        }
-      }
-      void haptic.commit();
-      if (editId) updateFocusBlock(editId, input);
-      else addFocusBlock(blockId, input);
-      selection.markSaved();
-    }, 'Could not save block.');
-
-    if (success) dismiss();
-  };
-
-  const handleDelete = (): void => {
-    if (!editId) return;
-    Alert.alert(
-      'Delete Focus Block?',
-      'This will permanently remove this focus block.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            void haptic.abandon();
-            deleteFocusBlock(editId);
-            dismiss();
-          },
-        },
-      ],
-    );
+    confirmStrictModeOn({
+      tamperReady,
+      onConfirm: () => form.setStrict(true),
+      onSetUpFirst: () => router.push('/protection'),
+    });
   };
 
   return (
@@ -290,13 +217,13 @@ export default function AddFocusBlockScreen(): JSX.Element {
           isEditing={isEditing}
           isPending={isPending}
           readOnly={readOnly}
-          onSave={() => void handleSave()}
-          onDelete={handleDelete}
+          onSave={() => void save()}
+          onDelete={requestDelete}
           onCancel={dismiss}
         />
       </ScrollView>
 
-      {pickerSession ? (
+      {pickerSession && (
         <DeviceActivitySelectionSheetViewPersisted
           familyActivitySelectionId={pickerSession.slotId}
           includeEntireCategory={pickerSession.includeEntireCategory}
@@ -305,7 +232,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
           }
           onDismissRequest={selection.closePicker}
         />
-      ) : null}
+      )}
     </Screen>
   );
 }

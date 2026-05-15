@@ -3,8 +3,11 @@
   "ignoreFiles": [
     "babel.config.js",
     "metro.config.js",
+    "plugins/with-focusblocks-icloud.js",
+    "store.config.js",
     "targets/**/expo-target.config.js"
   ],
+  "ignoreDependencies": ["lefthook"],
   "ignoreIssues": {
     "app.json": ["unlisted"]
   },

@@ -9,6 +9,7 @@ import {
 import {
   iosWeekday,
   isOvernightRange,
+  minutesOf,
   nextIosWeekday,
 } from '../../shared/days';
 import {
@@ -19,6 +20,16 @@ import type { DayOfWeek, FocusBlock } from './types';
 
 const FOCUS_ACTIVITY_PREFIX = 'focusblocks.block.';
 const SETUP_ACTIVITY_PREFIX = 'focusblocks.setup.';
+
+const DAY_BY_IOS_WEEKDAY: Record<number, DayOfWeek> = {
+  1: 'sun',
+  2: 'mon',
+  3: 'tue',
+  4: 'wed',
+  5: 'thu',
+  6: 'fri',
+  7: 'sat',
+};
 
 interface MonitorPlan {
   activityName: string;
@@ -36,66 +47,121 @@ function parseHM(time: string): { hour: number; minute: number } {
   return { hour: h, minute: m };
 }
 
-function materializeFocusBlock(block: FocusBlock): MonitorPlan[] {
+function previousDay(day: DayOfWeek): DayOfWeek {
+  const weekday = iosWeekday(day);
+  return DAY_BY_IOS_WEEKDAY[weekday === 1 ? 7 : weekday - 1];
+}
+
+function isActiveAtWeeklyInstant(
+  block: FocusBlock,
+  day: DayOfWeek,
+  minute: number,
+): boolean {
+  if (!block.isEnabled) return false;
+
+  const start = minutesOf(block.startTime);
+  const end = minutesOf(block.endTime);
+
+  if (!isOvernightRange(block.startTime, block.endTime)) {
+    return block.days.includes(day) && minute >= start && minute < end;
+  }
+
+  return (
+    (block.days.includes(day) && minute >= start) ||
+    (block.days.includes(previousDay(day)) && minute < end)
+  );
+}
+
+function reconcileActionsForInstant(
+  blocks: readonly FocusBlock[],
+  day: DayOfWeek,
+  minute: number,
+): Action[] {
+  const activeBlocks = blocks.filter((block) =>
+    isActiveAtWeeklyInstant(block, day, minute),
+  );
+  const webDomains = new Set<string>();
+  const actions: Action[] = [
+    { type: 'resetBlocks' },
+    { type: 'clearWebContentFilterPolicy' },
+  ];
+
+  for (const block of activeBlocks) {
+    if (hasSavedActivitySelection(block.selection.activitySelection)) {
+      actions.push({
+        type: 'blockSelection',
+        familyActivitySelectionId: selectionIdForBlock(block.id),
+      });
+    }
+    for (const domain of block.selection.webDomains) {
+      webDomains.add(domain);
+    }
+  }
+
+  if (webDomains.size > 0) {
+    actions.push({
+      type: 'setWebContentFilterPolicy',
+      policy: {
+        type: 'specific',
+        domains: [...webDomains].sort(),
+      },
+    });
+  }
+
+  return actions;
+}
+
+function materializeFocusBlock(
+  block: FocusBlock,
+  allBlocks: readonly FocusBlock[],
+): MonitorPlan[] {
   if (!block.isEnabled || block.days.length === 0) {
     return [];
   }
 
-  const startActions: Action[] = [];
-  const endActions: Action[] = [];
+  return block.days.map((day) => {
+    const schedule = scheduleForDay(block.startTime, block.endTime, day);
+    const startMinute = minutesOf(block.startTime);
+    const endMinute = minutesOf(block.endTime);
+    const endDay = DAY_BY_IOS_WEEKDAY[schedule.intervalEnd.weekday];
 
-  if (hasSavedActivitySelection(block.selection.activitySelection)) {
-    const selectionId = selectionIdForBlock(block.id);
-    startActions.push({
-      type: 'blockSelection',
-      familyActivitySelectionId: selectionId,
-    });
-    endActions.push({
-      type: 'unblockSelection',
-      familyActivitySelectionId: selectionId,
-    });
-  }
+    const startActions = reconcileActionsForInstant(
+      allBlocks,
+      day,
+      startMinute,
+    );
+    const endActions = reconcileActionsForInstant(allBlocks, endDay, endMinute);
 
-  if (block.selection.webDomains.length > 0) {
-    startActions.push({
-      type: 'setWebContentFilterPolicy',
-      policy: {
-        type: 'specific',
-        domains: [...block.selection.webDomains],
-      },
-    });
-    endActions.push({ type: 'clearWebContentFilterPolicy' });
-  }
+    if (block.notifyOnStart) {
+      startActions.push({
+        type: 'sendNotification',
+        payload: {
+          title: 'Focus Block Started',
+          body: `"${block.name}" is now active. Distractions are blocked.`,
+          sound: 'default',
+          interruptionLevel: 'active',
+        },
+      });
+    }
 
-  if (block.notifyOnStart) {
-    startActions.push({
-      type: 'sendNotification',
-      payload: {
-        title: 'Focus Block Started',
-        body: `"${block.name}" is now active. Distractions are blocked.`,
-        sound: 'default',
-        interruptionLevel: 'active',
-      },
-    });
-  }
+    if (block.notifyOnEnd) {
+      endActions.push({
+        type: 'sendNotification',
+        payload: {
+          title: 'Focus Block Ended',
+          body: `"${block.name}" has finished.`,
+          sound: 'default',
+        },
+      });
+    }
 
-  if (block.notifyOnEnd) {
-    endActions.push({
-      type: 'sendNotification',
-      payload: {
-        title: 'Focus Block Ended',
-        body: `"${block.name}" has finished.`,
-        sound: 'default',
-      },
-    });
-  }
-
-  return block.days.map((day) => ({
-    activityName: `${FOCUS_ACTIVITY_PREFIX}${block.id}.${day}`,
-    schedule: scheduleForDay(block.startTime, block.endTime, day),
-    startActions,
-    endActions,
-  }));
+    return {
+      activityName: `${FOCUS_ACTIVITY_PREFIX}${block.id}.${day}`,
+      schedule,
+      startActions,
+      endActions,
+    };
+  });
 }
 
 function materializeSetupBlock(
@@ -169,7 +235,7 @@ export async function reconcileFocusBlocks(
 ): Promise<void> {
   const desired = new Map<string, MonitorPlan>();
   for (const block of blocks) {
-    for (const plan of materializeFocusBlock(block)) {
+    for (const plan of materializeFocusBlock(block, blocks)) {
       desired.set(plan.activityName, plan);
     }
   }

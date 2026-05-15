@@ -45,7 +45,9 @@ export function BlockingCard({
               <Typography variant="caption" tone="muted">
                 {(() => {
                   const summary = summarizeActivitySelection(activitySelection);
-                  return summary === 'None' ? 'None selected' : `${summary} selected`;
+                  return summary === 'None'
+                    ? 'None selected'
+                    : `${summary} selected`;
                 })()}
               </Typography>
             </View>

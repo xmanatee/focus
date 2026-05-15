@@ -6,9 +6,9 @@ import type { SetupBlock } from './adminState';
 import { validateSetupBlock } from './validation';
 
 interface SettingsState {
-  setupBlock: SetupBlock | null;
-  setSetupBlock: (block: SetupBlock) => void;
-  clearSetupBlock: () => void;
+  readonly setupBlock: SetupBlock | null;
+  readonly setSetupBlock: (block: SetupBlock) => void;
+  readonly clearSetupBlock: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(

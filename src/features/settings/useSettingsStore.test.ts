@@ -1,52 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createJSONStorage } from 'zustand/middleware';
-import { EMPTY_BLOCK_SELECTION } from '../blocker/types';
-import type { DayOfWeek, FocusBlockInput } from '../schedule/types';
-import type { SetupBlock } from './adminState';
-
-const memoryMap = new Map<string, string>();
-
-vi.mock('../../shared/storage', () => ({
-  persistedStorage: createJSONStorage(() => ({
-    getItem: (key: string) => memoryMap.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      memoryMap.set(key, value);
-    },
-    removeItem: (key: string) => {
-      memoryMap.delete(key);
-    },
-  })),
-  attachCloudSync: () => () => {},
-  newId: () => 'test-id',
-}));
-
-const { useSettingsStore } = await import('./useSettingsStore');
-const { useFocusBlockStore } = await import('../schedule/useFocusBlockStore');
-
-const SETUP_BLOCK: SetupBlock = {
-  days: ['sun'] as DayOfWeek[],
-  startTime: '20:00',
-  endTime: '21:00',
-  notifyOnStart: false,
-};
-
-function baseInput(overrides: Partial<FocusBlockInput> = {}): FocusBlockInput {
-  return {
-    name: 'Work',
-    startTime: '09:00',
-    endTime: '17:00',
-    days: ['mon', 'tue', 'wed', 'thu', 'fri'] as DayOfWeek[],
-    isEnabled: true,
-    selection: { ...EMPTY_BLOCK_SELECTION, webDomains: ['example.com'] },
-    notifyOnStart: false,
-    notifyOnEnd: false,
-    strict: true,
-    ...overrides,
-  };
-}
+import {
+  SUNDAY_SETUP_BLOCK,
+  focusBlockInput,
+} from '../../test-helpers/focusBlockFixtures';
+import { storageMap } from '../../test-helpers/mockPersistedStorage';
+import { useFocusBlockStore } from '../schedule/useFocusBlockStore';
+import { useSettingsStore } from './useSettingsStore';
 
 function reset(): void {
-  memoryMap.clear();
+  storageMap.clear();
   useFocusBlockStore.setState({ focusBlocks: [] });
   useSettingsStore.setState({ setupBlock: null });
 }
@@ -65,33 +27,43 @@ describe('useSettingsStore', () => {
   describe('setSetupBlock', () => {
     it('clears strict on all focus blocks when invoked', () => {
       // Seed with strict blocks (no setupBlock yet, so strict is preserved)
-      useFocusBlockStore.getState().addFocusBlock('id-1', baseInput());
-      useFocusBlockStore.getState().addFocusBlock('id-2', baseInput());
+      useFocusBlockStore
+        .getState()
+        .addFocusBlock('id-1', focusBlockInput({ strict: true }));
+      useFocusBlockStore
+        .getState()
+        .addFocusBlock('id-2', focusBlockInput({ strict: true }));
       expect(
         useFocusBlockStore.getState().focusBlocks.every((b) => b.strict),
       ).toBe(true);
 
-      useSettingsStore.getState().setSetupBlock(SETUP_BLOCK);
+      useSettingsStore.getState().setSetupBlock(SUNDAY_SETUP_BLOCK);
 
       expect(
         useFocusBlockStore.getState().focusBlocks.every((b) => !b.strict),
       ).toBe(true);
-      expect(useSettingsStore.getState().setupBlock).toEqual(SETUP_BLOCK);
+      expect(useSettingsStore.getState().setupBlock).toEqual(
+        SUNDAY_SETUP_BLOCK,
+      );
     });
 
     it('is allowed even when blocks are mid-strict', () => {
       // The user must be able to enable lock-in regardless of strict state.
-      useFocusBlockStore.getState().addFocusBlock('id-1', baseInput());
+      useFocusBlockStore
+        .getState()
+        .addFocusBlock('id-1', focusBlockInput({ strict: true }));
       expect(() =>
-        useSettingsStore.getState().setSetupBlock(SETUP_BLOCK),
+        useSettingsStore.getState().setSetupBlock(SUNDAY_SETUP_BLOCK),
       ).not.toThrow();
     });
   });
 
   describe('clearSetupBlock', () => {
     it('does not resurrect strict flags', () => {
-      useFocusBlockStore.getState().addFocusBlock('id-1', baseInput());
-      useSettingsStore.getState().setSetupBlock(SETUP_BLOCK);
+      useFocusBlockStore
+        .getState()
+        .addFocusBlock('id-1', focusBlockInput({ strict: true }));
+      useSettingsStore.getState().setSetupBlock(SUNDAY_SETUP_BLOCK);
       // strict has been cleared above
       useSettingsStore.getState().clearSetupBlock();
       expect(useFocusBlockStore.getState().focusBlocks[0].strict).toBe(false);
