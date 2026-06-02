@@ -24,7 +24,7 @@
         "backgroundColor": "#1A1510"
       }
     },
-    "scheme": "focusblocks",
+    "scheme": ["focusblocks", "device-activity"],
     "plugins": [
       "expo-router",
       [

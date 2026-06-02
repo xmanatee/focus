@@ -28,6 +28,7 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>focusblocks</string>
+          <string>device-activity</string>
           <string>love.nemi.focus</string>
         </array>
       </dict>

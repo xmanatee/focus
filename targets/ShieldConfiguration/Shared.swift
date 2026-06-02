@@ -223,7 +223,8 @@ func executeGenericAction(
   } else if type == "disableBlockAllMode" {
     disableBlockAllMode(triggeredBy: triggeredBy)
   } else if type == "openApp" {
-    openUrl(urlString: "focusblocks://")
+    // todo: replace with general string
+    openUrl(urlString: "device-activity://")
 
     sleep(ms: 1000)
   } else if type == "enableBlockAllMode" {
