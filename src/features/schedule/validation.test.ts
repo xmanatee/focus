@@ -11,6 +11,8 @@ function baseInput(overrides: Partial<FocusBlockInput> = {}): FocusBlockInput {
     endTime: '17:00',
     days: weekdays,
     isEnabled: true,
+    scope: { kind: 'allDevices' },
+    rule: { kind: 'blockDuringSchedule' },
     selection: EMPTY_BLOCK_SELECTION,
     notifyOnStart: true,
     notifyOnEnd: true,
@@ -18,6 +20,17 @@ function baseInput(overrides: Partial<FocusBlockInput> = {}): FocusBlockInput {
     ...overrides,
   };
 }
+
+const nativeSelection = {
+  activitySelection: {
+    status: 'saved',
+    applicationCount: 1,
+    categoryCount: 0,
+    webDomainCount: 0,
+    includeEntireCategory: true,
+  },
+  webDomains: [],
+} as const;
 
 describe('validateFocusBlockInput', () => {
   it('accepts a valid weekday block', () => {
@@ -84,6 +97,39 @@ describe('validateFocusBlockInput', () => {
         baseInput({
           strict: true,
           selection: { ...EMPTY_BLOCK_SELECTION, webDomains: ['example.com'] },
+        }),
+      ),
+    ).not.toThrow();
+  });
+
+  it('rejects zero-minute daily budgets', () => {
+    expect(() =>
+      validateFocusBlockInput(
+        baseInput({
+          rule: { kind: 'dailyBudget', minutes: 0 },
+          selection: nativeSelection,
+        }),
+      ),
+    ).toThrow(/daily budget/i);
+  });
+
+  it('rejects daily budgets without Screen Time selection', () => {
+    expect(() =>
+      validateFocusBlockInput(
+        baseInput({
+          rule: { kind: 'dailyBudget', minutes: 30 },
+          selection: { ...EMPTY_BLOCK_SELECTION, webDomains: ['example.com'] },
+        }),
+      ),
+    ).toThrow(/screen time picker/i);
+  });
+
+  it('accepts schedule plus daily budget', () => {
+    expect(() =>
+      validateFocusBlockInput(
+        baseInput({
+          rule: { kind: 'allowDuringScheduleWithBudget', minutes: 30 },
+          selection: nativeSelection,
         }),
       ),
     ).not.toThrow();

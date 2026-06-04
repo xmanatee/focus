@@ -1598,6 +1598,41 @@ func isEqual(
     && diff.webDomainTokens.isEmpty
 }
 
+func onlyIfTriggeredAfterConditionPasses(action: [String: Any]) -> Bool {
+  guard let condition = action["onlyIfTriggeredAfter"] as? [String: Any] else {
+    return true
+  }
+  guard
+    let activityName = condition["activityName"] as? String,
+    let callbackName = condition["callbackName"] as? String,
+    let eventName = condition["eventName"] as? String,
+    let afterActivityName = condition["afterActivityName"] as? String,
+    let afterCallbackName = condition["afterCallbackName"] as? String
+  else {
+    return false
+  }
+
+  guard
+    let triggeredAt = getLastTriggeredTimeFromUserDefaults(
+      activityName: activityName,
+      callbackName: callbackName,
+      eventName: eventName
+    )
+  else {
+    return false
+  }
+
+  let afterEventName = condition["afterEventName"] as? String
+  let afterTriggeredAt =
+    getLastTriggeredTimeFromUserDefaults(
+      activityName: afterActivityName,
+      callbackName: afterCallbackName,
+      eventName: afterEventName
+    ) ?? Date.distantPast.timeIntervalSince1970 * 1000
+
+  return triggeredAt > afterTriggeredAt
+}
+
 func shouldExecuteAction(
   skipIfAlreadyTriggeredAfter: Double?,
   skipIfLargerEventRecordedAfter: Double?,

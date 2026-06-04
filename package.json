@@ -1,6 +1,6 @@
 {
   "name": "focus-blocks",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
@@ -14,6 +14,8 @@
     "check-lines": "node scripts/check-line-limit.mjs",
     "check-antipatterns": "node scripts/check-antipatterns.mjs",
     "check-deps": "npm ls",
+    "sync-ios-versions": "node scripts/sync-ios-versions.mjs",
+    "eas-build-post-install": "node scripts/sync-ios-versions.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "test": "vitest run"
   },

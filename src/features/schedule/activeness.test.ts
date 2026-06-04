@@ -6,6 +6,7 @@ const weekday = {
   startTime: '09:00',
   endTime: '17:00',
   isEnabled: true,
+  rule: { kind: 'blockDuringSchedule' } as const,
 };
 
 const overnight = {
@@ -46,6 +47,33 @@ describe('isFocusBlockActiveAt', () => {
     expect(
       isFocusBlockActiveAt(
         { ...weekday, isEnabled: false },
+        at('2026-04-27T10:30:00'),
+      ),
+    ).toBe(false);
+  });
+
+  it('allow-only schedule is active outside the allowed window', () => {
+    expect(
+      isFocusBlockActiveAt(
+        { ...weekday, rule: { kind: 'allowDuringSchedule' } },
+        at('2026-04-27T08:00:00'),
+      ),
+    ).toBe(true);
+  });
+
+  it('allow-only schedule is inactive inside the allowed window', () => {
+    expect(
+      isFocusBlockActiveAt(
+        { ...weekday, rule: { kind: 'allowDuringSchedule' } },
+        at('2026-04-27T10:30:00'),
+      ),
+    ).toBe(false);
+  });
+
+  it('daily budget is not schedule-active before the native threshold fires', () => {
+    expect(
+      isFocusBlockActiveAt(
+        { ...weekday, rule: { kind: 'dailyBudget', minutes: 10 } },
         at('2026-04-27T10:30:00'),
       ),
     ).toBe(false);

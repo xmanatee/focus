@@ -10,6 +10,7 @@ import type { FocusBlock } from '../types';
 interface FocusBlockRowProps {
   readonly block: FocusBlock;
   readonly isActive: boolean;
+  readonly needsDeviceSelection: boolean;
   readonly toggleDisabled: boolean;
   readonly onPress: () => void;
   readonly onToggle: (next: boolean) => void;
@@ -18,6 +19,7 @@ interface FocusBlockRowProps {
 export function FocusBlockRow({
   block,
   isActive,
+  needsDeviceSelection,
   toggleDisabled,
   onPress,
   onToggle,
@@ -50,9 +52,25 @@ export function FocusBlockRow({
             )}
           </View>
           <Typography variant="caption" tone="muted">
-            {formatActiveDays(block.days)} · {block.startTime}–{block.endTime}
+            {describeRule(block)}
           </Typography>
           <View className="flex-row items-center gap-2 flex-wrap">
+            <SelectionPill
+              icon={
+                block.scope.kind === 'allDevices' ? 'icloud.fill' : 'iphone'
+              }
+              label={
+                block.scope.kind === 'allDevices'
+                  ? 'All devices'
+                  : 'This device'
+              }
+            />
+            {needsDeviceSelection && (
+              <SelectionPill
+                icon="exclamationmark.triangle.fill"
+                label="Pick apps here"
+              />
+            )}
             {selection.activitySelection.status === 'saved' && (
               <SelectionPill
                 icon="square.grid.2x2.fill"
@@ -88,7 +106,13 @@ function SelectionPill({
   icon,
   label,
 }: {
-  icon: 'app.badge' | 'globe' | 'square.grid.2x2.fill';
+  icon:
+    | 'app.badge'
+    | 'exclamationmark.triangle.fill'
+    | 'globe'
+    | 'icloud.fill'
+    | 'iphone'
+    | 'square.grid.2x2.fill';
   label: string;
 }): JSX.Element {
   return (
@@ -99,4 +123,20 @@ function SelectionPill({
       </Typography>
     </View>
   );
+}
+
+function describeRule(block: FocusBlock): string {
+  const schedule = `${formatActiveDays(block.days)} · ${block.startTime}–${
+    block.endTime
+  }`;
+  switch (block.rule.kind) {
+    case 'blockDuringSchedule':
+      return schedule;
+    case 'allowDuringSchedule':
+      return `Allowed ${schedule}`;
+    case 'dailyBudget':
+      return `${formatActiveDays(block.days)} · ${block.rule.minutes} min/day`;
+    case 'allowDuringScheduleWithBudget':
+      return `Allowed ${schedule} · ${block.rule.minutes} min/day`;
+  }
 }

@@ -12,6 +12,19 @@ export const DAY_OF_WEEK_VALUES = [
 
 export type DayOfWeek = (typeof DAY_OF_WEEK_VALUES)[number];
 
+export type FocusBlockScope =
+  | { readonly kind: 'allDevices' }
+  | { readonly kind: 'device'; readonly deviceId: string };
+
+export type FocusBlockRule =
+  | { readonly kind: 'blockDuringSchedule' }
+  | { readonly kind: 'allowDuringSchedule' }
+  | { readonly kind: 'dailyBudget'; readonly minutes: number }
+  | {
+      readonly kind: 'allowDuringScheduleWithBudget';
+      readonly minutes: number;
+    };
+
 export interface FocusBlock {
   readonly id: string;
   readonly name: string;
@@ -19,6 +32,8 @@ export interface FocusBlock {
   readonly endTime: string;
   readonly days: readonly DayOfWeek[];
   readonly isEnabled: boolean;
+  readonly scope: FocusBlockScope;
+  readonly rule: FocusBlockRule;
   readonly selection: BlockSelection;
   readonly notifyOnStart: boolean;
   readonly notifyOnEnd: boolean;
@@ -31,6 +46,8 @@ export interface FocusBlockInput {
   readonly endTime: string;
   readonly days: readonly DayOfWeek[];
   readonly isEnabled: boolean;
+  readonly scope: FocusBlockScope;
+  readonly rule: FocusBlockRule;
   readonly selection: BlockSelection;
   readonly notifyOnStart: boolean;
   readonly notifyOnEnd: boolean;

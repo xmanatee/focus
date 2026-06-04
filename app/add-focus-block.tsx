@@ -4,12 +4,20 @@ import { ScrollView } from 'react-native';
 import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
-import { EMPTY_BLOCK_SELECTION } from '../src/features/blocker/types';
+import { isSlotPopulated } from '../src/features/blocker/selectionSlot';
+import {
+  EMPTY_BLOCK_SELECTION,
+  hasSavedActivitySelection,
+  selectionIdForBlock,
+} from '../src/features/blocker/types';
+import { getLocalDeviceId } from '../src/features/device/deviceId';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
+import { DeviceScopeCard } from '../src/features/schedule/components/DeviceScopeCard';
 import { FormActions } from '../src/features/schedule/components/FormActions';
 import { NotificationsCard } from '../src/features/schedule/components/NotificationsCard';
 import { PresetRow } from '../src/features/schedule/components/PresetRow';
+import { RuleCard } from '../src/features/schedule/components/RuleCard';
 import { StrictModeCard } from '../src/features/schedule/components/StrictModeCard';
 import { resolveEditPolicy } from '../src/features/schedule/editPolicy';
 import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
@@ -62,24 +70,36 @@ export default function AddFocusBlockScreen(): JSX.Element {
   );
   const { pickerSession } = selection;
   const dismiss = useDismiss();
+  const needsDeviceSelection =
+    hasSavedActivitySelection(selection.activitySelection) &&
+    !isSlotPopulated(selectionIdForBlock(blockId));
+  const usesScheduleWindow = form.rule.kind !== 'dailyBudget';
 
   const { error, isPending, run, save, requestDelete } = useFocusBlockSave({
     editId,
     newBlockId: blockId,
-    buildInput: () => ({
-      name: form.name,
-      startTime: form.startTime,
-      endTime: form.endTime,
-      days: form.selectedDays,
-      isEnabled: existing?.isEnabled ?? true,
-      selection: {
-        activitySelection: selection.activitySelection,
-        webDomains: form.webDomains,
-      },
-      notifyOnStart: form.notifyOnStart,
-      notifyOnEnd: form.notifyOnEnd,
-      strict: form.strict,
-    }),
+    buildInput: async () => {
+      const deviceId = await getLocalDeviceId();
+      return {
+        name: form.name,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        days: form.selectedDays,
+        isEnabled: existing?.isEnabled ?? true,
+        scope:
+          form.scopeChoice === 'allDevices'
+            ? { kind: 'allDevices' }
+            : { kind: 'device', deviceId },
+        rule: form.rule,
+        selection: {
+          activitySelection: selection.activitySelection,
+          webDomains: form.webDomains,
+        },
+        notifyOnStart: usesScheduleWindow && form.notifyOnStart,
+        notifyOnEnd: usesScheduleWindow && form.notifyOnEnd,
+        strict: form.strict,
+      };
+    },
     markSelectionSaved: selection.markSaved,
     dismiss,
   });
@@ -164,10 +184,32 @@ export default function AddFocusBlockScreen(): JSX.Element {
           onEndChange={form.setEndDate}
           selectedDays={form.selectedDays}
           onToggleDay={form.toggleDay}
+          showTimeRange={usesScheduleWindow}
+          disabled={readOnly}
+        />
+        <RuleCard
+          value={form.rule}
+          onChange={(next) => {
+            void haptic.select();
+            form.setRule(next);
+          }}
+          disabled={readOnly}
+        />
+        <DeviceScopeCard
+          value={form.scopeChoice}
+          onChange={(next) => {
+            void haptic.select();
+            form.setScopeChoice(next);
+          }}
           disabled={readOnly}
         />
         <BlockingCard
           activitySelection={selection.activitySelection}
+          needsDeviceSelection={needsDeviceSelection}
+          requiresActivitySelection={
+            form.rule.kind === 'dailyBudget' ||
+            form.rule.kind === 'allowDuringScheduleWithBudget'
+          }
           onOpenAppsPicker={selection.openBlockPicker}
           webDomains={form.webDomains}
           newDomain={newDomain}
@@ -193,19 +235,21 @@ export default function AddFocusBlockScreen(): JSX.Element {
           </Typography>
         ) : null}
 
-        <NotificationsCard
-          notifyOnStart={form.notifyOnStart}
-          notifyOnEnd={form.notifyOnEnd}
-          onChangeStart={(v) => {
-            void haptic.select();
-            form.setNotifyOnStart(v);
-          }}
-          onChangeEnd={(v) => {
-            void haptic.select();
-            form.setNotifyOnEnd(v);
-          }}
-          disabled={readOnly}
-        />
+        {usesScheduleWindow && (
+          <NotificationsCard
+            notifyOnStart={form.notifyOnStart}
+            notifyOnEnd={form.notifyOnEnd}
+            onChangeStart={(v) => {
+              void haptic.select();
+              form.setNotifyOnStart(v);
+            }}
+            onChangeEnd={(v) => {
+              void haptic.select();
+              form.setNotifyOnEnd(v);
+            }}
+            disabled={readOnly}
+          />
+        )}
 
         {error ? (
           <Typography variant="caption" tone="danger">

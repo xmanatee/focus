@@ -1,12 +1,19 @@
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { isSlotPopulated } from '../src/features/blocker/selectionSlot';
+import {
+  hasSavedActivitySelection,
+  selectionIdForBlock,
+} from '../src/features/blocker/types';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
+import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
-import { isFocusBlockActiveAt } from '../src/features/schedule/activeness';
 import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSessionCard';
 import { FocusBlockRow } from '../src/features/schedule/components/FocusBlockRow';
+import { focusBlockAppliesToDevice } from '../src/features/schedule/deviceScope';
+import { getFocusBlockRuntimeStatus } from '../src/features/schedule/runtimeStatus';
 import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
 import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
@@ -31,7 +38,17 @@ export default function MainFeedScreen(): JSX.Element {
 
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const toggleFocusBlock = useFocusBlockStore((s) => s.toggleFocusBlock);
-  const { active, now } = useActiveBlock(focusBlocks);
+  const deviceId = useLocalDeviceId();
+  const applicableBlocks = useMemo(
+    () =>
+      deviceId === null
+        ? []
+        : focusBlocks.filter((block) =>
+            focusBlockAppliesToDevice(block, deviceId),
+          ),
+    [focusBlocks, deviceId],
+  );
+  const { active, now } = useActiveBlock(applicableBlocks);
 
   const { state: adminState } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
@@ -41,8 +58,9 @@ export default function MainFeedScreen(): JSX.Element {
   const showProtectionCard = posture.score !== 'full';
 
   useEffect(() => {
-    void reconcileFocusBlocks(focusBlocks, setupBlock);
-  }, [focusBlocks, setupBlock]);
+    if (!hasPermissions || deviceId === null) return;
+    void reconcileFocusBlocks(applicableBlocks, setupBlock);
+  }, [applicableBlocks, setupBlock, hasPermissions, deviceId]);
 
   const handleGrant = async (): Promise<void> => {
     void haptic.commit();
@@ -77,7 +95,7 @@ export default function MainFeedScreen(): JSX.Element {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {active && <ActiveSessionCard block={active} now={now} />}
+        {active && <ActiveSessionCard status={active} now={now} />}
 
         <Section title="Configuration">
           {permissionsDenied ? (
@@ -165,7 +183,7 @@ export default function MainFeedScreen(): JSX.Element {
             </Pressable>
           }
         >
-          {focusBlocks.length === 0 ? (
+          {applicableBlocks.length === 0 ? (
             <Card tone="dashed" className="py-12 items-center">
               <Typography variant="body" tone="muted" align="center">
                 Your focus calendar is empty.
@@ -177,13 +195,18 @@ export default function MainFeedScreen(): JSX.Element {
               />
             </Card>
           ) : (
-            focusBlocks.map((block) => {
-              const isActive = isFocusBlockActiveAt(block, now);
+            applicableBlocks.map((block) => {
+              const status = getFocusBlockRuntimeStatus(block, now);
+              const isActive = status.kind === 'active';
+              const needsDeviceSelection =
+                hasSavedActivitySelection(block.selection.activitySelection) &&
+                !isSlotPopulated(selectionIdForBlock(block.id));
               return (
                 <FocusBlockRow
                   key={block.id}
                   block={block}
                   isActive={isActive}
+                  needsDeviceSelection={needsDeviceSelection}
                   toggleDisabled={isActive || isAdminLocked}
                   onPress={() => {
                     void haptic.select();

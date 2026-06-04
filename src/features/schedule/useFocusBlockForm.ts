@@ -5,7 +5,9 @@ import {
   timeStringToDate,
 } from '../../shared/days';
 import { PRESETS, type PresetKind } from './presets';
-import type { DayOfWeek, FocusBlock } from './types';
+import type { DayOfWeek, FocusBlock, FocusBlockRule } from './types';
+
+export type ScopeChoice = 'allDevices' | 'thisDevice';
 
 interface FocusBlockFormState {
   readonly name: string;
@@ -24,6 +26,10 @@ interface FocusBlockFormState {
   readonly setWebDomains: (next: readonly string[]) => void;
   readonly strict: boolean;
   readonly setStrict: (next: boolean) => void;
+  readonly rule: FocusBlockRule;
+  readonly setRule: (next: FocusBlockRule) => void;
+  readonly scopeChoice: ScopeChoice;
+  readonly setScopeChoice: (next: ScopeChoice) => void;
   readonly startTime: string;
   readonly endTime: string;
   readonly applyPreset: (kind: PresetKind) => void;
@@ -52,6 +58,12 @@ export function useFocusBlockForm(
     existing?.selection.webDomains ?? [],
   );
   const [strict, setStrict] = useState<boolean>(existing?.strict ?? false);
+  const [rule, setRule] = useState<FocusBlockRule>(
+    existing?.rule ?? { kind: 'blockDuringSchedule' },
+  );
+  const [scopeChoice, setScopeChoice] = useState<ScopeChoice>(
+    existing?.scope.kind === 'device' ? 'thisDevice' : 'allDevices',
+  );
 
   const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
   const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
@@ -73,6 +85,7 @@ export function useFocusBlockForm(
     setNotifyOnStart(preset.notifyOnStart);
     setNotifyOnEnd(preset.notifyOnEnd);
     setWebDomains(preset.webDomains);
+    setRule({ kind: 'blockDuringSchedule' });
   };
 
   return {
@@ -92,6 +105,10 @@ export function useFocusBlockForm(
     setWebDomains,
     strict,
     setStrict,
+    rule,
+    setRule,
+    scopeChoice,
+    setScopeChoice,
     startTime,
     endTime,
     applyPreset,

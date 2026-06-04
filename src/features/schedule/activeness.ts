@@ -1,11 +1,12 @@
 import { isOvernightRange, minutesOf } from '../../shared/days';
-import type { DayOfWeek } from './types';
+import type { DayOfWeek, FocusBlockRule } from './types';
 
 interface FocusBlockInternal {
   readonly days: readonly DayOfWeek[];
   readonly startTime: string;
   readonly endTime: string;
   readonly isEnabled: boolean;
+  readonly rule?: FocusBlockRule;
 }
 
 const DAY_BY_INDEX: readonly DayOfWeek[] = [
@@ -27,7 +28,19 @@ export function isFocusBlockActiveAt(
   at: Date,
 ): boolean {
   if (!block.isEnabled) return false;
+  const rule = block.rule ?? { kind: 'blockDuringSchedule' };
+  if (rule.kind === 'dailyBudget') return false;
 
+  const isInsideSchedule = isInsideScheduleWindow(block, at);
+  if (rule.kind === 'allowDuringSchedule') return !isInsideSchedule;
+  if (rule.kind === 'allowDuringScheduleWithBudget') return !isInsideSchedule;
+  return isInsideSchedule;
+}
+
+export function isInsideScheduleWindow(
+  block: FocusBlockInternal,
+  at: Date,
+): boolean {
   const current = minuteOfDay(at);
   const start = minutesOf(block.startTime);
   const end = minutesOf(block.endTime);

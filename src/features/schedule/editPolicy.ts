@@ -1,6 +1,6 @@
 import { formatRelative } from '../../shared/days';
 import type { AdminState } from '../settings/adminState';
-import { isFocusBlockActiveAt } from './activeness';
+import { getFocusBlockRuntimeStatus } from './runtimeStatus';
 import type { FocusBlock } from './types';
 
 interface EditPolicy {
@@ -32,11 +32,18 @@ export function resolveEditPolicy(
         : 'Lock-in is active.',
     };
   }
-  if (existing && isFocusBlockActiveAt(existing, now)) {
+  const status =
+    existing === null
+      ? { kind: 'inactive' as const }
+      : getFocusBlockRuntimeStatus(existing, now);
+  if (status.kind === 'active') {
     return {
       readOnly: true,
       title: 'Read-only',
-      message: `This block is active. Editable when it ends at ${existing.endTime}.`,
+      message: `This block is active. Editable ${formatRelative(
+        status.endsAt,
+        now,
+      )}.`,
     };
   }
   return { readOnly: false, title: null, message: null };

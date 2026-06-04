@@ -53,14 +53,15 @@
   <h3>On your device</h3>
   <ul>
     <li><strong>App and category selections</strong> you choose through Apple's <code>FamilyActivityPicker</code>. Stored in your app's local storage and used only to determine what to shield.</li>
-    <li><strong>Schedules</strong> you create (start and end times, which selections they apply to).</li>
+    <li><strong>Rules</strong> you create (schedules, daily budgets, device scope, and non-private selection metadata).</li>
     <li><strong>Screen Time authorization state</strong> granted by iOS.</li>
   </ul>
   <p>Focus Blocks does not read, count, log, or transmit app usage. The Screen Time framework performs shielding on the operating-system side based on the rules you set.</p>
 
   <h3>In your own iCloud</h3>
   <ul>
-    <li>Your schedules and preferences are written to Apple's <strong>iCloud Key-Value Store</strong> (container <code>iCloud.love.nemi.focus</code>) so that your setup is the same on your iPhone and iPad.</li>
+    <li>Your rules and preferences are written to Apple's <strong>iCloud Key-Value Store</strong> (container <code>iCloud.love.nemi.focus</code>) so that your setup is available on your iPhone and iPad.</li>
+    <li>Screen Time app selections do not sync as reusable app tokens. Each device stores its own private <code>FamilyActivitySelection</code> token after you confirm apps on that device.</li>
     <li>This data is stored in <strong>your</strong> iCloud account, under <strong>your</strong> Apple ID. The developer of Focus Blocks has no access to it, cannot read it, and cannot enumerate users.</li>
     <li>You can stop this sync at any time by turning off iCloud Drive for Focus Blocks in <strong>Settings &rarr; [your name] &rarr; iCloud</strong>.</li>
   </ul>

@@ -17,15 +17,15 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     super.intervalDidStart(for: activity)
     logger.log("intervalDidStart")
 
+    persistToUserDefaults(
+      activityName: activity.rawValue,
+      callbackName: "intervalDidStart"
+    )
+
     self.executeActionsForEvent(
       activityName: activity.rawValue,
       callbackName: "intervalDidStart",
       eventName: nil
-    )
-
-    persistToUserDefaults(
-      activityName: activity.rawValue,
-      callbackName: "intervalDidStart"
     )
 
     notifyAppWithName(name: "intervalDidStart")
@@ -73,6 +73,10 @@ class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     if let actions = userDefaults?.array(forKey: triggeredBy) {
       actions.forEach { actionRaw in
         if let action = actionRaw as? [String: Any] {
+          if !onlyIfTriggeredAfterConditionPasses(action: action) {
+            return
+          }
+
           let skipIfAlreadyTriggeredAfter = action["skipIfAlreadyTriggeredAfter"] as? Double
           let skipIfLargerEventRecordedAfter = action["skipIfLargerEventRecordedAfter"] as? Double
           let skipIfAlreadyTriggeredWithinMS = action["skipIfAlreadyTriggeredWithinMS"] as? Double

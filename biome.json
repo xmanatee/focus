@@ -3,6 +3,10 @@
   "files": {
     "ignore": [
       ".expo/**",
+      ".agents/**",
+      ".claude/**",
+      ".codex/**",
+      ".gemini/**",
       "dist/**",
       "build/**",
       "ios/**",

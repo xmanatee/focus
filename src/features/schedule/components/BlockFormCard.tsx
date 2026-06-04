@@ -15,6 +15,7 @@ interface BlockFormCardProps {
   readonly onEndChange: (next: Date) => void;
   readonly selectedDays: readonly DayOfWeek[];
   readonly onToggleDay: (day: DayOfWeek) => void;
+  readonly showTimeRange?: boolean;
   readonly disabled?: boolean;
 }
 
@@ -27,6 +28,7 @@ export function BlockFormCard({
   onEndChange,
   selectedDays,
   onToggleDay,
+  showTimeRange = true,
   disabled = false,
 }: BlockFormCardProps): JSX.Element {
   const colors = useThemeColors();
@@ -48,15 +50,17 @@ export function BlockFormCard({
         />
       </View>
 
-      <View className="h-[1px] bg-divider" />
+      {showTimeRange && <View className="h-[1px] bg-divider" />}
 
-      <TimeRangePicker
-        start={startDate}
-        end={endDate}
-        onStartChange={onStartChange}
-        onEndChange={onEndChange}
-        disabled={disabled}
-      />
+      {showTimeRange && (
+        <TimeRangePicker
+          start={startDate}
+          end={endDate}
+          onStartChange={onStartChange}
+          onEndChange={onEndChange}
+          disabled={disabled}
+        />
+      )}
 
       <View className="h-[1px] bg-divider" />
 

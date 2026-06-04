@@ -5,14 +5,20 @@ import {
   useAsyncAction,
 } from '../../shared/hooks/useAsyncAction';
 import { requestNotificationPermissions } from '../../shared/notifications';
-import { selectionHasBlockedTargets } from '../blocker/types';
+import { isSlotPopulated } from '../blocker/selectionSlot';
+import {
+  hasSavedActivitySelection,
+  selectionHasBlockedTargets,
+  selectionIdForBlock,
+} from '../blocker/types';
 import type { FocusBlockInput } from './types';
 import { useFocusBlockStore } from './useFocusBlockStore';
+import { validateFocusBlockInput } from './validation';
 
 interface UseFocusBlockSaveArgs {
   readonly editId: string | null;
   readonly newBlockId: string;
-  readonly buildInput: () => FocusBlockInput;
+  readonly buildInput: () => FocusBlockInput | Promise<FocusBlockInput>;
   readonly markSelectionSaved: () => void;
   readonly dismiss: () => void;
 }
@@ -38,11 +44,19 @@ export function useFocusBlockSave({
   const { error, isPending, run } = useAsyncAction();
 
   const save = async (): Promise<void> => {
-    const input = buildInput();
+    const blockId = editId ?? newBlockId;
+    const input = await buildInput();
     const success = await run(async () => {
       if (!selectionHasBlockedTargets(input.selection)) {
         throw new Error('Pick at least one app or site to block.');
       }
+      if (
+        hasSavedActivitySelection(input.selection.activitySelection) &&
+        !isSlotPopulated(selectionIdForBlock(blockId))
+      ) {
+        throw new Error('Pick apps on this device before saving this block.');
+      }
+      validateFocusBlockInput(input);
       if (input.notifyOnStart || input.notifyOnEnd) {
         const granted = await requestNotificationPermissions();
         if (!granted) {

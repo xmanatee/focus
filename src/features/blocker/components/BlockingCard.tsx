@@ -11,6 +11,8 @@ import {
 
 interface BlockingCardProps {
   readonly activitySelection: PersistedActivitySelection;
+  readonly needsDeviceSelection: boolean;
+  readonly requiresActivitySelection?: boolean;
   readonly onOpenAppsPicker: () => void;
   readonly webDomains: readonly string[];
   readonly newDomain: string;
@@ -22,6 +24,8 @@ interface BlockingCardProps {
 
 export function BlockingCard({
   activitySelection,
+  needsDeviceSelection,
+  requiresActivitySelection = false,
   onOpenAppsPicker,
   webDomains,
   newDomain,
@@ -43,12 +47,11 @@ export function BlockingCard({
                 Apps & Categories
               </Typography>
               <Typography variant="caption" tone="muted">
-                {(() => {
-                  const summary = summarizeActivitySelection(activitySelection);
-                  return summary === 'None'
-                    ? 'None selected'
-                    : `${summary} selected`;
-                })()}
+                {selectionSubtitle(
+                  activitySelection,
+                  needsDeviceSelection,
+                  requiresActivitySelection,
+                )}
               </Typography>
             </View>
           </View>
@@ -108,4 +111,17 @@ export function BlockingCard({
       </Card>
     </Section>
   );
+}
+
+function selectionSubtitle(
+  activitySelection: PersistedActivitySelection,
+  needsDeviceSelection: boolean,
+  requiresActivitySelection: boolean,
+): string {
+  if (needsDeviceSelection) return 'Pick apps on this device';
+  const summary = summarizeActivitySelection(activitySelection);
+  if (summary === 'None' && requiresActivitySelection) {
+    return 'Required for daily budgets';
+  }
+  return summary === 'None' ? 'None selected' : `${summary} selected`;
 }

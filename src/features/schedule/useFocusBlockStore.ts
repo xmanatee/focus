@@ -5,8 +5,13 @@ import { clearSlot } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
 import { assertAdminUnlocked } from '../settings/adminState';
 import { useSettingsStore } from '../settings/useSettingsStore';
-import { isFocusBlockActiveAt } from './activeness';
-import type { FocusBlock, FocusBlockInput } from './types';
+import { getFocusBlockRuntimeStatus } from './runtimeStatus';
+import type {
+  FocusBlock,
+  FocusBlockInput,
+  FocusBlockRule,
+  FocusBlockScope,
+} from './types';
 import { validateFocusBlockInput } from './validation';
 
 interface FocusBlockState {
@@ -20,7 +25,7 @@ interface FocusBlockState {
 
 function assertEditable(block: FocusBlock): void {
   const now = new Date();
-  if (isFocusBlockActiveAt(block, now)) {
+  if (getFocusBlockRuntimeStatus(block, now).kind === 'active') {
     throw new Error('Cannot change a block while it is active.');
   }
   assertAdminUnlocked(useSettingsStore.getState().setupBlock, now);
@@ -29,6 +34,39 @@ function assertEditable(block: FocusBlock): void {
 function normalizeInput(input: FocusBlockInput): FocusBlockInput {
   const setupBlock = useSettingsStore.getState().setupBlock;
   return setupBlock === null ? input : { ...input, strict: false };
+}
+
+interface PersistedFocusBlock {
+  readonly id: string;
+  readonly name: string;
+  readonly startTime: string;
+  readonly endTime: string;
+  readonly days: FocusBlock['days'];
+  readonly isEnabled: boolean;
+  readonly scope?: FocusBlockScope;
+  readonly rule?: FocusBlockRule;
+  readonly selection: FocusBlock['selection'];
+  readonly notifyOnStart: boolean;
+  readonly notifyOnEnd: boolean;
+  readonly strict: boolean;
+}
+
+function normalizePersistedBlock(block: PersistedFocusBlock): FocusBlock {
+  return {
+    ...block,
+    scope: block.scope ?? { kind: 'allDevices' },
+    rule: block.rule ?? { kind: 'blockDuringSchedule' },
+  };
+}
+
+function migratePersistedState(state: unknown): FocusBlockState {
+  const persisted = state as Omit<FocusBlockState, 'focusBlocks'> & {
+    readonly focusBlocks: readonly PersistedFocusBlock[];
+  };
+  return {
+    ...persisted,
+    focusBlocks: persisted.focusBlocks.map(normalizePersistedBlock),
+  };
 }
 
 export const useFocusBlockStore = create<FocusBlockState>()(
@@ -99,6 +137,8 @@ export const useFocusBlockStore = create<FocusBlockState>()(
     {
       name: 'focusblocks.focus-blocks',
       storage: persistedStorage,
+      version: 1,
+      migrate: migratePersistedState,
     },
   ),
 );
