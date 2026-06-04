@@ -35,29 +35,29 @@ const FONT = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const SHOTS = [
   {
     src: '01.png',
-    head: ['Block apps.', 'Reclaim hours.'],
-    sub: 'On the schedule you choose.',
-    badge: 'On-device  ·  Open source  ·  No account',
+    head: ['Block apps.', 'Keep focus.'],
+    sub: 'Choose when distractions disappear.',
+    badge: 'No account  ·  No ads  ·  On-device',
   },
   {
     src: '02.png',
-    head: ['You pick.', 'They go quiet.'],
-    sub: 'Apps, websites, whole categories.',
+    head: ['Pick apps.', 'Set a rule.'],
+    sub: 'Schedules, daily limits, or both.',
   },
   {
     src: '03.png',
-    head: ['Stays gone', 'till you said.'],
-    sub: 'No willpower games. No surprise undos.',
+    head: ['Apps stay', 'out of reach.'],
+    sub: 'Active blocks run until the rule ends.',
   },
   {
     src: '04.png',
-    head: ['Stronger than', 'impulses.'],
-    sub: 'Pair active blocks with iOS tamper protection.',
+    head: ['Lock down', 'impulses.'],
+    sub: 'Strict blocks pair with iOS Screen Time.',
   },
   {
     src: '05.png',
-    head: ['Edits when', 'you scheduled.'],
-    sub: 'A weekly review window. Otherwise, locked.',
+    head: ['Edit only', 'on schedule.'],
+    sub: 'A setup window keeps decisions intentional.',
   },
 ];
 
@@ -118,13 +118,13 @@ function captionSvg(
   return `<svg width="${W}" height="${CAPTION_H}" xmlns="http://www.w3.org/2000/svg">
     <text x="50%" y="${head1Base}" text-anchor="middle"
           font-family='${FONT}' font-weight="800" font-size="${HEAD_FONT_PX}"
-          fill="${FG}" letter-spacing="-3">${escapeXml(shot.head[0])}</text>
+          fill="${FG}" letter-spacing="0">${escapeXml(shot.head[0])}</text>
     <text x="50%" y="${head2Base}" text-anchor="middle"
           font-family='${FONT}' font-weight="800" font-size="${HEAD_FONT_PX}"
-          fill="${FG}" letter-spacing="-3">${escapeXml(shot.head[1])}</text>
+          fill="${FG}" letter-spacing="0">${escapeXml(shot.head[1])}</text>
     <text x="50%" y="${subBase}" text-anchor="middle"
           font-family='${FONT}' font-weight="400" font-size="${SUB_FONT_PX}"
-          fill="${FG_DIM}" letter-spacing="-0.3">${escapeXml(shot.sub)}</text>
+          fill="${FG_DIM}" letter-spacing="0">${escapeXml(shot.sub)}</text>
     ${badge}
   </svg>`;
 }

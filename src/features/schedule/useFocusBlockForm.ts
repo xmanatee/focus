@@ -85,7 +85,7 @@ export function useFocusBlockForm(
     setNotifyOnStart(preset.notifyOnStart);
     setNotifyOnEnd(preset.notifyOnEnd);
     setWebDomains(preset.webDomains);
-    setRule({ kind: 'blockDuringSchedule' });
+    setRule(preset.rule);
   };
 
   return {

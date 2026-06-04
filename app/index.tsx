@@ -48,6 +48,15 @@ export default function MainFeedScreen(): JSX.Element {
           ),
     [focusBlocks, deviceId],
   );
+  const blocksNeedingDeviceSelection = useMemo(
+    () =>
+      applicableBlocks.filter(
+        (block) =>
+          hasSavedActivitySelection(block.selection.activitySelection) &&
+          !isSlotPopulated(selectionIdForBlock(block.id)),
+      ),
+    [applicableBlocks],
+  );
   const { active, now } = useActiveBlock(applicableBlocks);
 
   const { state: adminState } = useAdminState();
@@ -184,9 +193,14 @@ export default function MainFeedScreen(): JSX.Element {
           }
         >
           {applicableBlocks.length === 0 ? (
-            <Card tone="dashed" className="py-12 items-center">
+            <Card tone="dashed" className="py-10 items-center">
+              <Icon name="sparkles" size={24} tone="signal" />
+              <Typography variant="h3" tone="ink" align="center">
+                Start with a template.
+              </Typography>
               <Typography variant="body" tone="muted" align="center">
-                Your focus calendar is empty.
+                Deep Work, Study Focus, Social Budget, and YouTube Limit are
+                ready on the next screen.
               </Typography>
               <Button
                 title="Add a block"
@@ -195,30 +209,51 @@ export default function MainFeedScreen(): JSX.Element {
               />
             </Card>
           ) : (
-            applicableBlocks.map((block) => {
-              const status = getFocusBlockRuntimeStatus(block, now);
-              const isActive = status.kind === 'active';
-              const needsDeviceSelection =
-                hasSavedActivitySelection(block.selection.activitySelection) &&
-                !isSlotPopulated(selectionIdForBlock(block.id));
-              return (
-                <FocusBlockRow
-                  key={block.id}
-                  block={block}
-                  isActive={isActive}
-                  needsDeviceSelection={needsDeviceSelection}
-                  toggleDisabled={isActive || isAdminLocked}
-                  onPress={() => {
-                    void haptic.select();
-                    router.push({
-                      pathname: '/add-focus-block',
-                      params: { id: block.id },
-                    });
-                  }}
-                  onToggle={(next) => handleToggle(block.id, next)}
-                />
-              );
-            })
+            <>
+              {blocksNeedingDeviceSelection.length > 0 && (
+                <Card tone="signal">
+                  <View className="flex-row items-center gap-2">
+                    <Icon
+                      name="iphone.gen3.radiowaves.left.and.right"
+                      size={22}
+                      tone="signal"
+                    />
+                    <Typography variant="h3" tone="signal">
+                      Confirm apps on this device
+                    </Typography>
+                  </View>
+                  <Typography variant="body" tone="ink">
+                    iCloud synced the rules, but iOS app selections are private
+                    to each device. Open each block marked "Pick apps here" and
+                    choose the apps for this iPhone.
+                  </Typography>
+                </Card>
+              )}
+              {applicableBlocks.map((block) => {
+                const status = getFocusBlockRuntimeStatus(block, now);
+                const isActive = status.kind === 'active';
+                const needsDeviceSelection = blocksNeedingDeviceSelection.some(
+                  (item) => item.id === block.id,
+                );
+                return (
+                  <FocusBlockRow
+                    key={block.id}
+                    block={block}
+                    isActive={isActive}
+                    needsDeviceSelection={needsDeviceSelection}
+                    toggleDisabled={isActive || isAdminLocked}
+                    onPress={() => {
+                      void haptic.select();
+                      router.push({
+                        pathname: '/add-focus-block',
+                        params: { id: block.id },
+                      });
+                    }}
+                    onToggle={(next) => handleToggle(block.id, next)}
+                  />
+                );
+              })}
+            </>
           )}
         </Section>
       </ScrollView>

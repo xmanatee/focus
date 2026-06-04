@@ -11,8 +11,11 @@ interface PresetRowProps {
 
 const ENTRIES: readonly { kind: PresetKind; label: string }[] = [
   { kind: 'work', label: 'Deep Work' },
+  { kind: 'study', label: 'Study' },
+  { kind: 'socialBudget', label: 'Social Budget' },
+  { kind: 'youtube', label: 'YouTube Limit' },
   { kind: 'evening', label: 'Evening' },
-  { kind: 'weekend', label: 'Weekend' },
+  { kind: 'weekend', label: 'Detox' },
 ];
 
 export function PresetRow({
@@ -22,7 +25,7 @@ export function PresetRow({
 }: PresetRowProps): JSX.Element {
   return (
     <Section title="Presets">
-      <View className="flex-row gap-2">
+      <View className="flex-row flex-wrap gap-2">
         {ENTRIES.map(({ kind, label }) => (
           <Chip
             key={kind}
