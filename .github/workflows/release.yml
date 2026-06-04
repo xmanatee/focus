@@ -3,9 +3,6 @@ name: Release iOS
 # Required GitHub Actions secrets:
 #   EXPO_TOKEN              — Expo robot-user token, project-scoped
 #   APPLE_TEAM_ID           — 10-char Apple Developer Team ID
-#   ASC_KEY_ID              — App Store Connect API Key ID
-#   ASC_ISSUER_ID           — App Store Connect API Issuer ID
-#   ASC_API_KEY_BASE64      — base64 of the ASC AuthKey_*.p8 file
 #   APPLE_REVIEW_FIRST_NAME — App Review contact, given name
 #   APPLE_REVIEW_LAST_NAME  — App Review contact, family name
 #   APPLE_REVIEW_EMAIL      — App Review contact email
@@ -37,8 +34,6 @@ jobs:
     env:
       EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       EXPO_APPLE_TEAM_TYPE: COMPANY_OR_ORGANIZATION
-      EXPO_ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-      EXPO_ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       APPLE_REVIEW_FIRST_NAME: ${{ secrets.APPLE_REVIEW_FIRST_NAME }}
       APPLE_REVIEW_LAST_NAME: ${{ secrets.APPLE_REVIEW_LAST_NAME }}
       APPLE_REVIEW_EMAIL: ${{ secrets.APPLE_REVIEW_EMAIL }}
@@ -58,14 +53,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Decode ASC API key
-        run: |
-          mkdir -p "$RUNNER_TEMP/asc"
-          key_path="$RUNNER_TEMP/asc/AuthKey_${EXPO_ASC_KEY_ID}.p8"
-          printf '%s' "${{ secrets.ASC_API_KEY_BASE64 }}" | base64 -d > "$key_path"
-          chmod 600 "$key_path"
-          echo "EXPO_ASC_API_KEY_PATH=$key_path" >> "$GITHUB_ENV"
 
       - name: Validate metadata
         run: eas metadata:lint
