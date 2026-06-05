@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "scripts/submit-indexnow.mjs"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -31,3 +32,6 @@ jobs:
           path: ./site
       - id: deployment
         uses: actions/deploy-pages@v5
+
+      - name: Notify IndexNow
+        run: node scripts/submit-indexnow.mjs
