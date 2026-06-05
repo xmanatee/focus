@@ -85,3 +85,6 @@ References:
 - Jun 5, 2026: Verified in URL Inspection that the homepage and privacy page are
   indexed. The support page passed the live URL test, is available to Google,
   and was added to the indexing queue.
+- Jun 5, 2026: Added IndexNow support for `focus.nemi.love`. GitHub Pages
+  deploys now host the IndexNow key file and notify the IndexNow endpoint with
+  the sitemap URLs after each site deployment. The first run submitted 3 URLs.

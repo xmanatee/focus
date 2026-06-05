@@ -21,11 +21,11 @@ Keep `store.config.js` as the source of truth for metadata, then review search
 terms monthly. Prioritize phrases like app blocker, screen time limit, block
 YouTube, study focus, and digital detox.
 
-## 4. Submit The Landing Page To Search
+## 4. Monitor Landing Page Search Discovery
 
-Once `focus.nemi.love` is stable, add it to Google Search Console and submit
-`https://focus.nemi.love/sitemap.xml`. Track search queries that lead people to
-the site and use them to tune the App Store subtitle, keywords, and landing copy.
+Use Google Search Console and Bing Webmaster Tools to track search queries that
+lead people to `focus.nemi.love`. Use those terms to tune the App Store subtitle,
+keywords, and landing copy.
 
 ## 5. Add A Review Prompt At The Right Moment
 
