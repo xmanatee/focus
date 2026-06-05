@@ -72,3 +72,13 @@ References:
 - Decide whether the developer account should stay as an individual account or
   be converted to an organization before investing heavily in the `nemi.love`
   brand surface.
+
+## Launch Ops Completed
+
+- Jun 5, 2026: Added `https://focus.nemi.love/` as a Google Search Console
+  URL-prefix property. Ownership was auto-verified through the domain provider.
+- Jun 5, 2026: Submitted `https://focus.nemi.love/sitemap.xml` in Search
+  Console. It initially displayed `Couldn't fetch` despite the sitemap returning
+  HTTP 200 with `application/xml`; recheck after Google's next read.
+- Jun 5, 2026: Requested indexing for `https://focus.nemi.love/`,
+  `https://focus.nemi.love/privacy/`, and `https://focus.nemi.love/support/`.
