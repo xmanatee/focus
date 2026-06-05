@@ -9,6 +9,8 @@ import {
 } from '../src/features/blocker/types';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
+import { SetupVerificationCard } from '../src/features/diagnostics/components/SetupVerificationCard';
+import { useSetupVerification } from '../src/features/diagnostics/useSetupVerification';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSessionCard';
 import { FocusBlockRow } from '../src/features/schedule/components/FocusBlockRow';
@@ -65,6 +67,7 @@ export default function MainFeedScreen(): JSX.Element {
 
   const posture = useProtectionPosture();
   const showProtectionCard = posture.score !== 'full';
+  const setupVerification = useSetupVerification();
 
   useEffect(() => {
     if (!hasPermissions || deviceId === null) return;
@@ -150,6 +153,8 @@ export default function MainFeedScreen(): JSX.Element {
               />
             </Card>
           ) : null}
+
+          <SetupVerificationCard verification={setupVerification} />
 
           {showProtectionCard && (
             <ProtectionStatusCard

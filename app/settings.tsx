@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
+import { DiagnosticsCard } from '../src/features/diagnostics/components/DiagnosticsCard';
 import { protectionCopy } from '../src/features/protection/copy';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import type { DayOfWeek } from '../src/features/schedule/types';
@@ -277,6 +278,8 @@ export default function SettingsScreen(): JSX.Element {
             ) : null}
           </View>
         </Card>
+
+        <DiagnosticsCard />
       </ScrollView>
     </Screen>
   );
