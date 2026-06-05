@@ -256,6 +256,41 @@ h1 {
   background: var(--surface-sunken);
   padding: 22px;
 }
+.use-case {
+  width: min(920px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 48px 0 96px;
+}
+.use-case h1 { font-size: 56px; }
+.use-case h2 {
+  margin-top: 56px;
+  font-size: 34px;
+  line-height: 1.12;
+}
+.use-case p,
+.use-case li { color: var(--ink-muted); }
+.use-case-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-top: 26px;
+}
+.link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+.link-grid a {
+  border: 1px solid var(--divider);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  padding: 16px;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 800;
+}
+.link-grid a:hover { color: var(--signal-strong); }
 code {
   border-radius: 6px;
   background: var(--surface-sunken);

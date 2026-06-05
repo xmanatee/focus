@@ -1,21 +1,28 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { ScreenTimeAccessCard } from '../src/features/blocker/components/ScreenTimeAccessCard';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
 import { SetupVerificationCard } from '../src/features/diagnostics/components/SetupVerificationCard';
 import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
 import { useSetupVerification } from '../src/features/diagnostics/useSetupVerification';
+import { QuickStartCard } from '../src/features/onboarding/QuickStartCard';
+import { resolveQuickStartPhase } from '../src/features/onboarding/quickStart';
+import { useQuickStartStore } from '../src/features/onboarding/useQuickStartStore';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { ReviewPromptCard } from '../src/features/reviews/ReviewPromptCard';
 import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSessionCard';
 import { FocusBlockRow } from '../src/features/schedule/components/FocusBlockRow';
+import { ProgressCard } from '../src/features/schedule/components/ProgressCard';
 import { focusBlocksForDevice } from '../src/features/schedule/deviceScope';
 import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
+import { buildFocusProgress } from '../src/features/schedule/progress';
 import { getFocusBlockRuntimeStatus } from '../src/features/schedule/runtimeStatus';
 import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
 import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
+import { LockInSettingsCard } from '../src/features/settings/components/LockInSettingsCard';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { Button } from '../src/shared/components/Button';
@@ -57,6 +64,19 @@ export default function MainFeedScreen(): JSX.Element {
   const showProtectionCard = posture.score !== 'full';
   const setupVerification = useSetupVerification();
   const handleSetupAction = useSetupActionHandler();
+  const hasCompletedQuickStart = useQuickStartStore(
+    (s) => s.hasCompletedQuickStart,
+  );
+  const completeQuickStart = useQuickStartStore((s) => s.completeQuickStart);
+
+  const quickStartPhase = resolveQuickStartPhase({
+    authorizationStatus,
+    blockCount: applicableBlocks.length,
+    hasCompletedQuickStart,
+    missingDeviceSelectionCount: blocksNeedingDeviceSelection.length,
+  });
+  const quickStartVisiblePhase =
+    quickStartPhase === 'complete' ? null : quickStartPhase;
 
   useEffect(() => {
     if (!hasPermissions || deviceId === null) return;
@@ -73,16 +93,33 @@ export default function MainFeedScreen(): JSX.Element {
     toggleFocusBlock(blockId, nextIsEnabled);
   };
 
-  const lockInTitle = !setupBlock
-    ? 'Set up Lock-in'
-    : isAdminLocked
-      ? 'Locked'
-      : 'Editable now';
-  const lockInSubtitle = !setupBlock
-    ? 'Set a weekly setup window so you can edit blocks only during it.'
-    : isAdminLocked
-      ? `Editable next during your setup block (${setupBlock.startTime}–${setupBlock.endTime}).`
-      : 'You are inside your setup window — edits are allowed.';
+  const handleQuickStartPrimary = (): void => {
+    if (quickStartPhase === 'grantAccess') {
+      void handleGrant();
+      return;
+    }
+    void haptic.select();
+    if (quickStartPhase === 'openSettings') {
+      handleSetupAction('requestScreenTime');
+      return;
+    }
+    if (quickStartPhase === 'createFirstBlock') {
+      router.push('/add-focus-block');
+      return;
+    }
+    if (quickStartPhase === 'finishDevice') {
+      handleSetupAction('finishDeviceSetup');
+      return;
+    }
+    if (quickStartPhase === 'verifySetup') {
+      router.push('/diagnostics');
+    }
+  };
+
+  const progress = useMemo(
+    () => buildFocusProgress(applicableBlocks, now),
+    [applicableBlocks, now],
+  );
 
   return (
     <Screen padded={false}>
@@ -105,48 +142,35 @@ export default function MainFeedScreen(): JSX.Element {
         )}
 
         <Section title="Configuration">
-          {permissionsDenied ? (
-            <Card tone="signal">
-              <View className="flex-row items-center gap-2">
-                <Icon name="lock.shield.fill" size={24} tone="signal" />
-                <Typography variant="h3" tone="signal">
-                  Permission denied
-                </Typography>
-              </View>
-              <Typography variant="body" tone="ink">
-                Open iOS Settings → Screen Time → Family Controls and allow
-                Focus Blocks. iOS won't show the prompt again from inside the
-                app.
-              </Typography>
-              <Button
-                title="Open Settings"
-                variant="commit"
-                onPress={() => {
-                  void haptic.select();
-                  handleSetupAction('requestScreenTime');
-                }}
-              />
-            </Card>
+          {quickStartVisiblePhase !== null ? (
+            <QuickStartCard
+              phase={quickStartVisiblePhase}
+              onPrimary={handleQuickStartPrimary}
+              onComplete={() => {
+                void haptic.commit();
+                completeQuickStart();
+              }}
+            />
+          ) : permissionsDenied ? (
+            <ScreenTimeAccessCard
+              denied
+              isAuthorizing={false}
+              onGrant={() => void handleGrant()}
+              onOpenSettings={() => {
+                void haptic.select();
+                handleSetupAction('requestScreenTime');
+              }}
+            />
           ) : !hasPermissions ? (
-            <Card tone="signal">
-              <View className="flex-row items-center gap-2">
-                <Icon name="lock.shield.fill" size={24} tone="signal" />
-                <Typography variant="h3" tone="signal">
-                  Grant access
-                </Typography>
-              </View>
-              <Typography variant="body" tone="ink">
-                Focus Blocks needs Screen Time permissions to block distracting
-                apps.
-              </Typography>
-              <Button
-                title="Give access"
-                variant="commit"
-                onPress={() => void handleGrant()}
-                isLoading={busyState === 'authorizing'}
-                disabled={busyState !== 'idle'}
-              />
-            </Card>
+            <ScreenTimeAccessCard
+              denied={false}
+              isAuthorizing={busyState === 'authorizing'}
+              onGrant={() => void handleGrant()}
+              onOpenSettings={() => {
+                void haptic.select();
+                handleSetupAction('requestScreenTime');
+              }}
+            />
           ) : null}
 
           <SetupVerificationCard
@@ -157,6 +181,8 @@ export default function MainFeedScreen(): JSX.Element {
 
           <ReviewPromptCard verification={setupVerification} />
 
+          <ProgressCard progress={progress} />
+
           {showProtectionCard && (
             <ProtectionStatusCard
               posture={posture}
@@ -164,24 +190,11 @@ export default function MainFeedScreen(): JSX.Element {
             />
           )}
 
-          <Card onPress={() => router.push('/settings')}>
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2">
-                <Icon
-                  name={isAdminLocked ? 'lock.fill' : 'lock.open.fill'}
-                  size={20}
-                  tone={isAdminLocked ? 'signal' : 'muted'}
-                />
-                <Typography variant="h3" tone="ink">
-                  {lockInTitle}
-                </Typography>
-              </View>
-              <Icon name="chevron.right" size={16} tone="faint" />
-            </View>
-            <Typography variant="body" tone="muted">
-              {lockInSubtitle}
-            </Typography>
-          </Card>
+          <LockInSettingsCard
+            isAdminLocked={isAdminLocked}
+            setupBlock={setupBlock}
+            onPress={() => router.push('/settings')}
+          />
         </Section>
 
         <Section

@@ -39,6 +39,11 @@ When there is enough traffic, create App Store custom product pages for study,
 work, social media, YouTube limits, and digital detox. Match each page to its
 own screenshots and landing-page section.
 
+The landing side now has matching focused pages for YouTube blocking, iPhone
+app blocking, screen time limits, study focus, and digital detox. Use those
+pages as the copy source when creating custom product pages in App Store
+Connect.
+
 ## 7. Add A Support Feedback Loop
 
 Use support emails and App Store reviews to maintain a small issue log: setup
@@ -64,3 +69,11 @@ Use `focus.nemi.love`, support email, privacy pages, App Store copy, and release
 notes consistently. If the brand grows, convert the Apple Developer account to
 an organization so the seller name can align with the brand instead of the
 individual account name.
+
+## 11. Design Breaks Only With Native Reconfiguration
+
+Intentional breaks are strategically useful, but should not ship as a purely
+JavaScript pause. DeviceActivity callbacks are configured ahead of time, so a
+break needs a native-side reconfiguration path or equivalent Screen Time action
+strategy before the app exposes it. A half-working break would make blocking
+feel unreliable.

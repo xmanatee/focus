@@ -79,6 +79,17 @@ References:
   be converted to an organization before investing heavily in the `nemi.love`
   brand surface.
 
+## Landing Pages Added
+
+These pages exist to target specific organic search intents and to provide copy
+angles for future App Store custom product pages:
+
+- `https://focus.nemi.love/block-youtube-iphone/`
+- `https://focus.nemi.love/iphone-app-blocker/`
+- `https://focus.nemi.love/screen-time-limit-app/`
+- `https://focus.nemi.love/study-focus-app/`
+- `https://focus.nemi.love/digital-detox-iphone/`
+
 ## Launch Ops Completed
 
 - Jun 5, 2026: Added `https://focus.nemi.love/` as a Google Search Console
