@@ -39,31 +39,32 @@ jobs:
       APPLE_REVIEW_EMAIL: ${{ secrets.APPLE_REVIEW_EMAIL }}
       APPLE_REVIEW_PHONE: ${{ secrets.APPLE_REVIEW_PHONE }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
-
-      - uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
         run: npm ci
 
       - name: Validate metadata
-        run: eas metadata:lint
+        run: npm exec --yes --package eas-cli -- eas metadata:lint
 
       - name: Push metadata to App Store Connect
         if: ${{ github.event.inputs.push_metadata != 'false' }}
-        run: eas metadata:push --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npm exec --yes --package eas-cli -- eas metadata:push --non-interactive
 
       - name: Build iOS production
-        run: eas build --platform ios --profile production --non-interactive --wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npm exec --yes --package eas-cli -- eas build --platform ios --profile production --non-interactive --wait
 
       - name: Submit to TestFlight
         if: ${{ github.event.inputs.submit != 'false' }}
-        run: eas submit --platform ios --latest --non-interactive --wait
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npm exec --yes --package eas-cli -- eas submit --platform ios --latest --non-interactive --wait
