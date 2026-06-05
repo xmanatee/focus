@@ -94,6 +94,10 @@ References:
 - Jun 5, 2026: Added IndexNow support for `focus.nemi.love`. GitHub Pages
   deploys now host the IndexNow key file and notify the IndexNow endpoint with
   the sitemap URLs after each site deployment. The first run submitted 3 URLs.
+- Jun 5, 2026: Imported `https://focus.nemi.love/` into Bing Webmaster Tools
+  from Google Search Console. Bing imported `https://focus.nemi.love/sitemap.xml`
+  and marked it `Processing`, then the homepage, privacy page, and support page
+  were manually submitted through Bing URL Submission.
 - Jun 5, 2026: Triggered the iOS release workflow for app version `1.0.1`,
   build `9`. EAS built the store IPA and submitted it to App Store Connect.
   App Store Connect was then updated to use build `9` for version `1.0.1`, and
