@@ -78,6 +78,9 @@ References:
 - Decide whether the developer account should stay as an individual account or
   be converted to an organization before investing heavily in the `nemi.love`
   brand surface.
+- CI currently sets `EXPO_APPLE_TEAM_TYPE=INDIVIDUAL` because the active Apple
+  Developer team is an individual account. Change it only after Apple completes
+  an organization account conversion.
 
 ## Landing Pages Added
 
