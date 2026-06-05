@@ -1,0 +1,41 @@
+name: Push App Store Metadata
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: app-store-metadata
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPO_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      EXPO_APPLE_TEAM_TYPE: COMPANY_OR_ORGANIZATION
+      APPLE_REVIEW_FIRST_NAME: ${{ secrets.APPLE_REVIEW_FIRST_NAME }}
+      APPLE_REVIEW_LAST_NAME: ${{ secrets.APPLE_REVIEW_LAST_NAME }}
+      APPLE_REVIEW_EMAIL: ${{ secrets.APPLE_REVIEW_EMAIL }}
+      APPLE_REVIEW_PHONE: ${{ secrets.APPLE_REVIEW_PHONE }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate metadata
+        run: eas metadata:lint
+
+      - name: Push metadata to App Store Connect
+        run: eas metadata:push --non-interactive
