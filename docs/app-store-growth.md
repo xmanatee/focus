@@ -98,6 +98,9 @@ References:
   from Google Search Console. Bing imported `https://focus.nemi.love/sitemap.xml`
   and marked it `Processing`, then the homepage, privacy page, and support page
   were manually submitted through Bing URL Submission.
+- Jun 5, 2026: Started a Bing Webmaster Tools Site Scan named
+  `Focus landing page baseline` for `https://focus.nemi.love/`. Initial status
+  was `Queued`.
 - Jun 5, 2026: Triggered the iOS release workflow for app version `1.0.1`,
   build `9`. EAS built the store IPA and submitted it to App Store Connect.
   App Store Connect was then updated to use build `9` for version `1.0.1`, and
