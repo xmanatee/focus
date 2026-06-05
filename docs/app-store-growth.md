@@ -95,9 +95,11 @@ References:
   deploys now host the IndexNow key file and notify the IndexNow endpoint with
   the sitemap URLs after each site deployment. The first run submitted 3 URLs.
 - Jun 5, 2026: Triggered the iOS release workflow for app version `1.0.1`,
-  build `9`. EAS built the store IPA and submitted it to App Store Connect for
-  Apple processing. Public App Store lookup remains on version `1.0` until Apple
-  finishes review and releases `1.0.1`.
+  build `9`. EAS built the store IPA and submitted it to App Store Connect.
+  App Store Connect was then updated to use build `9` for version `1.0.1`, and
+  submission `282dab6b-b4f8-421f-9db6-85d75e682383` is waiting for App Review.
+  Public App Store lookup remains on version `1.0` until Apple approves and
+  releases `1.0.1`.
 
 ## Release Notes
 
