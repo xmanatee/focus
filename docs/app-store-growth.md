@@ -78,7 +78,10 @@ References:
 - Jun 5, 2026: Added `https://focus.nemi.love/` as a Google Search Console
   URL-prefix property. Ownership was auto-verified through the domain provider.
 - Jun 5, 2026: Submitted `https://focus.nemi.love/sitemap.xml` in Search
-  Console. It initially displayed `Couldn't fetch` despite the sitemap returning
-  HTTP 200 with `application/xml`; recheck after Google's next read.
+  Console. The first report briefly displayed `Couldn't fetch`, then resolved to
+  `Success` with 3 discovered pages after Google's first read.
 - Jun 5, 2026: Requested indexing for `https://focus.nemi.love/`,
   `https://focus.nemi.love/privacy/`, and `https://focus.nemi.love/support/`.
+- Jun 5, 2026: Verified in URL Inspection that the homepage and privacy page are
+  indexed. The support page passed the live URL test, is available to Google,
+  and was added to the indexing queue.
