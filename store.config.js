@@ -20,8 +20,8 @@ const screenshots = {
   APP_IPAD_PRO_129: screenshotPaths('iPad-12.9'),
 };
 
-const supportUrl = 'https://xmanatee.github.io/focus/support/';
-const privacyPolicyUrl = 'https://xmanatee.github.io/focus/privacy';
+const supportUrl = 'https://focus.nemi.love/support/';
+const privacyPolicyUrl = 'https://focus.nemi.love/privacy/';
 
 const englishDescription =
   "Focus Blocks is the simplest way to put distracting apps out of reach during the time you set aside to focus.\n\nChoose the apps. Choose the rule. Block during focus hours, allow only inside chosen windows, or set a daily app budget. When a rule applies, selected apps are hidden system-wide until they are allowed again. No willpower games, no streaks, no social layer — just one clear setting that gives you your attention back.\n\nBuilt on Apple's Screen Time APIs, Focus Blocks works entirely on your device. It has no backend and no account. Your rules sync between your own devices through iCloud, under your own Apple ID. Screen Time app selections are private device-local tokens, so each device asks you to confirm the apps it should block.\n\nWHAT YOU CAN DO\n• Create as many focus blocks as you want — mornings, weekdays, deep-work afternoons\n• Pick specific apps and whole categories in one tap\n• Block during a schedule, allow only during a schedule, or set a daily limit\n• Choose whether a rule applies to all devices or only this device\n• Add a weekly setup window so blocks cannot be edited on impulse\n• Enable or disable any inactive block from one screen\n\nPRIVACY BY DEFAULT\n• No sign-up, no account\n• No analytics, no ads, no third-party SDKs\n• Uses Apple's Screen Time framework — selections and usage stay on-device\n• iCloud Key-Value Store is the only remote storage, and it lives in your own Apple ID\n\nFocus Blocks is self-directed. It is not a parental-control product and does not monitor or manage other people's devices.\n\nRequires iOS 18 or later.";
