@@ -23,11 +23,17 @@ Run metadata validation before pushing:
 npm exec --yes --package eas-cli -- eas metadata:lint
 ```
 
-Push metadata after review:
+Push metadata after reviewing the config and before App Review submission:
 
 ```sh
 npm exec --yes --package eas-cli -- eas metadata:push
 ```
+
+CI uses `scripts/run-eas-metadata-push.mjs` instead of calling
+`eas metadata:push` directly. The wrapper fails the workflow if EAS reports App
+Store upload errors in stdout even when the CLI process exits successfully. This
+keeps the release job from building and submitting a binary after a partial
+metadata sync.
 
 The review contact fields in `store.config.js` require the
 `APPLE_REVIEW_FIRST_NAME`, `APPLE_REVIEW_LAST_NAME`, `APPLE_REVIEW_EMAIL`, and
@@ -88,3 +94,15 @@ References:
 - Jun 5, 2026: Added IndexNow support for `focus.nemi.love`. GitHub Pages
   deploys now host the IndexNow key file and notify the IndexNow endpoint with
   the sitemap URLs after each site deployment. The first run submitted 3 URLs.
+- Jun 5, 2026: Triggered the iOS release workflow for app version `1.0.1`,
+  build `9`. EAS built the store IPA and submitted it to App Store Connect for
+  Apple processing. Public App Store lookup remains on version `1.0` until Apple
+  finishes review and releases `1.0.1`.
+
+## Release Notes
+
+Push App Store metadata before submitting a version for review. Apple can reject
+creation of new localizations or screenshot sets once a version is already in
+review, even when EAS Metadata exits successfully. If metadata upload fails in
+CI, fix the App Store version state or run the metadata workflow before the
+release workflow.

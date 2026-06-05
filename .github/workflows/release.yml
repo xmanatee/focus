@@ -56,7 +56,7 @@ jobs:
         if: ${{ github.event.inputs.push_metadata != 'false' }}
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npm exec --yes --package eas-cli -- eas metadata:push --non-interactive
+        run: node scripts/run-eas-metadata-push.mjs
 
       - name: Build iOS production
         env:

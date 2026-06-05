@@ -35,4 +35,4 @@ jobs:
       - name: Push metadata to App Store Connect
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npm exec --yes --package eas-cli -- eas metadata:push --non-interactive
+        run: node scripts/run-eas-metadata-push.mjs
