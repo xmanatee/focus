@@ -4,12 +4,7 @@ import { ScrollView } from 'react-native';
 import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
-import { isSlotPopulated } from '../src/features/blocker/selectionSlot';
-import {
-  EMPTY_BLOCK_SELECTION,
-  hasSavedActivitySelection,
-  selectionIdForBlock,
-} from '../src/features/blocker/types';
+import { EMPTY_BLOCK_SELECTION } from '../src/features/blocker/types';
 import { getLocalDeviceId } from '../src/features/device/deviceId';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
@@ -20,6 +15,7 @@ import { PresetRow } from '../src/features/schedule/components/PresetRow';
 import { RuleCard } from '../src/features/schedule/components/RuleCard';
 import { StrictModeCard } from '../src/features/schedule/components/StrictModeCard';
 import { resolveEditPolicy } from '../src/features/schedule/editPolicy';
+import { activitySelectionNeedsLocalSlot } from '../src/features/schedule/localActivitySelection';
 import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
 import { confirmStrictModeOn } from '../src/features/schedule/strictModeConfirm';
 import { useActivitySelection } from '../src/features/schedule/useActivitySelection';
@@ -70,9 +66,10 @@ export default function AddFocusBlockScreen(): JSX.Element {
   );
   const { pickerSession } = selection;
   const dismiss = useDismiss();
-  const needsDeviceSelection =
-    hasSavedActivitySelection(selection.activitySelection) &&
-    !isSlotPopulated(selectionIdForBlock(blockId));
+  const needsDeviceSelection = activitySelectionNeedsLocalSlot(
+    blockId,
+    selection.activitySelection,
+  );
   const usesScheduleWindow = form.rule.kind !== 'dailyBudget';
 
   const { error, isPending, run, save, requestDelete } = useFocusBlockSave({

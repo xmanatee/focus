@@ -1,20 +1,17 @@
-import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { isSlotPopulated } from '../src/features/blocker/selectionSlot';
-import {
-  hasSavedActivitySelection,
-  selectionIdForBlock,
-} from '../src/features/blocker/types';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
 import { SetupVerificationCard } from '../src/features/diagnostics/components/SetupVerificationCard';
+import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
 import { useSetupVerification } from '../src/features/diagnostics/useSetupVerification';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
+import { ReviewPromptCard } from '../src/features/reviews/ReviewPromptCard';
 import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSessionCard';
 import { FocusBlockRow } from '../src/features/schedule/components/FocusBlockRow';
-import { focusBlockAppliesToDevice } from '../src/features/schedule/deviceScope';
+import { focusBlocksForDevice } from '../src/features/schedule/deviceScope';
+import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
 import { getFocusBlockRuntimeStatus } from '../src/features/schedule/runtimeStatus';
 import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
 import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
@@ -42,24 +39,15 @@ export default function MainFeedScreen(): JSX.Element {
   const toggleFocusBlock = useFocusBlockStore((s) => s.toggleFocusBlock);
   const deviceId = useLocalDeviceId();
   const applicableBlocks = useMemo(
-    () =>
-      deviceId === null
-        ? []
-        : focusBlocks.filter((block) =>
-            focusBlockAppliesToDevice(block, deviceId),
-          ),
+    () => focusBlocksForDevice(focusBlocks, deviceId),
     [focusBlocks, deviceId],
   );
   const blocksNeedingDeviceSelection = useMemo(
     () =>
-      applicableBlocks.filter(
-        (block) =>
-          hasSavedActivitySelection(block.selection.activitySelection) &&
-          !isSlotPopulated(selectionIdForBlock(block.id)),
-      ),
+      applicableBlocks.filter((block) => focusBlockNeedsLocalSelection(block)),
     [applicableBlocks],
   );
-  const { active, now } = useActiveBlock(applicableBlocks);
+  const { active, activeBlocks, now } = useActiveBlock(applicableBlocks);
 
   const { state: adminState } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
@@ -68,6 +56,7 @@ export default function MainFeedScreen(): JSX.Element {
   const posture = useProtectionPosture();
   const showProtectionCard = posture.score !== 'full';
   const setupVerification = useSetupVerification();
+  const handleSetupAction = useSetupActionHandler();
 
   useEffect(() => {
     if (!hasPermissions || deviceId === null) return;
@@ -107,7 +96,13 @@ export default function MainFeedScreen(): JSX.Element {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {active && <ActiveSessionCard status={active} now={now} />}
+        {active && (
+          <ActiveSessionCard
+            status={active}
+            extraStatuses={activeBlocks.slice(1)}
+            now={now}
+          />
+        )}
 
         <Section title="Configuration">
           {permissionsDenied ? (
@@ -128,7 +123,7 @@ export default function MainFeedScreen(): JSX.Element {
                 variant="commit"
                 onPress={() => {
                   void haptic.select();
-                  void Linking.openSettings();
+                  handleSetupAction('requestScreenTime');
                 }}
               />
             </Card>
@@ -154,7 +149,13 @@ export default function MainFeedScreen(): JSX.Element {
             </Card>
           ) : null}
 
-          <SetupVerificationCard verification={setupVerification} />
+          <SetupVerificationCard
+            verification={setupVerification}
+            onAction={handleSetupAction}
+            onOpenDetails={() => router.push('/diagnostics')}
+          />
+
+          <ReviewPromptCard verification={setupVerification} />
 
           {showProtectionCard && (
             <ProtectionStatusCard
@@ -232,6 +233,11 @@ export default function MainFeedScreen(): JSX.Element {
                     to each device. Open each block marked "Pick apps here" and
                     choose the apps for this iPhone.
                   </Typography>
+                  <Button
+                    title="Finish this device"
+                    variant="commit"
+                    onPress={() => handleSetupAction('finishDeviceSetup')}
+                  />
                 </Card>
               )}
               {applicableBlocks.map((block) => {

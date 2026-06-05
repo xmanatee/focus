@@ -8,6 +8,7 @@ import type { FocusBlockInput } from './types';
 const MAX_NAME_LENGTH = 50;
 const MIN_DAILY_LIMIT_MINUTES = 1;
 const MAX_DAILY_LIMIT_MINUTES = 23 * 60 + 59;
+export const MAX_WEB_DOMAINS = 50;
 
 export function validateFocusBlockInput(input: FocusBlockInput): void {
   const name = input.name.trim();
@@ -19,6 +20,9 @@ export function validateFocusBlockInput(input: FocusBlockInput): void {
   }
   validateDays(input.days);
   validateTimeRange(input.startTime, input.endTime);
+  if (input.selection.webDomains.length > MAX_WEB_DOMAINS) {
+    throw new Error('iOS can filter up to 50 websites per block.');
+  }
   const usesDailyBudget =
     input.rule.kind === 'dailyBudget' ||
     input.rule.kind === 'allowDuringScheduleWithBudget';

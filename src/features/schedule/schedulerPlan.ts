@@ -12,6 +12,10 @@ import {
   reconcileActionsForInstant,
   scheduleForDay,
 } from './schedulerActions';
+import {
+  budgetEventWarningActions,
+  budgetWarningTime,
+} from './schedulerWarnings';
 import type { DayOfWeek, FocusBlock } from './types';
 
 function dailyBudgetPlan(
@@ -25,6 +29,7 @@ function dailyBudgetPlan(
     const startWeekday = iosWeekday(day);
     const endWeekday = nextIosWeekday(startWeekday);
     const endDay = DAY_BY_IOS_WEEKDAY[endWeekday];
+    const warningTime = budgetWarningTime(block);
 
     return {
       activityName: budgetActivityName(block, day),
@@ -32,11 +37,13 @@ function dailyBudgetPlan(
         intervalStart: { hour: 0, minute: 0, weekday: startWeekday },
         intervalEnd: { hour: 0, minute: 0, weekday: endWeekday },
         repeats: true,
+        ...(warningTime ? { warningTime } : {}),
       },
       events,
       startActions: reconcileActionsForInstant(allBlocks, day, 0),
       endActions: reconcileActionsForInstant(allBlocks, endDay, 0),
       eventActions: budgetEventActions(block),
+      eventWarningActions: budgetEventWarningActions(block),
     };
   });
 }
@@ -54,6 +61,7 @@ export function materializeFocusBlock(
     const startMinute = minutesOf(block.startTime);
     const endMinute = minutesOf(block.endTime);
     const endDay = DAY_BY_IOS_WEEKDAY[schedule.intervalEnd.weekday];
+    const warningTime = budgetWarningTime(block);
 
     const startActions = reconcileActionsForInstant(
       allBlocks,
@@ -90,11 +98,15 @@ export function materializeFocusBlock(
         block.rule.kind === 'allowDuringScheduleWithBudget'
           ? budgetActivityName(block, day)
           : `${FOCUS_ACTIVITY_PREFIX}${block.id}.${day}`,
-      schedule,
+      schedule: {
+        ...schedule,
+        ...(warningTime ? { warningTime } : {}),
+      },
       events: budgetEvents(block),
       startActions,
       endActions,
       eventActions: budgetEventActions(block),
+      eventWarningActions: budgetEventWarningActions(block),
     };
   });
 }
@@ -126,6 +138,7 @@ export function materializeSetupBlock(
     startActions,
     endActions: [],
     eventActions: [],
+    eventWarningActions: [],
   }));
 }
 

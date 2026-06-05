@@ -5,12 +5,9 @@ import {
   useAsyncAction,
 } from '../../shared/hooks/useAsyncAction';
 import { requestNotificationPermissions } from '../../shared/notifications';
-import { isSlotPopulated } from '../blocker/selectionSlot';
-import {
-  hasSavedActivitySelection,
-  selectionHasBlockedTargets,
-  selectionIdForBlock,
-} from '../blocker/types';
+import { selectionHasBlockedTargets } from '../blocker/types';
+import { inputUsesBudgetWarning } from './budget';
+import { activitySelectionNeedsLocalSlot } from './localActivitySelection';
 import type { FocusBlockInput } from './types';
 import { useFocusBlockStore } from './useFocusBlockStore';
 import { validateFocusBlockInput } from './validation';
@@ -51,8 +48,10 @@ export function useFocusBlockSave({
         throw new Error('Pick at least one app or site to block.');
       }
       if (
-        hasSavedActivitySelection(input.selection.activitySelection) &&
-        !isSlotPopulated(selectionIdForBlock(blockId))
+        activitySelectionNeedsLocalSlot(
+          blockId,
+          input.selection.activitySelection,
+        )
       ) {
         throw new Error('Pick apps on this device before saving this block.');
       }
@@ -64,6 +63,8 @@ export function useFocusBlockSave({
             'Notifications permission is required for this block. Enable it in Settings or turn off the notification toggles.',
           );
         }
+      } else if (inputUsesBudgetWarning(input)) {
+        await requestNotificationPermissions();
       }
       void haptic.commit();
       if (editId) updateFocusBlock(editId, input);

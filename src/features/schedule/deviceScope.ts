@@ -7,3 +7,13 @@ export function focusBlockAppliesToDevice(
   if (block.scope.kind === 'allDevices') return true;
   return block.scope.deviceId === deviceId;
 }
+
+export function focusBlocksForDevice(
+  focusBlocks: readonly FocusBlock[],
+  deviceId: string | null,
+): readonly FocusBlock[] {
+  if (deviceId === null) return [];
+  return focusBlocks.filter((block) =>
+    focusBlockAppliesToDevice(block, deviceId),
+  );
+}

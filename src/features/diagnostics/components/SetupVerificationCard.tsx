@@ -1,11 +1,14 @@
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
 import type {
   SetupVerification,
+  SetupVerificationAction,
   SetupVerificationStatus,
 } from '../diagnostics';
+import { setupActionForCheck } from '../diagnostics';
 
 function iconFor(status: SetupVerificationStatus): {
   readonly name: 'checkmark.seal.fill' | 'exclamationmark.triangle.fill';
@@ -17,9 +20,28 @@ function iconFor(status: SetupVerificationStatus): {
   return { name: 'exclamationmark.triangle.fill', tone: 'muted' };
 }
 
+function actionLabel(action: SetupVerificationAction): string {
+  switch (action) {
+    case 'requestScreenTime':
+      return 'Fix access';
+    case 'finishDeviceSetup':
+      return 'Pick apps';
+    case 'openProtection':
+      return 'Set up';
+    case 'addBlock':
+      return 'Add block';
+    case 'openDiagnostics':
+      return 'Details';
+  }
+}
+
 export function SetupVerificationCard({
+  onAction,
+  onOpenDetails,
   verification,
 }: {
+  readonly onAction?: (action: SetupVerificationAction) => void;
+  readonly onOpenDetails?: () => void;
   readonly verification: SetupVerification;
 }): JSX.Element {
   const tone = verification.level === 'ready' ? 'raised' : 'signal';
@@ -54,8 +76,9 @@ export function SetupVerificationCard({
       <View className="gap-2">
         {verification.checks.map((check) => {
           const icon = iconFor(check.status);
+          const action = setupActionForCheck(check.id);
           return (
-            <View key={check.id} className="flex-row gap-2">
+            <View key={check.id} className="flex-row gap-2 items-start">
               <View className="pt-0.5">
                 <Icon name={icon.name} size={16} tone={icon.tone} />
               </View>
@@ -67,10 +90,24 @@ export function SetupVerificationCard({
                   {check.detail}
                 </Typography>
               </View>
+              {check.status !== 'pass' && onAction ? (
+                <Pressable
+                  onPress={() => onAction(action)}
+                  className="rounded-full bg-surface px-3 py-1"
+                >
+                  <Typography variant="caption" tone="signal">
+                    {actionLabel(action)}
+                  </Typography>
+                </Pressable>
+              ) : null}
             </View>
           );
         })}
       </View>
+
+      {onOpenDetails ? (
+        <Button title="Troubleshoot" variant="ghost" onPress={onOpenDetails} />
+      ) : null}
     </Card>
   );
 }

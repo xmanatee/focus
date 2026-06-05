@@ -41,6 +41,14 @@ async function applyPlan(plan: MonitorPlan): Promise<void> {
       actions: eventAction.actions,
     });
   }
+  for (const eventAction of plan.eventWarningActions) {
+    configureActions({
+      activityName: plan.activityName,
+      callbackName: 'eventWillReachThresholdWarning',
+      eventName: eventAction.eventName,
+      actions: eventAction.actions,
+    });
+  }
   await startMonitoring(plan.activityName, plan.schedule, plan.events);
 }
 

@@ -3,16 +3,18 @@ import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
 import { formatRelative } from '../../../shared/days';
-import type { FocusBlockRuntimeStatus } from '../runtimeStatus';
+import type { ActiveFocusBlockStatus } from '../activeBlocks';
 
 interface ActiveSessionCardProps {
-  readonly status: Extract<FocusBlockRuntimeStatus, { kind: 'active' }>;
+  readonly extraStatuses: readonly ActiveFocusBlockStatus[];
   readonly now: Date;
+  readonly status: ActiveFocusBlockStatus;
 }
 
 export function ActiveSessionCard({
-  status,
+  extraStatuses,
   now,
+  status,
 }: ActiveSessionCardProps): JSX.Element {
   const { block } = status;
 
@@ -38,12 +40,34 @@ export function ActiveSessionCard({
       <Typography variant="body" tone="surface" className="opacity-70">
         {describeActiveStatus(status, now)}
       </Typography>
+
+      {extraStatuses.length > 0 ? (
+        <View className="gap-2 border-t border-surface/10 pt-3">
+          <Typography variant="label" tone="surface" className="opacity-70">
+            Also active
+          </Typography>
+          {extraStatuses.map((item) => (
+            <View key={item.block.id} className="gap-0.5">
+              <Typography variant="body-md" tone="surface">
+                {item.block.name}
+              </Typography>
+              <Typography
+                variant="caption"
+                tone="surface"
+                className="opacity-70"
+              >
+                {describeActiveStatus(item, now)}
+              </Typography>
+            </View>
+          ))}
+        </View>
+      ) : null}
     </Card>
   );
 }
 
 function describeActiveStatus(
-  status: Extract<FocusBlockRuntimeStatus, { kind: 'active' }>,
+  status: ActiveFocusBlockStatus,
   now: Date,
 ): string {
   const relative = formatRelative(status.endsAt, now);

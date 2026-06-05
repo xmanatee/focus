@@ -4,6 +4,7 @@ import { Icon } from '../../../shared/components/Icon';
 import { Section } from '../../../shared/components/Section';
 import { Typography } from '../../../shared/components/Typography';
 import { useThemeColors } from '../../../shared/design/theme';
+import { MAX_WEB_DOMAINS } from '../../schedule/validation';
 import {
   type PersistedActivitySelection,
   summarizeActivitySelection,
@@ -35,6 +36,7 @@ export function BlockingCard({
   disabled = false,
 }: BlockingCardProps): JSX.Element {
   const colors = useThemeColors();
+  const hasReachedWebsiteLimit = webDomains.length >= MAX_WEB_DOMAINS;
 
   return (
     <Section title="Blocking">
@@ -65,6 +67,9 @@ export function BlockingCard({
           <Typography variant="body-md" tone="ink" className="flex-1">
             Blocked Websites
           </Typography>
+          <Typography variant="caption" tone="muted">
+            {webDomains.length}/{MAX_WEB_DOMAINS}
+          </Typography>
         </View>
 
         {!disabled && (
@@ -77,17 +82,27 @@ export function BlockingCard({
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="url"
+              editable={!hasReachedWebsiteLimit}
               className="flex-1 bg-surface-sunken rounded-xl px-4 py-3"
               style={{ color: colors.ink }}
             />
             <Pressable
               onPress={onAddDomain}
-              className="bg-signal w-12 h-12 items-center justify-center rounded-xl"
+              disabled={hasReachedWebsiteLimit}
+              className={`bg-signal w-12 h-12 items-center justify-center rounded-xl ${
+                hasReachedWebsiteLimit ? 'opacity-40' : ''
+              }`}
             >
               <Icon name="plus" size={20} tone="surface" />
             </Pressable>
           </View>
         )}
+
+        {hasReachedWebsiteLimit ? (
+          <Typography variant="caption" tone="signal">
+            iOS supports up to {MAX_WEB_DOMAINS} blocked websites per block.
+          </Typography>
+        ) : null}
 
         {webDomains.length > 0 && (
           <View className="gap-2">

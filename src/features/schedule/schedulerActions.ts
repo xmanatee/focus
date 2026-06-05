@@ -9,17 +9,15 @@ import {
   minutesOf,
   nextIosWeekday,
 } from '../../shared/days';
-import { getSlotValue, isSlotPopulated } from '../blocker/selectionSlot';
-import {
-  hasSavedActivitySelection,
-  selectionIdForBlock,
-} from '../blocker/types';
+import { getSlotValue } from '../blocker/selectionSlot';
+import { selectionIdForBlock } from '../blocker/types';
+import { activitySelectionHasLocalSlot } from './localActivitySelection';
 import type { DayOfWeek, FocusBlock } from './types';
 
 export const FOCUS_ACTIVITY_PREFIX = 'focusblocks.block.';
 export const BUDGET_ACTIVITY_PREFIX = 'focusblocks.budget.';
 export const SETUP_ACTIVITY_PREFIX = 'focusblocks.setup.';
-const BUDGET_EVENT_NAME = 'limit';
+export const BUDGET_EVENT_NAME = 'limit';
 
 export const DAY_BY_IOS_WEEKDAY: Record<number, DayOfWeek> = {
   1: 'sun',
@@ -49,11 +47,16 @@ export interface MonitorPlan {
     intervalStart: { hour: number; minute: number; weekday: number };
     intervalEnd: { hour: number; minute: number; weekday: number };
     repeats: boolean;
+    warningTime?: { minute: number };
   };
   events: DeviceActivityEvent[];
   startActions: FocusAction[];
   endActions: FocusAction[];
   eventActions: readonly {
+    readonly eventName: string;
+    readonly actions: FocusAction[];
+  }[];
+  eventWarningActions: readonly {
     readonly eventName: string;
     readonly actions: FocusAction[];
   }[];
@@ -103,10 +106,10 @@ function isActiveAtWeeklyInstant(
   return isInsideWindow;
 }
 
-function hasLocalActivitySelection(block: FocusBlock): boolean {
-  return (
-    hasSavedActivitySelection(block.selection.activitySelection) &&
-    isSlotPopulated(selectionIdForBlock(block.id))
+export function hasLocalActivitySelection(block: FocusBlock): boolean {
+  return activitySelectionHasLocalSlot(
+    block.id,
+    block.selection.activitySelection,
   );
 }
 

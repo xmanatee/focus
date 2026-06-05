@@ -5,6 +5,7 @@ import type { FocusBlock } from '../schedule/types';
 import {
   buildDiagnosticsReport,
   evaluateSetupVerification,
+  setupActionForCheck,
 } from './diagnostics';
 
 const FULL_POSTURE: ProtectionPosture = {
@@ -70,6 +71,14 @@ describe('evaluateSetupVerification', () => {
 
     expect(result.level).toBe('ready');
     expect(result.missingDeviceSelectionCount).toBe(0);
+  });
+
+  it('maps failed setup checks to concrete repair actions', () => {
+    expect(setupActionForCheck('screenTime')).toBe('requestScreenTime');
+    expect(setupActionForCheck('deviceSelections')).toBe('finishDeviceSetup');
+    expect(setupActionForCheck('protection')).toBe('openProtection');
+    expect(setupActionForCheck('blocks')).toBe('addBlock');
+    expect(setupActionForCheck('activeNow')).toBe('openDiagnostics');
   });
 });
 

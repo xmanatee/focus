@@ -158,6 +158,7 @@ describe('reconcileFocusBlocks', () => {
           intervalStart: { hour: 0, minute: 0, weekday: 2 },
           intervalEnd: { hour: 0, minute: 0, weekday: 3 },
           repeats: true,
+          warningTime: { minute: 5 },
         },
         events: [
           {
@@ -181,5 +182,29 @@ describe('reconcileFocusBlocks', () => {
         (action) => action.type,
       ),
     ).toEqual(['resetBlocks', 'clearWebContentFilterPolicy']);
+  });
+
+  it('configures a pre-limit warning notification for larger daily budgets', async () => {
+    slotStore.set('block.budget', 'selection-budget');
+
+    await reconcileFocusBlocks(
+      [
+        block({
+          id: 'budget',
+          rule: { kind: 'dailyBudget', minutes: 15 },
+        }),
+      ],
+      null,
+    );
+
+    expect(monitoringCalls[0].schedule).toEqual(
+      expect.objectContaining({ warningTime: { minute: 5 } }),
+    );
+    expect(
+      actionsFor(
+        'focusblocks.budget.budget.mon',
+        'eventWillReachThresholdWarning',
+      ).map((action) => action.type),
+    ).toEqual(['sendNotification']);
   });
 });

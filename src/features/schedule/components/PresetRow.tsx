@@ -1,6 +1,7 @@
 import { View } from 'react-native';
 import { Chip } from '../../../shared/components/Chip';
 import { Section } from '../../../shared/components/Section';
+import { Typography } from '../../../shared/components/Typography';
 import type { PresetKind } from '../presets';
 
 interface PresetRowProps {
@@ -25,16 +26,22 @@ export function PresetRow({
 }: PresetRowProps): JSX.Element {
   return (
     <Section title="Presets">
-      <View className="flex-row flex-wrap gap-2">
-        {ENTRIES.map(({ kind, label }) => (
-          <Chip
-            key={kind}
-            label={label}
-            onPress={() => onSelect(kind)}
-            onLongPress={() => onLongPress(kind)}
-            disabled={disabled}
-          />
-        ))}
+      <View className="gap-2">
+        <View className="flex-row flex-wrap gap-2">
+          {ENTRIES.map(({ kind, label }) => (
+            <Chip
+              key={kind}
+              label={label}
+              onPress={() => onSelect(kind)}
+              onLongPress={() => onLongPress(kind)}
+              disabled={disabled}
+            />
+          ))}
+        </View>
+        <Typography variant="caption" tone="muted">
+          Tap to reuse a preset. Hold a preset to update the saved app group
+          behind it.
+        </Typography>
       </View>
     </Section>
   );

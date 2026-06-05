@@ -1,16 +1,19 @@
 import type { AuthorizationStatus } from '../../bridge/BlockerBridge';
-import {
-  hasSavedActivitySelection,
-  selectionIdForBlock,
-} from '../blocker/types';
 import type { ProtectionPosture } from '../protection/types';
-import { focusBlockAppliesToDevice } from '../schedule/deviceScope';
+import { focusBlocksForDevice } from '../schedule/deviceScope';
+import { focusBlockSelectionReadyInSlots } from '../schedule/localActivitySelection';
 import { getFocusBlockRuntimeStatus } from '../schedule/runtimeStatus';
 import type { FocusBlock } from '../schedule/types';
 import type { SetupBlock } from '../settings/adminState';
 
 export type SetupVerificationLevel = 'ready' | 'attention' | 'blocked';
 export type SetupVerificationStatus = 'pass' | 'warn' | 'fail';
+export type SetupVerificationAction =
+  | 'addBlock'
+  | 'finishDeviceSetup'
+  | 'openDiagnostics'
+  | 'openProtection'
+  | 'requestScreenTime';
 
 export interface SetupVerificationCheck {
   readonly id:
@@ -23,6 +26,24 @@ export interface SetupVerificationCheck {
   readonly title: string;
   readonly detail: string;
   readonly status: SetupVerificationStatus;
+}
+
+export function setupActionForCheck(
+  id: SetupVerificationCheck['id'],
+): SetupVerificationAction {
+  switch (id) {
+    case 'screenTime':
+      return 'requestScreenTime';
+    case 'device':
+    case 'activeNow':
+      return 'openDiagnostics';
+    case 'blocks':
+      return 'addBlock';
+    case 'deviceSelections':
+      return 'finishDeviceSetup';
+    case 'protection':
+      return 'openProtection';
+  }
 }
 
 export interface DiagnosticsInput {
@@ -71,28 +92,14 @@ function summaryFor(level: SetupVerificationLevel): string {
   return 'Screen Time access and local app selections look ready.';
 }
 
-function selectionReady(
-  block: FocusBlock,
-  slots: ReadonlySet<string>,
-): boolean {
-  if (!hasSavedActivitySelection(block.selection.activitySelection)) {
-    return true;
-  }
-  return slots.has(selectionIdForBlock(block.id));
-}
-
 export function evaluateSetupVerification(
   input: DiagnosticsInput,
 ): SetupVerification {
-  const applicable =
-    input.deviceId === null
-      ? []
-      : input.focusBlocks.filter((block) =>
-          focusBlockAppliesToDevice(block, input.deviceId ?? ''),
-        );
+  const applicable = focusBlocksForDevice(input.focusBlocks, input.deviceId);
   const enabled = applicable.filter((block) => block.isEnabled);
   const missingDeviceSelectionCount = enabled.filter(
-    (block) => !selectionReady(block, input.populatedSelectionSlots),
+    (block) =>
+      !focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
   ).length;
   const activeBlockCount = enabled.filter(
     (block) => getFocusBlockRuntimeStatus(block, input.now).kind === 'active',
@@ -210,7 +217,7 @@ export function buildDiagnosticsReport(input: DiagnosticsInput): string {
           activity.status === 'saved' ? activity.categoryCount : 0
         }`,
         `webDomains=${block.selection.webDomains.length}`,
-        `deviceSelection=${selectionReady(
+        `deviceSelection=${focusBlockSelectionReadyInSlots(
           block,
           input.populatedSelectionSlots,
         )}`,

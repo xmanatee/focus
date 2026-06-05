@@ -64,6 +64,20 @@ export default function RootLayout(): JSX.Element {
             }}
           />
           <Stack.Screen
+            name="diagnostics"
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+            }}
+          />
+          <Stack.Screen
+            name="finish-device"
+            options={{
+              presentation: 'formSheet',
+              sheetGrabberVisible: true,
+            }}
+          />
+          <Stack.Screen
             name="protection"
             options={{
               presentation: 'formSheet',

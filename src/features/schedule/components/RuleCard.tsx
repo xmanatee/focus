@@ -4,6 +4,7 @@ import { Icon } from '../../../shared/components/Icon';
 import { Section } from '../../../shared/components/Section';
 import { Typography } from '../../../shared/components/Typography';
 import { useThemeColors } from '../../../shared/design/theme';
+import { BUDGET_WARNING_MINUTES } from '../budget';
 import type { FocusBlockRule } from '../types';
 
 interface RuleCardProps {
@@ -22,22 +23,22 @@ const RULES: readonly {
   {
     kind: 'blockDuringSchedule',
     title: 'Block during schedule',
-    subtitle: 'Hide selected apps during the selected hours.',
+    subtitle: 'Selected apps are blocked inside the time window.',
   },
   {
     kind: 'allowDuringSchedule',
     title: 'Allow only during schedule',
-    subtitle: 'Block selected apps outside the selected hours.',
+    subtitle: 'Selected apps are blocked outside the time window.',
   },
   {
     kind: 'dailyBudget',
     title: 'Daily budget',
-    subtitle: 'Block after the selected apps reach a daily limit.',
+    subtitle: 'Selected apps are blocked after the daily limit is used.',
   },
   {
     kind: 'allowDuringScheduleWithBudget',
     title: 'Schedule + budget',
-    subtitle: 'Allow only inside the schedule and until the limit is used.',
+    subtitle: 'Apps are blocked outside the window and after the limit.',
   },
 ];
 
@@ -117,7 +118,7 @@ export function RuleCard({
           {showsBudget && (
             <View className="gap-2">
               <Typography variant="label" tone="faint">
-                Daily Minutes
+                Daily Limit
               </Typography>
               <TextInput
                 value={String(minutesFor(value))}
@@ -131,6 +132,10 @@ export function RuleCard({
                 className="bg-surface-sunken rounded-xl px-4 py-3 text-[18px] font-semibold"
                 style={{ color: colors.ink }}
               />
+              <Typography variant="caption" tone="muted">
+                Focus Blocks can warn when {BUDGET_WARNING_MINUTES} minutes
+                remain for budgets above {BUDGET_WARNING_MINUTES} minutes.
+              </Typography>
             </View>
           )}
         </View>

@@ -134,4 +134,19 @@ describe('validateFocusBlockInput', () => {
       ),
     ).not.toThrow();
   });
+
+  it('rejects more website domains than iOS can reliably filter', () => {
+    const webDomains = Array.from(
+      { length: 51 },
+      (_, index) => `site-${index}.example.com`,
+    );
+
+    expect(() =>
+      validateFocusBlockInput(
+        baseInput({
+          selection: { ...EMPTY_BLOCK_SELECTION, webDomains },
+        }),
+      ),
+    ).toThrow(/50 websites/i);
+  });
 });
