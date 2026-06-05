@@ -3,47 +3,181 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Focus Blocks</title>
-<style>
-  :root {
-    --bg: #F8F2E8;
-    --bg-dark: #1A1510;
-    --ink: #2A1F12;
-    --ink-dim: #6B5A45;
-    --accent: #B8612E;
-    --rule: #E5D8C2;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #1A1510; --ink: #F0E6D6; --ink-dim: #A89880; --rule: #2E2418; }
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font: 17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-    padding: 64px 24px;
-  }
-  main { max-width: 640px; margin: 0 auto; }
-  h1 { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 12px; font-weight: 700; }
-  p.lede { color: var(--ink-dim); font-size: 18px; margin: 0 0 40px; }
-  nav { display: flex; gap: 24px; margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--rule); }
-  nav a { color: var(--accent); text-decoration: none; font-weight: 500; }
-  nav a:hover { text-decoration: underline; }
-  footer { margin-top: 64px; color: var(--ink-dim); font-size: 14px; }
-</style>
+<title>Focus Blocks: App Blocker for iPhone and iPad</title>
+<meta name="description" content="Block distracting apps on a schedule, set daily screen time limits, and keep focus without an account, ads, analytics, or guilt.">
+<meta name="keywords" content="app blocker, screen time limit, block YouTube, focus app, study focus, productivity, digital detox">
+<meta name="theme-color" content="#F8F2E8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1A1510" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://focus.nemi.love/">
+<link rel="icon" href="/assets/focus-blocks-icon.png">
+<link rel="apple-touch-icon" href="/assets/focus-blocks-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Focus Blocks: App Blocker">
+<meta property="og:description" content="Block apps on schedule. Set daily limits. Stay focused without an account.">
+<meta property="og:url" content="https://focus.nemi.love/">
+<meta property="og:image" content="https://focus.nemi.love/assets/focus-blocks-home.webp">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Focus Blocks: App Blocker">
+<meta name="twitter:description" content="Block apps on schedule. Set daily limits. Stay focused without an account.">
+<meta name="twitter:image" content="https://focus.nemi.love/assets/focus-blocks-home.webp">
+<link rel="stylesheet" href="/styles.css">
+<link rel="stylesheet" href="/landing.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Focus Blocks: App Blocker",
+  "applicationCategory": "ProductivityApplication",
+  "operatingSystem": "iOS",
+  "url": "https://focus.nemi.love/",
+  "downloadUrl": "https://apps.apple.com/app/focus-blocks-apps-blocker/id6763754394",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Focus Blocks blocks distracting apps on a schedule, supports daily app budgets, and works without an account, ads, analytics, or third-party SDKs."
+}
+</script>
 </head>
 <body>
-<main>
-  <h1>Focus Blocks</h1>
-  <p class="lede">Block distracting apps on a schedule. Private by design.</p>
+<div class="site-shell">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="nav" aria-label="Site header">
+    <a class="brand" href="/" aria-label="Focus Blocks home">
+      <img src="/assets/focus-blocks-icon.png" width="38" height="38" alt="">
+      <span>Focus Blocks</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary navigation">
+      <a href="#how-it-works">How it works</a>
+      <a href="#privacy">Privacy</a>
+      <a href="/support/">Support</a>
+    </nav>
+  </header>
 
-  <nav>
-    <a href="./privacy/">Privacy Policy</a>
-    <a href="./support/">Support</a>
-  </nav>
+  <main id="main">
+    <section class="section hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Screen Time, without the guilt loop</p>
+        <h1 id="hero-title">Block apps when focus matters.</h1>
+        <p class="lede">Focus Blocks hides distracting apps during the rules you choose: work hours, study sessions, daily limits, or a stricter Lock-in window.</p>
+        <div class="actions">
+          <a class="button button-primary" href="https://apps.apple.com/app/focus-blocks-apps-blocker/id6763754394">View on the App Store</a>
+          <a class="button button-secondary" href="#how-it-works">See how it works</a>
+        </div>
+        <div class="hero-proof">
+          <span class="pill">No account</span>
+          <span class="pill">No ads</span>
+          <span class="pill">No analytics</span>
+          <span class="pill">iOS 18+</span>
+        </div>
+      </div>
+      <div class="device-stage">
+        <img class="device-shot" src="/assets/focus-blocks-home.webp" width="720" height="1564" alt="Focus Blocks app showing active focus blocks and setup cards." fetchpriority="high">
+      </div>
+    </section>
 
-  <footer>support@nemi.love</footer>
-</main>
+    <section class="section section-narrow" aria-labelledby="why-title">
+      <p class="eyebrow">Why it exists</p>
+      <h2 id="why-title">A blocker for people who already know what pulls them in.</h2>
+      <p class="section-lede">Focus Blocks is not a streak app, a social layer, or a lecture. It is a small commitment tool: pick the distractions, pick the rule, and let iOS keep them out of reach.</p>
+      <div class="grid">
+        <article class="card">
+          <strong>Schedules</strong>
+          <p>Block distracting apps during focus hours, evenings, classes, or weekend detox windows.</p>
+        </article>
+        <article class="card">
+          <strong>Daily budgets</strong>
+          <p>Allow a small amount of time, then block the selected apps once the minutes are gone.</p>
+        </article>
+        <article class="card">
+          <strong>Strict Lock-in</strong>
+          <p>Add a setup window so future-you cannot casually undo the rule during a weak moment.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="section split" aria-labelledby="how-title">
+      <div>
+        <p class="eyebrow">How it works</p>
+        <h2 id="how-title">Choose the apps. Choose the rule. Let the system enforce it.</h2>
+        <div class="steps">
+          <div class="step">
+            <span class="step-number">1</span>
+            <p><strong>Pick apps, sites, or categories.</strong><br>Use Apple's Screen Time picker to select what should disappear.</p>
+          </div>
+          <div class="step">
+            <span class="step-number">2</span>
+            <p><strong>Set the rule.</strong><br>Use a schedule, a daily budget, or both when you want more precision.</p>
+          </div>
+          <div class="step">
+            <span class="step-number">3</span>
+            <p><strong>Stay with the decision.</strong><br>When a rule applies, selected apps are shielded system-wide until they are allowed again.</p>
+          </div>
+        </div>
+      </div>
+      <img class="device-shot" src="/assets/focus-blocks-rules.webp" width="720" height="1564" loading="lazy" alt="Focus Blocks rule setup screen with presets, app categories, and blocked websites.">
+    </section>
+
+    <section id="privacy" class="section" aria-labelledby="privacy-title">
+      <div class="privacy-band">
+        <p class="eyebrow">Private by default</p>
+        <h2 id="privacy-title">No account. No tracking. No backend.</h2>
+        <p class="section-lede">Rules can sync through your own iCloud account, under your own Apple ID. Screen Time app selections are private device-local tokens, so each iPhone or iPad confirms its own apps.</p>
+        <div class="actions">
+          <a class="button button-secondary" href="/privacy/">Read the privacy policy</a>
+          <a class="button button-secondary" href="/support/">Get support</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-narrow" aria-labelledby="details-title">
+      <p class="eyebrow">Built for real use</p>
+      <h2 id="details-title">Flexible enough for different kinds of distraction.</h2>
+      <div class="grid">
+        <article class="card">
+          <strong>Block YouTube after ten minutes</strong>
+          <p>Use a daily app budget for apps that are useful in small doses but costly when they run long.</p>
+        </article>
+        <article class="card">
+          <strong>Keep social apps away during work</strong>
+          <p>Set a weekday schedule so the apps are available later, without needing manual toggles.</p>
+        </article>
+        <article class="card">
+          <strong>Use different rules per device</strong>
+          <p>Apply a block everywhere, or keep it only on this iPhone when your iPad needs different rules.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section section-narrow" aria-labelledby="faq-title">
+      <p class="eyebrow">Questions</p>
+      <h2 id="faq-title">What people usually ask before installing.</h2>
+      <div class="faq">
+        <details>
+          <summary>Is Focus Blocks parental control?</summary>
+          <p>No. It is self-directed and designed for your own devices. It does not manage other people's devices.</p>
+        </details>
+        <details>
+          <summary>Does it read which apps I use?</summary>
+          <p>No. Apple's Screen Time framework performs shielding on the operating-system side. Focus Blocks does not run analytics or send usage data to a server.</p>
+        </details>
+        <details>
+          <summary>Why does each device ask me to confirm apps?</summary>
+          <p>Screen Time selections are private device-local tokens. Rules can sync through iCloud, but app selections must be confirmed on each iPhone or iPad.</p>
+        </details>
+        <details>
+          <summary>What version of iOS do I need?</summary>
+          <p>Focus Blocks requires iOS 18 or later.</p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>&copy; 2026 nemi.love</span>
+    <span><a href="/privacy/">Privacy</a> · <a href="/support/">Support</a> · <a href="mailto:support@nemi.love">support@nemi.love</a></span>
+  </footer>
+</div>
 </body>
 </html>

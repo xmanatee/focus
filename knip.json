@@ -4,6 +4,7 @@
     "babel.config.js",
     "metro.config.js",
     "plugins/with-focusblocks-icloud.js",
+    "site/*.css",
     "store.config.js",
     "targets/**/expo-target.config.js"
   ],

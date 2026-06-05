@@ -3,85 +3,75 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Support — Focus Blocks</title>
-<style>
-  :root {
-    --bg: #F8F2E8;
-    --ink: #2A1F12;
-    --ink-dim: #6B5A45;
-    --accent: #B8612E;
-    --rule: #E5D8C2;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #1A1510; --ink: #F0E6D6; --ink-dim: #A89880; --rule: #2E2418; }
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--ink);
-    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
-    padding: 48px 24px 96px;
-  }
-  main { max-width: 680px; margin: 0 auto; }
-  a.back { color: var(--ink-dim); text-decoration: none; font-size: 14px; display: inline-block; margin-bottom: 32px; }
-  a.back:hover { color: var(--accent); }
-  h1 { font-size: 32px; line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 8px; font-weight: 700; }
-  h2 { font-size: 22px; line-height: 1.25; margin: 40px 0 12px; font-weight: 600; }
-  h3 { font-size: 18px; line-height: 1.3; margin: 28px 0 8px; font-weight: 600; }
-  p, li { font-size: 17px; line-height: 1.6; color: var(--ink); }
-  p.lede { color: var(--ink-dim); font-size: 18px; margin: 0 0 24px; }
-  ul { padding-left: 22px; }
-  li { margin-bottom: 6px; }
-  a { color: var(--accent); }
-  .contact-card {
-    background: var(--rule);
-    padding: 20px 24px;
-    border-radius: 12px;
-    margin: 24px 0 40px;
-  }
-  .contact-card a { font-weight: 600; font-size: 18px; }
-  strong { font-weight: 600; }
-</style>
+<title>Support - Focus Blocks</title>
+<meta name="description" content="Support for Focus Blocks, including Screen Time permissions, daily budgets, per-device app selections, iCloud sync, and troubleshooting.">
+<meta name="theme-color" content="#F8F2E8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1A1510" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://focus.nemi.love/support/">
+<link rel="icon" href="/assets/focus-blocks-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Support - Focus Blocks">
+<meta property="og:description" content="Help with Focus Blocks setup, Screen Time permissions, daily budgets, iCloud sync, and troubleshooting.">
+<meta property="og:url" content="https://focus.nemi.love/support/">
+<meta property="og:image" content="https://focus.nemi.love/assets/focus-blocks-home.webp">
+<link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-<main>
-  <a href="../" class="back">&larr; Focus Blocks</a>
-  <h1>Support</h1>
-  <p class="lede">Have a question, hit a bug, or want to suggest something?</p>
+<div class="site-shell">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="nav" aria-label="Site header">
+    <a class="brand" href="/" aria-label="Focus Blocks home">
+      <img src="/assets/focus-blocks-icon.png" width="38" height="38" alt="">
+      <span>Focus Blocks</span>
+    </a>
+    <nav class="nav-links" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="mailto:support@nemi.love">Email support</a>
+    </nav>
+  </header>
 
-  <div class="contact-card">
-    Email <a href="mailto:support@nemi.love">support@nemi.love</a> &mdash; we read everything and reply as soon as we can.
-  </div>
+  <main id="main" class="doc-page">
+    <p class="eyebrow">Support</p>
+    <h1>Help with Focus Blocks.</h1>
+    <p class="lede">Have a question, hit a bug, or want to suggest something? Email <a href="mailto:support@nemi.love">support@nemi.love</a>.</p>
 
-  <h2>Common questions</h2>
+    <div class="doc-card">
+      <strong>Fastest useful bug report</strong>
+      <p>Tell us what you were trying to do, what happened instead, your iOS version, and whether the block uses a schedule, a daily budget, or both.</p>
+    </div>
 
-  <h3>Why does Focus Blocks need Screen Time permission?</h3>
-  <p>Focus Blocks uses Apple's Screen Time framework (Family Controls) to hide the apps you choose during the schedules you set. The permission is required by iOS for any app that wants to apply shields to other apps. Selections and usage stay on your device.</p>
+    <h2>Common questions</h2>
 
-  <h3>Does my data leave the device?</h3>
-  <p>No. Rules and preferences can sync through your own iCloud account so your setup is available on your iPhone and iPad. Screen Time app selections are private device-local tokens, so each device confirms its own apps. Nothing goes to our servers — we don't have any. See the <a href="../privacy/">Privacy Policy</a> for details.</p>
+    <h3>Why does Focus Blocks need Screen Time permission?</h3>
+    <p>Focus Blocks uses Apple's Screen Time frameworks to shield the apps, sites, and categories you choose. iOS requires this permission before any app can apply those shields.</p>
 
-  <h3>How do I unblock an app temporarily?</h3>
-  <p>Wait for the block to end. If you configured a setup window, edits unlock during that window.</p>
+    <h3>Why did my synced block not block apps on a new iPhone?</h3>
+    <p>Rules can sync through your iCloud account, but Screen Time app selections are private tokens that belong to one device. Open any block marked "Pick apps here" on the new device and confirm the apps there.</p>
 
-  <h3>I deleted the app and the shields stayed on. How do I clear them?</h3>
-  <p>Go to <strong>Settings &rarr; Screen Time &rarr; See All App and Website Activity &rarr; Restrictions</strong> and clear any remaining entries. iOS keeps shields applied even after the controlling app is deleted; this is by design so your blocks survive a re-install.</p>
+    <h3>What is the difference between a schedule and a daily budget?</h3>
+    <p>A schedule controls when selected apps are blocked or allowed. A daily budget gives selected apps a limited number of minutes per day, then blocks them after the budget is used. Some blocks can use both.</p>
 
-  <h3>Does Focus Blocks work for parental control?</h3>
-  <p>No. Focus Blocks is self-directed — you set rules for yourself on your own device. It is not a parental-control product and does not manage other people's devices. For parental control, use Apple's built-in Screen Time with Family Sharing.</p>
+    <h3>How do I unblock an app temporarily?</h3>
+    <p>Wait for the rule to stop applying. If you set a Lock-in setup window, edits unlock during that window so you can change the block intentionally rather than on impulse.</p>
 
-  <h3>Which iOS versions are supported?</h3>
-  <p>Focus Blocks requires iOS 18 or later.</p>
+    <h3>I deleted the app and shields stayed on. How do I clear them?</h3>
+    <p>Go to <strong>Settings -> Screen Time</strong> and clear remaining restrictions. iOS can keep shields after the controlling app is removed so restrictions survive deletion and reinstall attempts.</p>
 
-  <h2>Reporting a bug</h2>
-  <p>If something behaves unexpectedly, the most useful thing you can include in an email:</p>
-  <ul>
-    <li>What you were trying to do.</li>
-    <li>What happened instead.</li>
-    <li>iOS version (Settings &rarr; General &rarr; About &rarr; Software Version).</li>
-    <li>Any steps to reproduce, if you've found them.</li>
-  </ul>
-</main>
+    <h3>Does Focus Blocks work for parental control?</h3>
+    <p>No. Focus Blocks is self-directed. It is not a parental-control product and does not manage other people's devices. For parental control, use Apple's built-in Screen Time with Family Sharing.</p>
+
+    <h3>Which iOS versions are supported?</h3>
+    <p>Focus Blocks requires iOS 18 or later.</p>
+
+    <h2>Still stuck?</h2>
+    <p>Email <a href="mailto:support@nemi.love">support@nemi.love</a>. We read everything and reply as soon as we can.</p>
+  </main>
+
+  <footer class="footer">
+    <span>&copy; 2026 nemi.love</span>
+    <span><a href="/">Home</a> · <a href="/privacy/">Privacy</a> · <a href="mailto:support@nemi.love">support@nemi.love</a></span>
+  </footer>
+</div>
 </body>
 </html>
