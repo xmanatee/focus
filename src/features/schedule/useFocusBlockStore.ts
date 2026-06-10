@@ -5,6 +5,11 @@ import { clearSlot } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
 import { assertAdminUnlocked } from '../settings/adminState';
 import { useSettingsStore } from '../settings/useSettingsStore';
+import {
+  enabledDeviceIdsAfterToggle,
+  normalizeEnabledDeviceIds,
+} from './deviceActivation';
+import { focusBlockRunnableOnDevice } from './deviceRuntime';
 import { getFocusBlockRuntimeStatus } from './runtimeStatus';
 import type {
   FocusBlock,
@@ -17,15 +22,24 @@ import { validateFocusBlockInput } from './validation';
 interface FocusBlockState {
   readonly focusBlocks: readonly FocusBlock[];
   readonly addFocusBlock: (id: string, input: FocusBlockInput) => void;
-  readonly updateFocusBlock: (id: string, input: FocusBlockInput) => void;
-  readonly toggleFocusBlock: (id: string, isEnabled: boolean) => void;
-  readonly deleteFocusBlock: (id: string) => void;
+  readonly updateFocusBlock: (
+    id: string,
+    input: FocusBlockInput,
+    deviceId: string,
+  ) => void;
+  readonly toggleFocusBlock: (
+    id: string,
+    deviceId: string,
+    isEnabled: boolean,
+  ) => void;
+  readonly deleteFocusBlock: (id: string, deviceId: string) => void;
   readonly clearAllStrict: () => void;
 }
 
-function assertEditable(block: FocusBlock): void {
+function assertEditable(block: FocusBlock, deviceId: string): void {
   const now = new Date();
-  if (getFocusBlockRuntimeStatus(block, now).kind === 'active') {
+  const blockOnThisDevice = focusBlockRunnableOnDevice(block, deviceId);
+  if (getFocusBlockRuntimeStatus(blockOnThisDevice, now).kind === 'active') {
     throw new Error('Cannot change a block while it is active.');
   }
   assertAdminUnlocked(useSettingsStore.getState().setupBlock, now);
@@ -33,7 +47,11 @@ function assertEditable(block: FocusBlock): void {
 
 function normalizeInput(input: FocusBlockInput): FocusBlockInput {
   const setupBlock = useSettingsStore.getState().setupBlock;
-  return setupBlock === null ? input : { ...input, strict: false };
+  const normalized = {
+    ...input,
+    enabledDeviceIds: normalizeEnabledDeviceIds(input.enabledDeviceIds),
+  };
+  return setupBlock === null ? normalized : { ...normalized, strict: false };
 }
 
 interface PersistedFocusBlock {
@@ -43,6 +61,7 @@ interface PersistedFocusBlock {
   readonly endTime: string;
   readonly days: FocusBlock['days'];
   readonly isEnabled: boolean;
+  readonly enabledDeviceIds?: FocusBlock['enabledDeviceIds'];
   readonly scope?: FocusBlockScope;
   readonly rule?: FocusBlockRule;
   readonly selection: FocusBlock['selection'];
@@ -54,6 +73,7 @@ interface PersistedFocusBlock {
 function normalizePersistedBlock(block: PersistedFocusBlock): FocusBlock {
   return {
     ...block,
+    enabledDeviceIds: normalizeEnabledDeviceIds(block.enabledDeviceIds ?? []),
     scope: block.scope ?? { kind: 'allDevices' },
     rule: block.rule ?? { kind: 'blockDuringSchedule' },
   };
@@ -85,14 +105,14 @@ export const useFocusBlockStore = create<FocusBlockState>()(
         }));
       },
 
-      updateFocusBlock: (id, input) => {
+      updateFocusBlock: (id, input, deviceId) => {
         const normalized = normalizeInput(input);
         validateFocusBlockInput(normalized);
         const existing = get().focusBlocks.find((b) => b.id === id);
         if (!existing) {
           throw new Error('Focus block not found.');
         }
-        assertEditable(existing);
+        assertEditable(existing, deviceId);
         set((state) => ({
           focusBlocks: state.focusBlocks.map((b) =>
             b.id === id
@@ -102,23 +122,33 @@ export const useFocusBlockStore = create<FocusBlockState>()(
         }));
       },
 
-      toggleFocusBlock: (id, isEnabled) => {
+      toggleFocusBlock: (id, deviceId, isEnabled) => {
         const existing = get().focusBlocks.find((b) => b.id === id);
         if (!existing) {
           throw new Error('Focus block not found.');
         }
-        assertEditable(existing);
+        assertEditable(existing, deviceId);
         set((state) => ({
           focusBlocks: state.focusBlocks.map((b) =>
-            b.id === id ? { ...b, isEnabled } : b,
+            b.id === id
+              ? {
+                  ...b,
+                  isEnabled: isEnabled ? true : b.isEnabled,
+                  enabledDeviceIds: enabledDeviceIdsAfterToggle(
+                    b.enabledDeviceIds,
+                    deviceId,
+                    isEnabled,
+                  ),
+                }
+              : b,
           ),
         }));
       },
 
-      deleteFocusBlock: (id) => {
+      deleteFocusBlock: (id, deviceId) => {
         const existing = get().focusBlocks.find((b) => b.id === id);
         if (existing) {
-          assertEditable(existing);
+          assertEditable(existing, deviceId);
         }
         clearSlot(selectionIdForBlock(id));
         set((state) => ({
@@ -137,7 +167,7 @@ export const useFocusBlockStore = create<FocusBlockState>()(
     {
       name: 'focusblocks.focus-blocks',
       storage: persistedStorage,
-      version: 1,
+      version: 2,
       migrate: migratePersistedState,
     },
   ),

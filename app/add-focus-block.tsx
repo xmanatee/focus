@@ -6,6 +6,7 @@ import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
 import { EMPTY_BLOCK_SELECTION } from '../src/features/blocker/types';
 import { getLocalDeviceId } from '../src/features/device/deviceId';
+import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
 import { DeviceScopeCard } from '../src/features/schedule/components/DeviceScopeCard';
@@ -14,6 +15,7 @@ import { NotificationsCard } from '../src/features/schedule/components/Notificat
 import { PresetRow } from '../src/features/schedule/components/PresetRow';
 import { RuleCard } from '../src/features/schedule/components/RuleCard';
 import { StrictModeCard } from '../src/features/schedule/components/StrictModeCard';
+import { focusBlockRunnableOnDevice } from '../src/features/schedule/deviceRuntime';
 import { resolveEditPolicy } from '../src/features/schedule/editPolicy';
 import { activitySelectionNeedsLocalSlot } from '../src/features/schedule/localActivitySelection';
 import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
@@ -49,10 +51,13 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const { state: adminState, now } = useAdminState();
   const setupBlock = useSettingsStore((s) => s.setupBlock);
   const tamperReady = useProtectionPosture().score === 'full';
+  const deviceId = useLocalDeviceId();
+  const existingOnThisDevice =
+    existing === null ? null : focusBlockRunnableOnDevice(existing, deviceId);
 
   const policy = resolveEditPolicy(
     adminState,
-    isEditing ? existing : null,
+    isEditing ? existingOnThisDevice : null,
     now,
   );
   const readOnly = policy.readOnly;
@@ -76,17 +81,18 @@ export default function AddFocusBlockScreen(): JSX.Element {
     editId,
     newBlockId: blockId,
     buildInput: async () => {
-      const deviceId = await getLocalDeviceId();
+      const localDeviceId = deviceId ?? (await getLocalDeviceId());
       return {
         name: form.name,
         startTime: form.startTime,
         endTime: form.endTime,
         days: form.selectedDays,
         isEnabled: existing?.isEnabled ?? true,
+        enabledDeviceIds: existing?.enabledDeviceIds ?? [localDeviceId],
         scope:
           form.scopeChoice === 'allDevices'
             ? { kind: 'allDevices' }
-            : { kind: 'device', deviceId },
+            : { kind: 'device', deviceId: localDeviceId },
         rule: form.rule,
         selection: {
           activitySelection: selection.activitySelection,

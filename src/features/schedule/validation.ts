@@ -23,6 +23,9 @@ export function validateFocusBlockInput(input: FocusBlockInput): void {
   if (input.selection.webDomains.length > MAX_WEB_DOMAINS) {
     throw new Error('iOS can filter up to 50 websites per block.');
   }
+  if (input.enabledDeviceIds.some((id) => id.trim().length === 0)) {
+    throw new Error('Enabled device ids cannot be empty.');
+  }
   const usesDailyBudget =
     input.rule.kind === 'dailyBudget' ||
     input.rule.kind === 'allowDuringScheduleWithBudget';

@@ -27,9 +27,9 @@ export function activitySelectionHasLocalSlot(
 }
 
 export function focusBlockNeedsLocalSelection(block: FocusBlock): boolean {
-  return (
-    block.isEnabled &&
-    activitySelectionNeedsLocalSlot(block.id, block.selection.activitySelection)
+  return activitySelectionNeedsLocalSlot(
+    block.id,
+    block.selection.activitySelection,
   );
 }
 

@@ -9,6 +9,7 @@ import type { FocusBlock } from '../types';
 
 interface FocusBlockRowProps {
   readonly block: FocusBlock;
+  readonly isEnabled: boolean;
   readonly isActive: boolean;
   readonly needsDeviceSelection: boolean;
   readonly toggleDisabled: boolean;
@@ -18,6 +19,7 @@ interface FocusBlockRowProps {
 
 export function FocusBlockRow({
   block,
+  isEnabled,
   isActive,
   needsDeviceSelection,
   toggleDisabled,
@@ -92,7 +94,7 @@ export function FocusBlockRow({
           </View>
         </Pressable>
         <Switch
-          value={block.isEnabled}
+          value={isEnabled}
           onValueChange={onToggle}
           disabled={toggleDisabled}
           trackColor={{ true: colors.signal, false: colors.divider }}

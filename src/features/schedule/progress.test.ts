@@ -10,6 +10,7 @@ function block(overrides: Partial<FocusBlock> = {}): FocusBlock {
     endTime: '10:00',
     days: ['mon', 'tue', 'wed'],
     isEnabled: true,
+    enabledDeviceIds: ['device-a'],
     scope: { kind: 'allDevices' },
     rule: { kind: 'blockDuringSchedule' },
     selection: {

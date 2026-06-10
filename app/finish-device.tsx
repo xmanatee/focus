@@ -68,7 +68,7 @@ export default function FinishDeviceScreen(): JSX.Element {
   );
   const missingBlocks = applicableBlocks.filter(focusBlockNeedsLocalSelection);
   const readyBlocks = applicableBlocks.filter(
-    (block) => block.isEnabled && !focusBlockNeedsLocalSelection(block),
+    (block) => !focusBlockNeedsLocalSelection(block),
   );
 
   const editBlock = (block: FocusBlock): void => {
@@ -120,8 +120,8 @@ export default function FinishDeviceScreen(): JSX.Element {
                   This device is ready
                 </Typography>
                 <Typography variant="body" tone="muted">
-                  Every enabled block for this device has the local selection
-                  data it needs.
+                  Every synced block for this device has the local selection
+                  data it needs before you turn it on here.
                 </Typography>
               </View>
             </View>

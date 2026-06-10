@@ -11,6 +11,7 @@ function baseInput(overrides: Partial<FocusBlockInput> = {}): FocusBlockInput {
     endTime: '17:00',
     days: weekdays,
     isEnabled: true,
+    enabledDeviceIds: ['device-a'],
     scope: { kind: 'allDevices' },
     rule: { kind: 'blockDuringSchedule' },
     selection: EMPTY_BLOCK_SELECTION,

@@ -32,6 +32,7 @@ export interface FocusBlock {
   readonly endTime: string;
   readonly days: readonly DayOfWeek[];
   readonly isEnabled: boolean;
+  readonly enabledDeviceIds: readonly string[];
   readonly scope: FocusBlockScope;
   readonly rule: FocusBlockRule;
   readonly selection: BlockSelection;
@@ -46,6 +47,7 @@ export interface FocusBlockInput {
   readonly endTime: string;
   readonly days: readonly DayOfWeek[];
   readonly isEnabled: boolean;
+  readonly enabledDeviceIds: readonly string[];
   readonly scope: FocusBlockScope;
   readonly rule: FocusBlockRule;
   readonly selection: BlockSelection;

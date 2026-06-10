@@ -5,6 +5,7 @@ import { SetupVerificationCard } from '../src/features/diagnostics/components/Se
 import { evaluateSetupVerification } from '../src/features/diagnostics/diagnostics';
 import { useDiagnosticsSnapshot } from '../src/features/diagnostics/useDiagnosticsSnapshot';
 import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
+import { focusBlockWithDeviceEnabledState } from '../src/features/schedule/deviceActivation';
 import { focusBlocksForDevice } from '../src/features/schedule/deviceScope';
 import { focusBlockSelectionReadyInSlots } from '../src/features/schedule/localActivitySelection';
 import { getFocusBlockRuntimeStatus } from '../src/features/schedule/runtimeStatus';
@@ -36,9 +37,14 @@ function ruleLabel(block: FocusBlock): string {
   }
 }
 
-function statusLabel(block: FocusBlock, now: Date): string {
+function statusLabel(
+  block: FocusBlock,
+  now: Date,
+  selectionReady: boolean,
+): string {
+  if (!selectionReady) return 'Needs app selection on this device';
   const status = getFocusBlockRuntimeStatus(block, now);
-  if (!block.isEnabled) return 'Disabled';
+  if (!block.isEnabled) return 'Off on this device';
   if (status.kind !== 'active') return 'Not active now';
   if (status.reason === 'outsideSchedule') return 'Blocking outside window';
   if (status.reason === 'budget') return 'Budget used';
@@ -65,7 +71,7 @@ function RuleDiagnosticRow({
             {ruleLabel(block)}
           </Typography>
           <Typography variant="caption" tone="muted">
-            {statusLabel(block, now)}
+            {statusLabel(block, now, selectionReady)}
           </Typography>
         </View>
         <View className="items-end gap-1">
@@ -164,16 +170,18 @@ export default function DiagnosticsScreen(): JSX.Element {
             </Card>
           ) : (
             applicableBlocks.map((block) => {
-              const selectionReady =
-                !block.isEnabled ||
-                focusBlockSelectionReadyInSlots(
-                  block,
-                  snapshot.populatedSelectionSlots,
-                );
+              const blockOnThisDevice = focusBlockWithDeviceEnabledState(
+                block,
+                snapshot.deviceId,
+              );
+              const selectionReady = focusBlockSelectionReadyInSlots(
+                block,
+                snapshot.populatedSelectionSlots,
+              );
               return (
                 <RuleDiagnosticRow
                   key={block.id}
-                  block={block}
+                  block={blockOnThisDevice}
                   now={now}
                   selectionReady={selectionReady}
                 />

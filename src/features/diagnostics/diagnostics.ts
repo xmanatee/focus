@@ -1,5 +1,9 @@
 import type { AuthorizationStatus } from '../../bridge/BlockerBridge';
 import type { ProtectionPosture } from '../protection/types';
+import {
+  focusBlockIsEnabledOnDevice,
+  focusBlockWithDeviceEnabledState,
+} from '../schedule/deviceActivation';
 import { focusBlocksForDevice } from '../schedule/deviceScope';
 import { focusBlockSelectionReadyInSlots } from '../schedule/localActivitySelection';
 import { getFocusBlockRuntimeStatus } from '../schedule/runtimeStatus';
@@ -96,11 +100,20 @@ export function evaluateSetupVerification(
   input: DiagnosticsInput,
 ): SetupVerification {
   const applicable = focusBlocksForDevice(input.focusBlocks, input.deviceId);
-  const enabled = applicable.filter((block) => block.isEnabled);
-  const missingDeviceSelectionCount = enabled.filter(
+  const missingDeviceSelectionCount = applicable.filter(
     (block) =>
       !focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
   ).length;
+  const runnable = applicable.map((block) => {
+    const blockOnThisDevice = focusBlockWithDeviceEnabledState(
+      block,
+      input.deviceId,
+    );
+    return focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots)
+      ? blockOnThisDevice
+      : { ...blockOnThisDevice, isEnabled: false };
+  });
+  const enabled = runnable.filter((block) => block.isEnabled);
   const activeBlockCount = enabled.filter(
     (block) => getFocusBlockRuntimeStatus(block, input.now).kind === 'active',
   ).length;
@@ -203,11 +216,23 @@ export function buildDiagnosticsReport(input: DiagnosticsInput): string {
 
   input.focusBlocks.forEach((block, index) => {
     const activity = block.selection.activitySelection;
-    const runtime = getFocusBlockRuntimeStatus(block, input.now);
+    const selectionReady = focusBlockSelectionReadyInSlots(
+      block,
+      input.populatedSelectionSlots,
+    );
+    const blockOnThisDevice = focusBlockWithDeviceEnabledState(
+      block,
+      input.deviceId,
+    );
+    const runnableBlock = selectionReady
+      ? blockOnThisDevice
+      : { ...blockOnThisDevice, isEnabled: false };
+    const runtime = getFocusBlockRuntimeStatus(runnableBlock, input.now);
     lines.push(
       [
         `Block ${index + 1}:`,
-        `enabled=${block.isEnabled}`,
+        `enabledHere=${runnableBlock.isEnabled}`,
+        `armedHere=${focusBlockIsEnabledOnDevice(block, input.deviceId)}`,
         `scope=${safeScope(block, input.deviceId)}`,
         `rule=${block.rule.kind}`,
         `days=${block.days.length}`,
@@ -217,10 +242,7 @@ export function buildDiagnosticsReport(input: DiagnosticsInput): string {
           activity.status === 'saved' ? activity.categoryCount : 0
         }`,
         `webDomains=${block.selection.webDomains.length}`,
-        `deviceSelection=${focusBlockSelectionReadyInSlots(
-          block,
-          input.populatedSelectionSlots,
-        )}`,
+        `deviceSelection=${selectionReady}`,
         `runtime=${runtime.kind}`,
       ].join(' '),
     );

@@ -6,6 +6,7 @@ import {
 } from '../../shared/hooks/useAsyncAction';
 import { requestNotificationPermissions } from '../../shared/notifications';
 import { selectionHasBlockedTargets } from '../blocker/types';
+import { getLocalDeviceId } from '../device/deviceId';
 import { inputUsesBudgetWarning } from './budget';
 import { activitySelectionNeedsLocalSlot } from './localActivitySelection';
 import type { FocusBlockInput } from './types';
@@ -67,7 +68,8 @@ export function useFocusBlockSave({
         await requestNotificationPermissions();
       }
       void haptic.commit();
-      if (editId) updateFocusBlock(editId, input);
+      const deviceId = await getLocalDeviceId();
+      if (editId) updateFocusBlock(editId, input, deviceId);
       else addFocusBlock(newBlockId, input);
       markSelectionSaved();
     }, 'Could not save block.');
@@ -85,10 +87,14 @@ export function useFocusBlockSave({
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            void haptic.abandon();
-            markSelectionSaved();
-            deleteFocusBlock(editId);
-            dismiss();
+            void run(async () => {
+              void haptic.abandon();
+              const deviceId = await getLocalDeviceId();
+              deleteFocusBlock(editId, deviceId);
+              markSelectionSaved();
+            }, 'Could not delete block.').then((success) => {
+              if (success) dismiss();
+            });
           },
         },
       ],

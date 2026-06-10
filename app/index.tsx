@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView } from 'react-native';
 import { ScreenTimeAccessCard } from '../src/features/blocker/components/ScreenTimeAccessCard';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
@@ -13,25 +13,21 @@ import { useQuickStartStore } from '../src/features/onboarding/useQuickStartStor
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { ReviewPromptCard } from '../src/features/reviews/ReviewPromptCard';
 import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSessionCard';
-import { FocusBlockRow } from '../src/features/schedule/components/FocusBlockRow';
+import { FocusBlockListSection } from '../src/features/schedule/components/FocusBlockListSection';
 import { ProgressCard } from '../src/features/schedule/components/ProgressCard';
+import { focusBlocksRunnableOnDevice } from '../src/features/schedule/deviceRuntime';
 import { focusBlocksForDevice } from '../src/features/schedule/deviceScope';
 import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
 import { buildFocusProgress } from '../src/features/schedule/progress';
-import { getFocusBlockRuntimeStatus } from '../src/features/schedule/runtimeStatus';
 import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
 import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { LockInSettingsCard } from '../src/features/settings/components/LockInSettingsCard';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
-import { Button } from '../src/shared/components/Button';
-import { Card } from '../src/shared/components/Card';
-import { Icon } from '../src/shared/components/Icon';
 import { ProtectionStatusCard } from '../src/shared/components/ProtectionStatusCard';
 import { Screen } from '../src/shared/components/Screen';
 import { Section } from '../src/shared/components/Section';
-import { Typography } from '../src/shared/components/Typography';
 import { haptic } from '../src/shared/design/haptics';
 
 export default function MainFeedScreen(): JSX.Element {
@@ -49,12 +45,17 @@ export default function MainFeedScreen(): JSX.Element {
     () => focusBlocksForDevice(focusBlocks, deviceId),
     [focusBlocks, deviceId],
   );
-  const blocksNeedingDeviceSelection = useMemo(
+  const missingDeviceSelectionCount = useMemo(
     () =>
-      applicableBlocks.filter((block) => focusBlockNeedsLocalSelection(block)),
+      applicableBlocks.filter((block) => focusBlockNeedsLocalSelection(block))
+        .length,
     [applicableBlocks],
   );
-  const { active, activeBlocks, now } = useActiveBlock(applicableBlocks);
+  const runnableBlocks = useMemo(
+    () => focusBlocksRunnableOnDevice(applicableBlocks, deviceId),
+    [applicableBlocks, deviceId],
+  );
+  const { active, activeBlocks, now } = useActiveBlock(runnableBlocks);
 
   const { state: adminState } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
@@ -73,15 +74,15 @@ export default function MainFeedScreen(): JSX.Element {
     authorizationStatus,
     blockCount: applicableBlocks.length,
     hasCompletedQuickStart,
-    missingDeviceSelectionCount: blocksNeedingDeviceSelection.length,
+    missingDeviceSelectionCount,
   });
   const quickStartVisiblePhase =
     quickStartPhase === 'complete' ? null : quickStartPhase;
 
   useEffect(() => {
     if (!hasPermissions || deviceId === null) return;
-    void reconcileFocusBlocks(applicableBlocks, setupBlock);
-  }, [applicableBlocks, setupBlock, hasPermissions, deviceId]);
+    void reconcileFocusBlocks(runnableBlocks, setupBlock);
+  }, [runnableBlocks, setupBlock, hasPermissions, deviceId]);
 
   const handleGrant = async (): Promise<void> => {
     void haptic.commit();
@@ -89,8 +90,9 @@ export default function MainFeedScreen(): JSX.Element {
   };
 
   const handleToggle = (blockId: string, nextIsEnabled: boolean): void => {
+    if (deviceId === null) return;
     void haptic.select();
-    toggleFocusBlock(blockId, nextIsEnabled);
+    toggleFocusBlock(blockId, deviceId, nextIsEnabled);
   };
 
   const handleQuickStartPrimary = (): void => {
@@ -117,8 +119,8 @@ export default function MainFeedScreen(): JSX.Element {
   };
 
   const progress = useMemo(
-    () => buildFocusProgress(applicableBlocks, now),
-    [applicableBlocks, now],
+    () => buildFocusProgress(runnableBlocks, now),
+    [runnableBlocks, now],
   );
 
   return (
@@ -197,89 +199,26 @@ export default function MainFeedScreen(): JSX.Element {
           />
         </Section>
 
-        <Section
-          title="Focus Blocks"
-          action={
-            <Pressable
-              onPress={() => {
-                void haptic.select();
-                router.push('/add-focus-block');
-              }}
-              className="h-10 w-10 items-center justify-center rounded-full bg-signal"
-            >
-              <Icon name="plus" size={20} tone="surface" />
-            </Pressable>
-          }
-        >
-          {applicableBlocks.length === 0 ? (
-            <Card tone="dashed" className="py-10 items-center">
-              <Icon name="sparkles" size={24} tone="signal" />
-              <Typography variant="h3" tone="ink" align="center">
-                Start with a template.
-              </Typography>
-              <Typography variant="body" tone="muted" align="center">
-                Deep Work, Study Focus, Social Budget, and YouTube Limit are
-                ready on the next screen.
-              </Typography>
-              <Button
-                title="Add a block"
-                variant="commit"
-                onPress={() => router.push('/add-focus-block')}
-              />
-            </Card>
-          ) : (
-            <>
-              {blocksNeedingDeviceSelection.length > 0 && (
-                <Card tone="signal">
-                  <View className="flex-row items-center gap-2">
-                    <Icon
-                      name="iphone.gen3.radiowaves.left.and.right"
-                      size={22}
-                      tone="signal"
-                    />
-                    <Typography variant="h3" tone="signal">
-                      Confirm apps on this device
-                    </Typography>
-                  </View>
-                  <Typography variant="body" tone="ink">
-                    iCloud synced the rules, but iOS app selections are private
-                    to each device. Open each block marked "Pick apps here" and
-                    choose the apps for this iPhone.
-                  </Typography>
-                  <Button
-                    title="Finish this device"
-                    variant="commit"
-                    onPress={() => handleSetupAction('finishDeviceSetup')}
-                  />
-                </Card>
-              )}
-              {applicableBlocks.map((block) => {
-                const status = getFocusBlockRuntimeStatus(block, now);
-                const isActive = status.kind === 'active';
-                const needsDeviceSelection = blocksNeedingDeviceSelection.some(
-                  (item) => item.id === block.id,
-                );
-                return (
-                  <FocusBlockRow
-                    key={block.id}
-                    block={block}
-                    isActive={isActive}
-                    needsDeviceSelection={needsDeviceSelection}
-                    toggleDisabled={isActive || isAdminLocked}
-                    onPress={() => {
-                      void haptic.select();
-                      router.push({
-                        pathname: '/add-focus-block',
-                        params: { id: block.id },
-                      });
-                    }}
-                    onToggle={(next) => handleToggle(block.id, next)}
-                  />
-                );
-              })}
-            </>
-          )}
-        </Section>
+        <FocusBlockListSection
+          applicableBlocks={applicableBlocks}
+          deviceId={deviceId}
+          isAdminLocked={isAdminLocked}
+          missingDeviceSelectionCount={missingDeviceSelectionCount}
+          now={now}
+          onAdd={() => {
+            void haptic.select();
+            router.push('/add-focus-block');
+          }}
+          onEdit={(blockId) => {
+            void haptic.select();
+            router.push({
+              pathname: '/add-focus-block',
+              params: { id: blockId },
+            });
+          }}
+          onFinishDeviceSetup={() => handleSetupAction('finishDeviceSetup')}
+          onToggle={handleToggle}
+        />
       </ScrollView>
     </Screen>
   );

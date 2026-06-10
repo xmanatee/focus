@@ -34,9 +34,6 @@ export const useTamperSetupStore = create<TamperSetupState>()(
       },
     }),
     {
-      // v2 schema: `{ acks: Record<DefenseId, Ack> }`. Renaming the key
-      // strands any v1 (`{ passcode, deleteLock, installLock, completedAt }`)
-      // payloads in iCloud rather than carrying a translation shim.
       name: 'focusblocks.protection.tamper-setup.v2',
       storage: persistedStorage,
     },

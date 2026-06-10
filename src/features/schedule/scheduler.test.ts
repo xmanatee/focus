@@ -16,6 +16,7 @@ function block(overrides: Partial<FocusBlock>): FocusBlock {
     endTime: '17:00',
     days: ['mon'],
     isEnabled: true,
+    enabledDeviceIds: ['device-a'],
     selection: {
       activitySelection: {
         status: 'saved',

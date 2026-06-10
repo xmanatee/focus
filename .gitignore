@@ -1,4 +1,5 @@
 .claude/
+.playwright-mcp/
 
 # Dependencies
 node_modules/

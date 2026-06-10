@@ -60,7 +60,11 @@ describe('useFocusBlockStore', () => {
       expect(() =>
         useFocusBlockStore
           .getState()
-          .updateFocusBlock('id-1', focusBlockInput({ name: 'Renamed' })),
+          .updateFocusBlock(
+            'id-1',
+            focusBlockInput({ name: 'Renamed' }),
+            'device-a',
+          ),
       ).toThrow(/lock-in/i);
     });
 
@@ -71,7 +75,11 @@ describe('useFocusBlockStore', () => {
       expect(() =>
         useFocusBlockStore
           .getState()
-          .updateFocusBlock('id-1', focusBlockInput({ name: 'Renamed' })),
+          .updateFocusBlock(
+            'id-1',
+            focusBlockInput({ name: 'Renamed' }),
+            'device-a',
+          ),
       ).toThrow(/while it is active/i);
     });
 
@@ -79,7 +87,32 @@ describe('useFocusBlockStore', () => {
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
       useFocusBlockStore
         .getState()
-        .updateFocusBlock('id-1', focusBlockInput({ name: 'Renamed' }));
+        .updateFocusBlock(
+          'id-1',
+          focusBlockInput({ name: 'Renamed' }),
+          'device-a',
+        );
+      expect(useFocusBlockStore.getState().focusBlocks[0].name).toBe('Renamed');
+    });
+
+    it('allows update during the scheduled window when this device is not armed', () => {
+      vi.setSystemTime(new Date('2026-04-27T12:00:00'));
+      useFocusBlockStore.getState().addFocusBlock(
+        'id-1',
+        focusBlockInput({
+          enabledDeviceIds: ['other-device'],
+        }),
+      );
+
+      useFocusBlockStore.getState().updateFocusBlock(
+        'id-1',
+        focusBlockInput({
+          name: 'Renamed',
+          enabledDeviceIds: ['other-device'],
+        }),
+        'this-device',
+      );
+
       expect(useFocusBlockStore.getState().focusBlocks[0].name).toBe('Renamed');
     });
   });
@@ -89,16 +122,35 @@ describe('useFocusBlockStore', () => {
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
       useSettingsStore.setState({ setupBlock: SUNDAY_SETUP_BLOCK });
       expect(() =>
-        useFocusBlockStore.getState().toggleFocusBlock('id-1', false),
+        useFocusBlockStore
+          .getState()
+          .toggleFocusBlock('id-1', 'device-a', false),
       ).toThrow(/lock-in/i);
     });
 
-    it('allows toggle when unlocked', () => {
-      useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
-      useFocusBlockStore.getState().toggleFocusBlock('id-1', false);
-      expect(useFocusBlockStore.getState().focusBlocks[0].isEnabled).toBe(
-        false,
+    it('toggles only the current device activation', () => {
+      useFocusBlockStore.getState().addFocusBlock(
+        'id-1',
+        focusBlockInput({
+          enabledDeviceIds: ['other-device'],
+        }),
       );
+
+      useFocusBlockStore
+        .getState()
+        .toggleFocusBlock('id-1', 'this-device', true);
+
+      expect(
+        useFocusBlockStore.getState().focusBlocks[0].enabledDeviceIds,
+      ).toEqual(['other-device', 'this-device']);
+
+      useFocusBlockStore
+        .getState()
+        .toggleFocusBlock('id-1', 'this-device', false);
+
+      expect(
+        useFocusBlockStore.getState().focusBlocks[0].enabledDeviceIds,
+      ).toEqual(['other-device']);
     });
   });
 
@@ -107,13 +159,13 @@ describe('useFocusBlockStore', () => {
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
       useSettingsStore.setState({ setupBlock: SUNDAY_SETUP_BLOCK });
       expect(() =>
-        useFocusBlockStore.getState().deleteFocusBlock('id-1'),
+        useFocusBlockStore.getState().deleteFocusBlock('id-1', 'device-a'),
       ).toThrow(/lock-in/i);
     });
 
     it('allows delete when unlocked', () => {
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
-      useFocusBlockStore.getState().deleteFocusBlock('id-1');
+      useFocusBlockStore.getState().deleteFocusBlock('id-1', 'device-a');
       expect(useFocusBlockStore.getState().focusBlocks).toHaveLength(0);
     });
   });
