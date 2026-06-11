@@ -2,7 +2,8 @@ import { spawn } from 'node:child_process';
 
 const METADATA_UPLOAD_ERROR_PATTERNS = [
   /Store configuration upload encountered \d+ errors?\b/i,
-  /\bFailed (creating|updating|deleting)\b/i,
+  /Store configuration upload encountered an error\b/i,
+  /\bFailed (creating|updating|deleting|uploading)\b/i,
 ];
 const ANSI_ESCAPE_PATTERN = new RegExp(
   `${String.fromCharCode(27)}\\[[0-?]*[ -/]*[@-~]`,

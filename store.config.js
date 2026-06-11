@@ -14,7 +14,7 @@ const screenshotPaths = (size) =>
   );
 
 const screenshots = {
-  APP_IPHONE_67: screenshotPaths('6.7'),
+  APP_IPHONE_67: screenshotPaths('6.9'),
   APP_IPHONE_65: screenshotPaths('6.5'),
   APP_IPAD_PRO_3GEN_129: screenshotPaths('iPad-13'),
   APP_IPAD_PRO_129: screenshotPaths('iPad-12.9'),

@@ -16,11 +16,31 @@ describe('metadataPushOutputHasUploadErrors', () => {
     expect(metadataPushOutputHasUploadErrors(output)).toBe(true);
   });
 
+  test('detects a singular EAS metadata upload error', () => {
+    const output = `
+      Store configuration upload encountered an error.
+
+      Error processing screenshot '01.png'. IMAGE_INCORRECT_DIMENSIONS
+    `;
+
+    expect(metadataPushOutputHasUploadErrors(output)).toBe(true);
+  });
+
   test('detects failed App Store resource operations', () => {
     const output = `
       - Creating localized version for en-US...
       Failed creating localized version for en-US
       - Updating app categories...
+    `;
+
+    expect(metadataPushOutputHasUploadErrors(output)).toBe(true);
+  });
+
+  test('detects failed screenshot uploads', () => {
+    const output = `
+      - Uploading screenshot 01.png (en-GB)...
+      Failed uploading screenshot 01.png (en-GB)
+      - Skipped app clip, not configured
     `;
 
     expect(metadataPushOutputHasUploadErrors(output)).toBe(true);
