@@ -41,6 +41,18 @@ export function buildIndexNowPayload({ host, key, keyLocation, urls }) {
   };
 }
 
+export function parseSubmitIndexNowArgs(argv) {
+  const unknown = argv.filter((arg) => arg !== '--dry-run');
+
+  if (unknown.length > 0) {
+    throw new Error(`Unknown argument: ${unknown[0]}`);
+  }
+
+  return {
+    dryRun: argv.includes('--dry-run'),
+  };
+}
+
 async function fetchText(fetchImpl, url, label) {
   const response = await fetchImpl(url);
 
@@ -92,6 +104,7 @@ async function verifyKeyFile({
 }
 
 export async function submitIndexNow({
+  dryRun = false,
   fetchImpl = globalThis.fetch,
   host,
   key,
@@ -116,6 +129,14 @@ export async function submitIndexNow({
     urls: parseSitemapUrls(sitemapXml),
   });
 
+  if (dryRun) {
+    return {
+      dryRun: true,
+      status: null,
+      submitted: payload.urlList.length,
+    };
+  }
+
   const response = await fetchImpl(INDEXNOW_ENDPOINT, {
     body: JSON.stringify(payload),
     headers: {
@@ -130,20 +151,27 @@ export async function submitIndexNow({
   }
 
   return {
+    dryRun: false,
     status: response.status,
     submitted: payload.urlList.length,
   };
 }
 
 async function main() {
+  const { dryRun } = parseSubmitIndexNowArgs(process.argv.slice(2));
   const result = await submitIndexNow({
+    dryRun,
     host: HOST,
     key: INDEXNOW_KEY,
     keyLocation: KEY_LOCATION,
     sitemapUrl: SITEMAP_URL,
   });
 
-  console.log(`Submitted ${result.submitted} URL(s) to IndexNow.`);
+  if (result.dryRun) {
+    console.log(`Dry run: ${result.submitted} URL(s) ready for IndexNow.`);
+  } else {
+    console.log(`Submitted ${result.submitted} URL(s) to IndexNow.`);
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
