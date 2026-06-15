@@ -28,6 +28,8 @@ export function FocusBlockRow({
 }: FocusBlockRowProps): JSX.Element {
   const colors = useThemeColors();
   const { selection } = block;
+  const showsActivitySelectionSummary =
+    selection.activitySelection.status === 'saved' && !needsDeviceSelection;
 
   return (
     <Card>
@@ -70,10 +72,10 @@ export function FocusBlockRow({
             {needsDeviceSelection && (
               <SelectionPill
                 icon="exclamationmark.triangle.fill"
-                label="Needs apps here"
+                label="Pick apps here"
               />
             )}
-            {selection.activitySelection.status === 'saved' && (
+            {showsActivitySelectionSummary && (
               <SelectionPill
                 icon="square.grid.2x2.fill"
                 label={summarizeActivitySelection(selection.activitySelection)}

@@ -61,4 +61,39 @@ describe('FocusBlockRow', () => {
 
     expect(collectText(tree.root)).toContain('Mon · 22:00–06:00 next day');
   });
+
+  it('hides synced app counts until this device selection is finished', () => {
+    const block = {
+      id: 'needs-local-selection',
+      ...focusBlockInput({
+        selection: {
+          activitySelection: {
+            status: 'saved',
+            applicationCount: 36,
+            categoryCount: 1,
+            webDomainCount: 4,
+            includeEntireCategory: false,
+          },
+          webDomains: ['youtube.com'],
+        },
+      }),
+    };
+
+    const tree = TestRenderer.create(
+      React.createElement(FocusBlockRow, {
+        block,
+        isEnabled: true,
+        isActive: false,
+        needsDeviceSelection: true,
+        toggleDisabled: false,
+        onPress: vi.fn(),
+        onToggle: vi.fn(),
+      }),
+    );
+
+    const text = collectText(tree.root);
+    expect(text).toContain('Pick apps here');
+    expect(text).toContain('1 site');
+    expect(text).not.toContain('36 apps, 1 category, 4 domains');
+  });
 });
