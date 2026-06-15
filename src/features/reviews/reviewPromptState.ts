@@ -1,6 +1,6 @@
 import type { SetupVerification } from '../diagnostics/diagnostics';
 
-export const REVIEW_PROMPT_SNOOZE_MS = 21 * 24 * 60 * 60 * 1000;
+const REVIEW_PROMPT_SNOOZE_MS = 21 * 24 * 60 * 60 * 1000;
 
 export type ReviewPromptState =
   | { readonly kind: 'eligible' }
