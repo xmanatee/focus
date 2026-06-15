@@ -86,6 +86,7 @@
 }
 .faq summary::marker { color: var(--signal-strong); }
 .faq p { margin-top: 10px; }
+.faq + .doc-card { margin-top: 20px; }
 
 @media (max-width: 860px) {
   .hero,

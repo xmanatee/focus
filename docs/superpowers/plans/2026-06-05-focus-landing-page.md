@@ -63,7 +63,7 @@ Use `assets/icon.png` for brand preview and optimized WebP previews generated fr
 Link the primary CTA to:
 
 ```text
-https://apps.apple.com/app/focus-blocks-apps-blocker/id6763754394
+https://apps.apple.com/us/app/focus-blocks-app-blocker/id6763754394
 ```
 
 Use a text/button CTA rather than an unofficial App Store badge asset.

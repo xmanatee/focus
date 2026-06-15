@@ -24,29 +24,28 @@ const supportUrl = 'https://focus.nemi.love/support/';
 const privacyPolicyUrl = 'https://focus.nemi.love/privacy/';
 
 const englishDescription =
-  "Focus Blocks is the simplest way to put distracting apps out of reach during the time you set aside to focus.\n\nChoose the apps. Choose the rule. Block during focus hours, allow only inside chosen windows, or set a daily app budget. When a rule applies, selected apps are hidden system-wide until they are allowed again. No willpower games, no streaks, no social layer — just one clear setting that gives you your attention back.\n\nBuilt on Apple's Screen Time APIs, Focus Blocks works entirely on your device. It has no backend and no account. Your rules sync between your own devices through iCloud, under your own Apple ID. Screen Time app selections are private device-local tokens, so each device asks you to confirm the apps it should block.\n\nWHAT YOU CAN DO\n• Create as many focus blocks as you want — mornings, weekdays, deep-work afternoons\n• Pick specific apps and whole categories in one tap\n• Block during a schedule, allow only during a schedule, or set a daily limit\n• Choose whether a rule applies to all devices or only this device\n• Add a weekly setup window so blocks cannot be edited on impulse\n• Enable or disable any inactive block from one screen\n\nPRIVACY BY DEFAULT\n• No sign-up, no account\n• No analytics, no ads, no third-party SDKs\n• Uses Apple's Screen Time framework — selections and usage stay on-device\n• iCloud Key-Value Store is the only remote storage, and it lives in your own Apple ID\n\nFocus Blocks is self-directed. It is not a parental-control product and does not monitor or manage other people's devices.\n\nRequires iOS 18 or later.";
+  "Focus Blocks is an app blocker for iPhone and iPad that puts distracting apps out of reach during the time you set aside to focus.\n\nChoose the apps. Choose the rule. Block during focus hours, allow only inside chosen windows, or set a daily app budget. When a rule applies, selected apps are hidden system-wide until they are allowed again. No willpower games, no streaks, no social layer — just one clear setting that gives you your attention back.\n\nBuilt on Apple's Screen Time APIs, Focus Blocks works entirely on your device. It has no backend and no account. Your rules sync between your own devices through iCloud, under your own Apple ID. Screen Time app selections are private device-local tokens, so each device asks you to confirm the apps it should block.\n\nWHAT YOU CAN DO\n• Create as many focus blocks as you want — mornings, weekdays, deep-work afternoons\n• Pick specific apps and whole categories in one tap\n• Block during a schedule, allow only during a schedule, or set a daily limit\n• Choose whether a rule applies to all devices or only this device\n• Add a weekly setup window so blocks cannot be edited on impulse\n• Enable or disable any inactive block from one screen\n\nPRIVACY BY DEFAULT\n• No sign-up, no account\n• No analytics, no ads, no third-party SDKs\n• Uses Apple's Screen Time framework — selections and usage stay on-device\n• iCloud Key-Value Store is the only remote storage, and it lives in your own Apple ID\n\nFocus Blocks is self-directed. It is not a parental-control product and does not monitor or manage other people's devices.\n\nRequires iOS 18 or later.";
 
 const englishInfo = {
   description: englishDescription,
   keywords: [
-    'screen time',
-    'social media',
-    'limit',
-    'productivity',
-    'study',
-    'timer',
-    'detox',
-    'self control',
-    'habits',
     'youtube',
+    'study focus',
+    'digital detox',
+    'self control',
+    'social media',
+    'website',
+    'budget',
+    'strict',
+    'habits',
   ],
   promoText:
-    'Block distracting apps on your schedule, set daily limits, and keep Screen Time selections private on each device. No account, ads, or analytics.',
+    'Block distracting apps, set Screen Time limits, and keep app selections private on each device. No account, ads, or analytics.',
   releaseNotes:
     'Adds daily app budgets, schedule plus budget rules, and clearer per-device setup for synced blocks.',
   supportUrl,
   title: 'Focus Blocks: App Blocker',
-  subtitle: 'Block apps on schedule',
+  subtitle: 'Screen time app limits',
   privacyPolicyUrl,
   screenshots,
 };
