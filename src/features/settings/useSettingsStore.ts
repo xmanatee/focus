@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { persistedStorage } from '../../shared/storage';
 import { useFocusBlockStore } from '../schedule/useFocusBlockStore';
 import type { SetupBlock } from './adminState';
+import { SETTINGS_STORAGE_KEY } from './storageKeys';
 import { validateSetupBlock } from './validation';
 
 interface SettingsState {
@@ -23,7 +24,7 @@ export const useSettingsStore = create<SettingsState>()(
       clearSetupBlock: () => set({ setupBlock: null }),
     }),
     {
-      name: 'focusblocks.settings',
+      name: SETTINGS_STORAGE_KEY,
       storage: persistedStorage,
     },
   ),

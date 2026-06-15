@@ -34,6 +34,13 @@ export function describeLockInCard(
   }
 
   if (state.kind === 'unlocked') {
+    if (state.reason === 'disabled-on-device') {
+      return {
+        title: 'Off on this device',
+        subtitle:
+          'This synced setup window will not lock edits here until you turn it on.',
+      };
+    }
     return {
       title: 'Editable now',
       subtitle: 'You are inside your setup window — edits are allowed.',

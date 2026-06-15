@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   configuredActions,
+  eventRecords,
+  manualActions,
   monitoringCalls,
   resetDeviceActivityMock,
   slotStore,
@@ -101,8 +103,9 @@ describe('reconcileFocusBlocks', () => {
       'resetBlocks',
       'clearWebContentFilterPolicy',
       'blockSelection',
+      'addWebContentFilterDomains',
       'blockSelection',
-      'setWebContentFilterPolicy',
+      'addWebContentFilterDomains',
     ]);
 
     expect(
@@ -113,7 +116,7 @@ describe('reconcileFocusBlocks', () => {
       'resetBlocks',
       'clearWebContentFilterPolicy',
       'blockSelection',
-      'setWebContentFilterPolicy',
+      'addWebContentFilterDomains',
     ]);
   });
 
@@ -207,5 +210,85 @@ describe('reconcileFocusBlocks', () => {
         'eventWillReachThresholdWarning',
       ).map((action) => action.type),
     ).toEqual(['sendNotification']);
+  });
+
+  it('adds website domains when a budget threshold fires', async () => {
+    slotStore.set('block.budget-web', 'selection-budget-web');
+
+    await reconcileFocusBlocks(
+      [
+        block({
+          id: 'budget-web',
+          rule: { kind: 'dailyBudget', minutes: 10 },
+          selection: {
+            activitySelection: {
+              status: 'saved',
+              applicationCount: 1,
+              categoryCount: 0,
+              webDomainCount: 0,
+              includeEntireCategory: true,
+            },
+            webDomains: ['youtube.com', 'm.youtube.com'],
+          },
+        }),
+      ],
+      null,
+    );
+
+    expect(
+      actionsFor(
+        'focusblocks.budget.budget-web.mon',
+        'eventDidReachThreshold',
+      ).map((action) => action.type),
+    ).toEqual(['blockSelection', 'addWebContentFilterDomains']);
+  });
+
+  it('reapplies budget website blocking during current-state reconcile', async () => {
+    slotStore.set('block.budget-web', 'selection-budget-web');
+    eventRecords.push(
+      {
+        activityName: 'focusblocks.budget.budget-web.mon',
+        callbackName: 'intervalDidStart',
+        lastCalledAt: 100,
+      },
+      {
+        activityName: 'focusblocks.budget.budget-web.mon',
+        callbackName: 'eventDidReachThreshold',
+        eventName: 'limit',
+        lastCalledAt: 200,
+      },
+    );
+
+    await reconcileFocusBlocks(
+      [
+        block({
+          id: 'budget-web',
+          rule: { kind: 'dailyBudget', minutes: 10 },
+          selection: {
+            activitySelection: {
+              status: 'saved',
+              applicationCount: 1,
+              categoryCount: 0,
+              webDomainCount: 0,
+              includeEntireCategory: true,
+            },
+            webDomains: ['youtube.com'],
+          },
+        }),
+      ],
+      null,
+      new Date('2026-04-27T10:00:00'),
+    );
+
+    expect(manualActions.map((action) => action.type)).toEqual([
+      'resetBlocks',
+      'blockSelection',
+      'clearWebContentFilterPolicy',
+      'setWebContentFilterPolicy',
+    ]);
+    expect(manualActions[3]?.payload).toEqual({
+      payload: { type: 'specific', domains: ['youtube.com'] },
+      triggeredBy: 'focusblocks current-state reconcile',
+    });
   });
 });

@@ -29,7 +29,7 @@ export function FocusBlockRow({
   const colors = useThemeColors();
   const { selection } = block;
   const showsActivitySelectionSummary =
-    selection.activitySelection.status === 'saved' && !needsDeviceSelection;
+    selection.activitySelection.status === 'saved';
 
   return (
     <Card>

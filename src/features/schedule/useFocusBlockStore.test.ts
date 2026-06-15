@@ -4,12 +4,18 @@ import {
   focusBlockInput,
 } from '../../test-helpers/focusBlockFixtures';
 import { storageMap } from '../../test-helpers/mockPersistedStorage';
+import { useSetupBlockDeviceStore } from '../settings/setupBlockDeviceStore';
 import { useSettingsStore } from '../settings/useSettingsStore';
 import { useFocusBlockStore } from './useFocusBlockStore';
 
 function reset(): void {
   storageMap.clear();
   useFocusBlockStore.setState({ focusBlocks: [] });
+  useSetupBlockDeviceStore.setState({
+    hasResolvedInitialState: false,
+    initialDeviceActivation: null,
+    isEnabledOnDevice: false,
+  });
   useSettingsStore.setState({ setupBlock: null });
 }
 
@@ -57,6 +63,7 @@ describe('useFocusBlockStore', () => {
     it('rejects when admin is locked', () => {
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
       useSettingsStore.setState({ setupBlock: SUNDAY_SETUP_BLOCK });
+      useSetupBlockDeviceStore.getState().enableOnDevice();
       expect(() =>
         useFocusBlockStore
           .getState()
@@ -95,6 +102,21 @@ describe('useFocusBlockStore', () => {
       expect(useFocusBlockStore.getState().focusBlocks[0].name).toBe('Renamed');
     });
 
+    it('allows update when lock-in is configured but off on this device', () => {
+      useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
+      useSettingsStore.setState({ setupBlock: SUNDAY_SETUP_BLOCK });
+
+      useFocusBlockStore
+        .getState()
+        .updateFocusBlock(
+          'id-1',
+          focusBlockInput({ name: 'Renamed' }),
+          'device-a',
+        );
+
+      expect(useFocusBlockStore.getState().focusBlocks[0].name).toBe('Renamed');
+    });
+
     it('allows update during the scheduled window when this device is not armed', () => {
       vi.setSystemTime(new Date('2026-04-27T12:00:00'));
       useFocusBlockStore.getState().addFocusBlock(
@@ -121,11 +143,23 @@ describe('useFocusBlockStore', () => {
     it('rejects when admin is locked', () => {
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
       useSettingsStore.setState({ setupBlock: SUNDAY_SETUP_BLOCK });
+      useSetupBlockDeviceStore.getState().enableOnDevice();
       expect(() =>
         useFocusBlockStore
           .getState()
           .toggleFocusBlock('id-1', 'device-a', false),
       ).toThrow(/lock-in/i);
+    });
+
+    it('allows toggling when the setup block is synced but off locally', () => {
+      useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
+      useSettingsStore.setState({ setupBlock: SUNDAY_SETUP_BLOCK });
+
+      useFocusBlockStore.getState().toggleFocusBlock('id-1', 'device-a', false);
+
+      expect(
+        useFocusBlockStore.getState().focusBlocks[0].enabledDeviceIds,
+      ).toEqual([]);
     });
 
     it('toggles only the current device activation', () => {
@@ -158,6 +192,7 @@ describe('useFocusBlockStore', () => {
     it('rejects when admin is locked', () => {
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
       useSettingsStore.setState({ setupBlock: SUNDAY_SETUP_BLOCK });
+      useSetupBlockDeviceStore.getState().enableOnDevice();
       expect(() =>
         useFocusBlockStore.getState().deleteFocusBlock('id-1', 'device-a'),
       ).toThrow(/lock-in/i);

@@ -13,6 +13,16 @@ vi.mock('../shared/storage', () => ({
       storageMap.delete(key);
     },
   })),
+  localStorage: createJSONStorage(() => ({
+    getItem: (key: string) => storageMap.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      storageMap.set(key, value);
+    },
+    removeItem: (key: string) => {
+      storageMap.delete(key);
+    },
+  })),
+  hasLocalStorageValue: async (key: string) => storageMap.has(key),
   attachCloudSync: () => () => {},
   newId: () => 'test-id',
 }));

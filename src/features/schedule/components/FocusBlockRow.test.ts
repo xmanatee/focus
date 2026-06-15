@@ -62,7 +62,7 @@ describe('FocusBlockRow', () => {
     expect(collectText(tree.root)).toContain('Mon · 22:00–06:00 next day');
   });
 
-  it('hides synced app counts until this device selection is finished', () => {
+  it('keeps synced app counts visible while this device still needs local selection', () => {
     const block = {
       id: 'needs-local-selection',
       ...focusBlockInput({
@@ -94,6 +94,6 @@ describe('FocusBlockRow', () => {
     const text = collectText(tree.root);
     expect(text).toContain('Pick apps here');
     expect(text).toContain('1 site');
-    expect(text).not.toContain('36 apps, 1 category, 4 domains');
+    expect(text).toContain('36 apps, 1 category, 4 domains');
   });
 });

@@ -13,6 +13,10 @@ import { getSlotValue } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
 import { activitySelectionHasLocalSlot } from './localActivitySelection';
 import type { DayOfWeek, FocusBlock } from './types';
+import {
+  isActiveAtWeeklyInstant,
+  scheduleTimeComponents,
+} from './weeklyInstant';
 
 export const FOCUS_ACTIVITY_PREFIX = 'focusblocks.block.';
 export const BUDGET_ACTIVITY_PREFIX = 'focusblocks.budget.';
@@ -37,7 +41,12 @@ export interface TriggeredAfterCondition {
   readonly afterCallbackName: 'intervalDidStart';
 }
 
-export type FocusAction = Action & {
+type WebDomainAction = {
+  readonly type: 'addWebContentFilterDomains';
+  readonly domains: readonly string[];
+};
+
+export type FocusAction = (Action | WebDomainAction) & {
   readonly onlyIfTriggeredAfter?: TriggeredAfterCondition;
 };
 
@@ -60,50 +69,6 @@ export interface MonitorPlan {
     readonly eventName: string;
     readonly actions: FocusAction[];
   }[];
-}
-
-function parseHM(time: string): { hour: number; minute: number } {
-  const [h, m] = time.split(':').map(Number);
-  return { hour: h, minute: m };
-}
-
-function previousDay(day: DayOfWeek): DayOfWeek {
-  const weekday = iosWeekday(day);
-  return DAY_BY_IOS_WEEKDAY[weekday === 1 ? 7 : weekday - 1];
-}
-
-function isInsideScheduleAtWeeklyInstant(
-  block: FocusBlock,
-  day: DayOfWeek,
-  minute: number,
-): boolean {
-  const start = minutesOf(block.startTime);
-  const end = minutesOf(block.endTime);
-
-  if (!isOvernightRange(block.startTime, block.endTime)) {
-    return block.days.includes(day) && minute >= start && minute < end;
-  }
-
-  return (
-    (block.days.includes(day) && minute >= start) ||
-    (block.days.includes(previousDay(day)) && minute < end)
-  );
-}
-
-function isActiveAtWeeklyInstant(
-  block: FocusBlock,
-  day: DayOfWeek,
-  minute: number,
-): boolean {
-  if (!block.isEnabled) return false;
-  if (block.rule.kind === 'dailyBudget') return false;
-
-  const isInsideWindow = isInsideScheduleAtWeeklyInstant(block, day, minute);
-  if (block.rule.kind === 'allowDuringSchedule') return !isInsideWindow;
-  if (block.rule.kind === 'allowDuringScheduleWithBudget') {
-    return !isInsideWindow;
-  }
-  return isInsideWindow;
 }
 
 export function hasLocalActivitySelection(block: FocusBlock): boolean {
@@ -184,7 +149,8 @@ export function budgetOriginDaysAtWeeklyInstant(
 
   const originDays: DayOfWeek[] = [];
   if (block.days.includes(day) && minute >= start) originDays.push(day);
-  const previous = previousDay(day);
+  const previous =
+    DAY_BY_IOS_WEEKDAY[iosWeekday(day) === 1 ? 7 : iosWeekday(day) - 1];
   if (block.days.includes(previous) && minute < end) {
     originDays.push(previous);
   }
@@ -204,23 +170,33 @@ function addSelectionAction(
   });
 }
 
+function addWebDomainAction(
+  actions: FocusAction[],
+  block: FocusBlock,
+  condition?: TriggeredAfterCondition,
+): void {
+  if (block.selection.webDomains.length === 0) return;
+  actions.push({
+    type: 'addWebContentFilterDomains',
+    domains: [...new Set(block.selection.webDomains)].sort(),
+    ...(condition ? { onlyIfTriggeredAfter: condition } : {}),
+  });
+}
+
 export function reconcileActionsForInstant(
   blocks: readonly FocusBlock[],
   day: DayOfWeek,
   minute: number,
 ): FocusAction[] {
-  const activeBlocks = blocks.filter((block) =>
-    isActiveAtWeeklyInstant(block, day, minute),
-  );
-  const webDomains = new Set<string>();
   const actions: FocusAction[] = [
     { type: 'resetBlocks' },
     { type: 'clearWebContentFilterPolicy' },
   ];
 
-  for (const block of activeBlocks) {
+  for (const block of blocks) {
+    if (!isActiveAtWeeklyInstant(block, day, minute)) continue;
     addSelectionAction(actions, block);
-    for (const domain of block.selection.webDomains) webDomains.add(domain);
+    addWebDomainAction(actions, block);
   }
 
   for (const block of blocks) {
@@ -230,15 +206,10 @@ export function reconcileActionsForInstant(
       day,
       minute,
     )) {
-      addSelectionAction(actions, block, budgetCondition(block, originDay));
+      const condition = budgetCondition(block, originDay);
+      addSelectionAction(actions, block, condition);
+      addWebDomainAction(actions, block, condition);
     }
-  }
-
-  if (webDomains.size > 0) {
-    actions.push({
-      type: 'setWebContentFilterPolicy',
-      policy: { type: 'specific', domains: [...webDomains].sort() },
-    });
   }
 
   return actions;
@@ -263,15 +234,22 @@ export function budgetEventActions(
 ): MonitorPlan['eventActions'] {
   const minutes = budgetMinutes(block);
   if (minutes === null || !hasLocalActivitySelection(block)) return [];
+  const actions: FocusAction[] = [
+    {
+      type: 'blockSelection',
+      familyActivitySelectionId: selectionIdForBlock(block.id),
+    },
+  ];
+  if (block.selection.webDomains.length > 0) {
+    actions.push({
+      type: 'addWebContentFilterDomains',
+      domains: [...new Set(block.selection.webDomains)].sort(),
+    });
+  }
   return [
     {
       eventName: BUDGET_EVENT_NAME,
-      actions: [
-        {
-          type: 'blockSelection',
-          familyActivitySelectionId: selectionIdForBlock(block.id),
-        },
-      ],
+      actions,
     },
   ];
 }
@@ -286,8 +264,11 @@ export function scheduleForDay(
     ? nextIosWeekday(startWeekday)
     : startWeekday;
   return {
-    intervalStart: { ...parseHM(startTime), weekday: startWeekday },
-    intervalEnd: { ...parseHM(endTime), weekday: endWeekday },
+    intervalStart: {
+      ...scheduleTimeComponents(startTime),
+      weekday: startWeekday,
+    },
+    intervalEnd: { ...scheduleTimeComponents(endTime), weekday: endWeekday },
     repeats: true,
   };
 }

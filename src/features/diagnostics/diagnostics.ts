@@ -8,7 +8,7 @@ import { focusBlocksForDevice } from '../schedule/deviceScope';
 import { focusBlockSelectionReadyInSlots } from '../schedule/localActivitySelection';
 import { getFocusBlockRuntimeStatus } from '../schedule/runtimeStatus';
 import type { FocusBlock } from '../schedule/types';
-import type { SetupBlock } from '../settings/adminState';
+import { type SetupBlock, resolveAdminState } from '../settings/adminState';
 
 export type SetupVerificationLevel = 'ready' | 'attention' | 'blocked';
 export type SetupVerificationStatus = 'pass' | 'warn' | 'fail';
@@ -60,6 +60,7 @@ export interface DiagnosticsInput {
   readonly populatedSelectionSlots: ReadonlySet<string>;
   readonly posture: ProtectionPosture;
   readonly setupBlock: SetupBlock | null;
+  readonly setupBlockEnabledOnDevice: boolean;
 }
 
 export interface SetupVerification {
@@ -191,6 +192,21 @@ function safeScope(block: FocusBlock, deviceId: string | null): string {
   return block.scope.deviceId === deviceId ? 'thisDevice' : 'otherDevice';
 }
 
+function diagnosticsLockInState(input: DiagnosticsInput): string {
+  if (input.setupBlock === null) return 'notConfigured';
+
+  const state = resolveAdminState(
+    input.setupBlock,
+    input.setupBlockEnabledOnDevice,
+    input.now,
+  );
+
+  if (state.kind === 'locked') return 'locked';
+  if (state.reason === 'inside-block') return 'editableWindow';
+  if (state.reason === 'disabled-on-device') return 'offOnThisDevice';
+  return 'editableAlways';
+}
+
 export function buildDiagnosticsReport(input: DiagnosticsInput): string {
   const generatedAt = input.generatedAt ?? new Date();
   const verification = evaluateSetupVerification(input);
@@ -201,7 +217,7 @@ export function buildDiagnosticsReport(input: DiagnosticsInput): string {
     `Screen Time: ${input.authorizationStatus}`,
     `Device id: ${input.deviceId === null ? 'missing' : 'present'}`,
     `Protection: ${input.posture.score}`,
-    `Lock-in: ${input.setupBlock === null ? 'notConfigured' : 'configured'}`,
+    `Lock-in: ${diagnosticsLockInState(input)}`,
     `Blocks: ${input.focusBlocks.length}`,
     `Applicable blocks: ${verification.applicableBlockCount}`,
     `Missing device selections: ${verification.missingDeviceSelectionCount}`,

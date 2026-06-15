@@ -5,15 +5,24 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
+import { useSetupBlockDeviceStore } from '../src/features/settings/setupBlockDeviceStore';
+import { SETTINGS_STORAGE_KEY } from '../src/features/settings/storageKeys';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
-import { attachCloudSync } from '../src/shared/storage';
+import { attachCloudSync, hasLocalStorageValue } from '../src/shared/storage';
 
 async function rehydrateAll(): Promise<void> {
+  const hadLocalSetupBlock = await hasLocalStorageValue(SETTINGS_STORAGE_KEY);
   await useFocusBlockStore.persist.rehydrate();
   await useSettingsStore.persist.rehydrate();
+  await useSetupBlockDeviceStore.persist.rehydrate();
   await useTamperSetupStore.persist.rehydrate();
-  if (useSettingsStore.getState().setupBlock !== null) {
+  useSetupBlockDeviceStore.getState().initialize(hadLocalSetupBlock);
+  const setupBlock = useSettingsStore.getState().setupBlock;
+  useSetupBlockDeviceStore
+    .getState()
+    .syncSetupBlockPresence(setupBlock !== null);
+  if (setupBlock !== null) {
     useFocusBlockStore.getState().clearAllStrict();
   }
 }

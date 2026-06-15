@@ -46,6 +46,7 @@ describe('evaluateSetupVerification', () => {
       populatedSelectionSlots: new Set(),
       posture: FULL_POSTURE,
       setupBlock: null,
+      setupBlockEnabledOnDevice: false,
     });
 
     expect(result.level).toBe('blocked');
@@ -67,6 +68,7 @@ describe('evaluateSetupVerification', () => {
       populatedSelectionSlots: new Set(['block.one']),
       posture: FULL_POSTURE,
       setupBlock: null,
+      setupBlockEnabledOnDevice: false,
     });
 
     expect(result.level).toBe('ready');
@@ -93,12 +95,19 @@ describe('buildDiagnosticsReport', () => {
       now: new Date('2026-06-05T10:00:00'),
       populatedSelectionSlots: new Set(['block.one']),
       posture: FULL_POSTURE,
-      setupBlock: null,
+      setupBlock: {
+        days: ['sun'],
+        startTime: '20:00',
+        endTime: '21:00',
+        notifyOnStart: false,
+      },
+      setupBlockEnabledOnDevice: false,
     });
 
     expect(report).toContain('Focus Blocks Diagnostics');
     expect(report).toContain('Version: 1.0.1');
     expect(report).toContain('Blocks: 1');
+    expect(report).toContain('Lock-in: offOnThisDevice');
     expect(report).toContain('Block 1');
     expect(report).toContain('webDomains=1');
     expect(report).not.toContain('Secret YouTube Block');

@@ -9,7 +9,10 @@ export interface SetupBlock {
 }
 
 export type AdminState =
-  | { readonly kind: 'unlocked'; readonly reason: 'always' | 'inside-block' }
+  | {
+      readonly kind: 'unlocked';
+      readonly reason: 'always' | 'inside-block' | 'disabled-on-device';
+    }
   | {
       readonly kind: 'locked';
       readonly nextUnlock: {
@@ -20,10 +23,14 @@ export type AdminState =
 
 export function resolveAdminState(
   setupBlock: SetupBlock | null,
+  isEnabledOnDevice: boolean,
   now: Date,
 ): AdminState {
   if (!setupBlock) {
     return { kind: 'unlocked', reason: 'always' };
+  }
+  if (!isEnabledOnDevice) {
+    return { kind: 'unlocked', reason: 'disabled-on-device' };
   }
 
   const asFocusBlock = { ...setupBlock, isEnabled: true };
@@ -41,9 +48,10 @@ export function resolveAdminState(
 
 export function assertAdminUnlocked(
   setupBlock: SetupBlock | null,
+  isEnabledOnDevice: boolean,
   now: Date,
 ): void {
-  if (resolveAdminState(setupBlock, now).kind === 'locked') {
+  if (resolveAdminState(setupBlock, isEnabledOnDevice, now).kind === 'locked') {
     throw new Error(
       'Lock-in is active. Edits unlock during your setup window.',
     );

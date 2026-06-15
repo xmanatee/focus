@@ -40,4 +40,18 @@ describe('lockInCopy', () => {
       ),
     ).toBe('Next unlock tomorrow 13:00 · in 1 day.');
   });
+
+  it('explains when a synced setup block is still off on this device', () => {
+    expect(
+      describeLockInCard(
+        { kind: 'unlocked', reason: 'disabled-on-device' },
+        setupBlock,
+        new Date('2026-06-15T10:00:00'),
+      ),
+    ).toEqual({
+      title: 'Off on this device',
+      subtitle:
+        'This synced setup window will not lock edits here until you turn it on.',
+    });
+  });
 });

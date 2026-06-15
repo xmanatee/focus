@@ -5,11 +5,17 @@ import {
 } from '../../test-helpers/focusBlockFixtures';
 import { storageMap } from '../../test-helpers/mockPersistedStorage';
 import { useFocusBlockStore } from '../schedule/useFocusBlockStore';
+import { useSetupBlockDeviceStore } from './setupBlockDeviceStore';
 import { useSettingsStore } from './useSettingsStore';
 
 function reset(): void {
   storageMap.clear();
   useFocusBlockStore.setState({ focusBlocks: [] });
+  useSetupBlockDeviceStore.setState({
+    hasResolvedInitialState: false,
+    initialDeviceActivation: null,
+    isEnabledOnDevice: false,
+  });
   useSettingsStore.setState({ setupBlock: null });
 }
 

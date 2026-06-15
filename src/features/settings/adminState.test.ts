@@ -21,15 +21,31 @@ function at(iso: string): Date {
 
 describe('resolveAdminState', () => {
   it('is unlocked when no setup block is configured', () => {
-    const state = resolveAdminState(null, new Date());
+    const state = resolveAdminState(null, false, new Date());
     expect(state.kind).toBe('unlocked');
     if (state.kind === 'unlocked') {
       expect(state.reason).toBe('always');
     }
   });
 
+  it('stays unlocked when the setup block is off on this device', () => {
+    const state = resolveAdminState(
+      monFri9to17,
+      false,
+      at('2026-04-27T10:00:00'),
+    );
+    expect(state.kind).toBe('unlocked');
+    if (state.kind === 'unlocked') {
+      expect(state.reason).toBe('disabled-on-device');
+    }
+  });
+
   it('is unlocked when inside the setup block', () => {
-    const state = resolveAdminState(monFri9to17, at('2026-04-27T10:00:00'));
+    const state = resolveAdminState(
+      monFri9to17,
+      true,
+      at('2026-04-27T10:00:00'),
+    );
     expect(state.kind).toBe('unlocked');
     if (state.kind === 'unlocked') {
       expect(state.reason).toBe('inside-block');
@@ -37,7 +53,11 @@ describe('resolveAdminState', () => {
   });
 
   it('is locked before the block opens', () => {
-    const state = resolveAdminState(monFri9to17, at('2026-04-27T08:59:59'));
+    const state = resolveAdminState(
+      monFri9to17,
+      true,
+      at('2026-04-27T08:59:59'),
+    );
     expect(state.kind).toBe('locked');
     if (state.kind === 'locked') {
       expect(state.nextUnlock?.day).toBe('mon');
@@ -46,7 +66,11 @@ describe('resolveAdminState', () => {
   });
 
   it('is locked on weekends with weekday setup block', () => {
-    const state = resolveAdminState(monFri9to17, at('2026-04-25T12:00:00'));
+    const state = resolveAdminState(
+      monFri9to17,
+      true,
+      at('2026-04-25T12:00:00'),
+    );
     expect(state.kind).toBe('locked');
     if (state.kind === 'locked') {
       expect(state.nextUnlock?.day).toBe('mon');
@@ -54,13 +78,21 @@ describe('resolveAdminState', () => {
   });
 
   it('is locked at the exact end of the block', () => {
-    const state = resolveAdminState(monFri9to17, at('2026-04-27T17:00:00'));
+    const state = resolveAdminState(
+      monFri9to17,
+      true,
+      at('2026-04-27T17:00:00'),
+    );
     expect(state.kind).toBe('locked');
   });
 
   it('computes the next unlock for a weekly single-day block', () => {
     // Sunday night setup. Check it on Monday morning.
-    const state = resolveAdminState(sundayNight, at('2026-04-27T09:00:00'));
+    const state = resolveAdminState(
+      sundayNight,
+      true,
+      at('2026-04-27T09:00:00'),
+    );
     expect(state.kind).toBe('locked');
     if (state.kind === 'locked') {
       expect(state.nextUnlock?.day).toBe('sun');

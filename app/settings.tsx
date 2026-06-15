@@ -5,20 +5,14 @@ import { DiagnosticsCard } from '../src/features/diagnostics/components/Diagnost
 import { protectionCopy } from '../src/features/protection/copy';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import type { DayOfWeek } from '../src/features/schedule/types';
-import type {
-  AdminState,
-  SetupBlock,
-} from '../src/features/settings/adminState';
-import { describeNextUnlock } from '../src/features/settings/lockInCopy';
+import type { SetupBlock } from '../src/features/settings/adminState';
+import { SetupBlockEditorCard } from '../src/features/settings/components/SetupBlockEditorCard';
+import { useSetupBlockDeviceStore } from '../src/features/settings/setupBlockDeviceStore';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
-import { Button } from '../src/shared/components/Button';
 import { Card } from '../src/shared/components/Card';
-import { DayPicker } from '../src/shared/components/DayPicker';
 import { Icon } from '../src/shared/components/Icon';
-import { NotifyRow } from '../src/shared/components/NotifyRow';
 import { Screen } from '../src/shared/components/Screen';
-import { TimeRangePicker } from '../src/shared/components/TimeRangePicker';
 import { Typography } from '../src/shared/components/Typography';
 import {
   DAY_ORDER,
@@ -36,9 +30,9 @@ export default function SettingsScreen(): JSX.Element {
   const existing = useSettingsStore((s) => s.setupBlock);
   const setSetupBlock = useSettingsStore((s) => s.setSetupBlock);
   const clearSetupBlock = useSettingsStore((s) => s.clearSetupBlock);
-  const { state, now } = useAdminState();
-
-  const isUnlocked = state.kind === 'unlocked';
+  const enableOnDevice = useSetupBlockDeviceStore((s) => s.enableOnDevice);
+  const disableOnDevice = useSetupBlockDeviceStore((s) => s.disableOnDevice);
+  const { isEnabledOnDevice, state, now } = useAdminState();
 
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(
     existing ? [...existing.days] : ['sun'],
@@ -85,17 +79,28 @@ export default function SettingsScreen(): JSX.Element {
     );
   };
 
-  const handleSave = async (): Promise<void> => {
+  const handleSave = async (
+    nextAction: 'saveOnly' | 'saveAndEnable',
+  ): Promise<void> => {
     const nextBlock: SetupBlock = {
       days: selectedDays,
       startTime,
       endTime,
       notifyOnStart,
     };
+    const shouldEnableOnDevice =
+      nextAction === 'saveAndEnable' || isEnabledOnDevice;
+    const isEnablingOnDevice =
+      nextAction === 'saveAndEnable' && !isEnabledOnDevice;
+    const dialogMessage = isEnablingOnDevice
+      ? 'You will only be able to edit your focus blocks during your setup window on this device. Please review your blocks carefully before turning this on.'
+      : existing === null
+        ? 'Save the synced setup window without turning it on for this device yet?'
+        : 'Update the synced setup window without changing whether this device enforces it.';
 
     const performSave = async (): Promise<void> => {
       const success = await run(async () => {
-        if (nextBlock.notifyOnStart) {
+        if (shouldEnableOnDevice && nextBlock.notifyOnStart) {
           const granted = await requestNotificationPermissions();
           if (!granted) {
             throw new Error(
@@ -105,18 +110,45 @@ export default function SettingsScreen(): JSX.Element {
         }
         void haptic.commit();
         setSetupBlock(nextBlock);
+        if (nextAction === 'saveAndEnable') {
+          enableOnDevice();
+        }
       }, 'Could not save setup block.');
       if (success) dismiss();
     };
 
     Alert.alert(
-      existing ? 'Update Lock-in?' : 'Turn on Lock-in?',
-      'You will only be able to edit your focus blocks during your setup window. Please review your existing blocks to make sure you are confident in the setup.',
+      isEnablingOnDevice
+        ? existing === null
+          ? 'Turn on Lock-in?'
+          : 'Save and turn on?'
+        : existing === null
+          ? 'Save Lock-in?'
+          : 'Update Lock-in?',
+      dialogMessage,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: existing ? 'Update' : 'Turn on',
+          text: isEnablingOnDevice ? 'Turn on' : 'Save',
           onPress: () => void performSave(),
+        },
+      ],
+    );
+  };
+
+  const confirmDisableOnDevice = (): void => {
+    Alert.alert(
+      'Turn off on this device?',
+      'This iPhone or iPad will stop using the setup window for edit protection. Other devices keep their current lock-in state.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Turn off',
+          style: 'destructive',
+          onPress: () => {
+            void haptic.abandon();
+            disableOnDevice();
+          },
         },
       ],
     );
@@ -157,8 +189,8 @@ export default function SettingsScreen(): JSX.Element {
             Configure Lock-in.
           </Typography>
           <Typography variant="body" tone="muted">
-            The Lock-in mechanism prevents you from disabling or editing your
-            focus blocks when you are most likely to be distracted.
+            The setup window syncs through iCloud, but each iPhone or iPad
+            decides for itself when to enforce it.
           </Typography>
         </View>
 
@@ -183,91 +215,29 @@ export default function SettingsScreen(): JSX.Element {
           </View>
         </Card>
 
-        <Card>
-          <View className="flex-row items-center justify-between">
-            <Typography variant="h3" tone="ink">
-              Setup Block
-            </Typography>
-            <View
-              className={`rounded-full px-3 py-1 ${
-                isUnlocked ? 'bg-signal' : 'bg-surface-sunken'
-              }`}
-            >
-              <Typography
-                variant="caption"
-                tone={isUnlocked ? 'surface' : 'muted'}
-              >
-                {isUnlocked ? 'Editable' : 'Locked'}
-              </Typography>
-            </View>
-          </View>
-
-          {!isUnlocked && existing ? (
-            <Typography variant="caption" tone="muted">
-              {describeNextUnlock(state, existing, now)}
-            </Typography>
-          ) : null}
-
-          <View className="h-[1px] bg-divider" />
-
-          <View className="gap-2">
-            <Typography variant="label" tone="faint">
-              Active Days
-            </Typography>
-            <DayPicker
-              selected={selectedDays}
-              onToggle={toggleDay}
-              disabled={!isUnlocked}
-            />
-          </View>
-
-          <View className="h-[1px] bg-divider" />
-
-          <TimeRangePicker
-            start={startDate}
-            end={endDate}
-            onStartChange={setStartDate}
-            onEndChange={setEndDate}
-            disabled={!isUnlocked}
-          />
-
-          <View className="h-[1px] bg-divider" />
-
-          <NotifyRow
-            title="Setup Reminder"
-            subtitle="Alert when this setup block begins."
-            value={notifyOnStart}
-            onChange={(v) => {
-              void haptic.select();
-              setNotifyOnStart(v);
-            }}
-            disabled={!isUnlocked}
-          />
-
-          {error ? (
-            <Typography variant="caption" tone="danger">
-              {error}
-            </Typography>
-          ) : null}
-
-          <View className="gap-2 pt-1">
-            <Button
-              title={existing ? 'Update setup block' : 'Save setup block'}
-              variant="commit"
-              onPress={() => void handleSave()}
-              isLoading={isPending}
-              disabled={isPending || !isUnlocked}
-            />
-            {existing ? (
-              <Button
-                title="Remove setup block"
-                variant="abandon"
-                onPress={confirmClear}
-                disabled={isPending || !isUnlocked}
-              />
-            ) : null}
-          </View>
-        </Card>
+        <SetupBlockEditorCard
+          endDate={endDate}
+          error={error}
+          existing={existing}
+          isEnabledOnDevice={isEnabledOnDevice}
+          isLoading={isPending}
+          now={now}
+          notifyOnStart={notifyOnStart}
+          onChangeEnd={setEndDate}
+          onChangeNotifyOnStart={(value) => {
+            void haptic.select();
+            setNotifyOnStart(value);
+          }}
+          onChangeStart={setStartDate}
+          onRemove={confirmClear}
+          onSaveAndEnable={() => void handleSave('saveAndEnable')}
+          onSaveOnly={() => void handleSave('saveOnly')}
+          onToggleDay={toggleDay}
+          onTurnOff={confirmDisableOnDevice}
+          selectedDays={selectedDays}
+          startDate={startDate}
+          state={state}
+        />
 
         <DiagnosticsCard />
       </ScrollView>

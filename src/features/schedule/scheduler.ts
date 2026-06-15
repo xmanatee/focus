@@ -1,4 +1,5 @@
 import {
+  type Action,
   blockSelection,
   cleanUpAfterActivity,
   clearWebContentFilterPolicy,
@@ -21,24 +22,29 @@ import {
   materializeSetupBlock,
 } from './schedulerPlan';
 import type { DayOfWeek, FocusBlock } from './types';
+import { webDomainsForInstant } from './webDomainsForInstant';
+
+function configuredActions(actions: readonly FocusAction[]): Action[] {
+  return [...actions] as Action[];
+}
 
 async function applyPlan(plan: MonitorPlan): Promise<void> {
   configureActions({
     activityName: plan.activityName,
     callbackName: 'intervalDidStart',
-    actions: plan.startActions,
+    actions: configuredActions(plan.startActions),
   });
   configureActions({
     activityName: plan.activityName,
     callbackName: 'intervalDidEnd',
-    actions: plan.endActions,
+    actions: configuredActions(plan.endActions),
   });
   for (const eventAction of plan.eventActions) {
     configureActions({
       activityName: plan.activityName,
       callbackName: 'eventDidReachThreshold',
       eventName: eventAction.eventName,
-      actions: eventAction.actions,
+      actions: configuredActions(eventAction.actions),
     });
   }
   for (const eventAction of plan.eventWarningActions) {
@@ -46,7 +52,7 @@ async function applyPlan(plan: MonitorPlan): Promise<void> {
       activityName: plan.activityName,
       callbackName: 'eventWillReachThresholdWarning',
       eventName: eventAction.eventName,
-      actions: eventAction.actions,
+      actions: configuredActions(eventAction.actions),
     });
   }
   await startMonitoring(plan.activityName, plan.schedule, plan.events);
@@ -74,22 +80,12 @@ function executeActionNow(action: FocusAction): void {
     resetBlocks('focusblocks current-state reconcile');
     return;
   }
-  if (action.type === 'clearWebContentFilterPolicy') {
-    clearWebContentFilterPolicy('focusblocks current-state reconcile');
-    return;
-  }
   if (action.type === 'blockSelection') {
     blockSelection(
       { activitySelectionId: action.familyActivitySelectionId },
       'focusblocks current-state reconcile',
     );
     return;
-  }
-  if (action.type === 'setWebContentFilterPolicy') {
-    setWebContentFilterPolicy(
-      action.policy,
-      'focusblocks current-state reconcile',
-    );
   }
 }
 
@@ -98,6 +94,14 @@ function applyCurrentState(blocks: readonly FocusBlock[], at: Date): void {
   const minute = at.getHours() * 60 + at.getMinutes();
   for (const action of reconcileActionsForInstant(blocks, day, minute)) {
     executeActionNow(action);
+  }
+  const webDomains = webDomainsForInstant(blocks, day, minute);
+  clearWebContentFilterPolicy('focusblocks current-state reconcile');
+  if (webDomains.length > 0) {
+    setWebContentFilterPolicy(
+      { type: 'specific', domains: [...webDomains] },
+      'focusblocks current-state reconcile',
+    );
   }
 }
 

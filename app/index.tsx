@@ -53,9 +53,15 @@ export default function MainFeedScreen(): JSX.Element {
   );
   const { active, activeBlocks, now } = useActiveBlock(runnableBlocks);
 
-  const { state: adminState, now: adminNow } = useAdminState();
+  const {
+    isEnabledOnDevice: isSetupBlockEnabledOnDevice,
+    state: adminState,
+    now: adminNow,
+  } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
   const setupBlock = useSettingsStore((s) => s.setupBlock);
+  const setupBlockForThisDevice =
+    setupBlock !== null && isSetupBlockEnabledOnDevice ? setupBlock : null;
 
   const posture = useProtectionPosture();
   const showProtectionCard = posture.score !== 'full';
@@ -71,8 +77,8 @@ export default function MainFeedScreen(): JSX.Element {
 
   useEffect(() => {
     if (!hasPermissions || deviceId === null) return;
-    void reconcileFocusBlocks(runnableBlocks, setupBlock);
-  }, [runnableBlocks, setupBlock, hasPermissions, deviceId]);
+    void reconcileFocusBlocks(runnableBlocks, setupBlockForThisDevice);
+  }, [runnableBlocks, setupBlockForThisDevice, hasPermissions, deviceId]);
 
   const handleGrant = async (): Promise<void> => {
     void haptic.commit();

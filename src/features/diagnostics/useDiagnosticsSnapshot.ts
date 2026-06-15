@@ -5,6 +5,7 @@ import { useBlockerStore } from '../blocker/useBlockerStore';
 import { useLocalDeviceId } from '../device/useLocalDeviceId';
 import { useProtectionPosture } from '../protection/useProtectionPosture';
 import { useFocusBlockStore } from '../schedule/useFocusBlockStore';
+import { useSetupBlockDeviceStore } from '../settings/setupBlockDeviceStore';
 import { useSettingsStore } from '../settings/useSettingsStore';
 import type { DiagnosticsInput } from './diagnostics';
 
@@ -16,6 +17,9 @@ export function useDiagnosticsSnapshot(): DiagnosticsSnapshot {
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const posture = useProtectionPosture();
   const setupBlock = useSettingsStore((s) => s.setupBlock);
+  const setupBlockEnabledOnDevice = useSetupBlockDeviceStore(
+    (s) => s.isEnabledOnDevice,
+  );
 
   const populatedSelectionSlots = useMemo(() => {
     const slots = new Set<string>();
@@ -33,5 +37,6 @@ export function useDiagnosticsSnapshot(): DiagnosticsSnapshot {
     populatedSelectionSlots,
     posture,
     setupBlock,
+    setupBlockEnabledOnDevice,
   };
 }

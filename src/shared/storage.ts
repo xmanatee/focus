@@ -42,6 +42,11 @@ const cloudBackedStorage: StateStorage = {
 // migrate callbacks, no defensive null checks downstream. See
 // useTamperSetupStore for the canonical pattern.
 export const persistedStorage = createJSONStorage(() => cloudBackedStorage);
+export const localStorage = createJSONStorage(() => AsyncStorage);
+
+export async function hasLocalStorageValue(key: string): Promise<boolean> {
+  return (await AsyncStorage.getItem(key)) !== null;
+}
 
 export function attachCloudSync(onRemoteChange: () => void): () => void {
   if (!cloudIsUsable()) {

@@ -1,16 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { type AdminState, resolveAdminState } from './adminState';
+import { useSetupBlockDeviceStore } from './setupBlockDeviceStore';
 import { useSettingsStore } from './useSettingsStore';
 
 const TICK_MS = 15_000;
 
 interface AdminStateView {
+  readonly isEnabledOnDevice: boolean;
   readonly state: AdminState;
   readonly now: Date;
 }
 
 export function useAdminState(): AdminStateView {
   const setupBlock = useSettingsStore((s) => s.setupBlock);
+  const isEnabledOnDevice = useSetupBlockDeviceStore(
+    (s) => s.isEnabledOnDevice,
+  );
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -22,9 +27,10 @@ export function useAdminState(): AdminStateView {
 
   return useMemo<AdminStateView>(
     () => ({
-      state: resolveAdminState(setupBlock, now),
+      isEnabledOnDevice,
+      state: resolveAdminState(setupBlock, isEnabledOnDevice, now),
       now,
     }),
-    [now, setupBlock],
+    [isEnabledOnDevice, now, setupBlock],
   );
 }

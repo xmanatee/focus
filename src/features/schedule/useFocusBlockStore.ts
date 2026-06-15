@@ -4,6 +4,7 @@ import { persistedStorage } from '../../shared/storage';
 import { clearSlot } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
 import { assertAdminUnlocked } from '../settings/adminState';
+import { useSetupBlockDeviceStore } from '../settings/setupBlockDeviceStore';
 import { useSettingsStore } from '../settings/useSettingsStore';
 import {
   enabledDeviceIdsAfterToggle,
@@ -42,7 +43,11 @@ function assertEditable(block: FocusBlock, deviceId: string): void {
   if (getFocusBlockRuntimeStatus(blockOnThisDevice, now).kind === 'active') {
     throw new Error('Cannot change a block while it is active.');
   }
-  assertAdminUnlocked(useSettingsStore.getState().setupBlock, now);
+  assertAdminUnlocked(
+    useSettingsStore.getState().setupBlock,
+    useSetupBlockDeviceStore.getState().isEnabledOnDevice,
+    now,
+  );
 }
 
 function normalizeInput(input: FocusBlockInput): FocusBlockInput {
