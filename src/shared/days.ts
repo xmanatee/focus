@@ -10,13 +10,37 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
   sun: 'Sun',
 };
 
+const DAY_SHORT_LABELS: Record<DayOfWeek, string> = {
+  mon: 'Mo',
+  tue: 'Tu',
+  wed: 'We',
+  thu: 'Th',
+  fri: 'Fr',
+  sat: 'Sa',
+  sun: 'Su',
+};
+
+const DAY_ACCESSIBILITY_LABELS: Record<DayOfWeek, string> = {
+  mon: 'Monday',
+  tue: 'Tuesday',
+  wed: 'Wednesday',
+  thu: 'Thursday',
+  fri: 'Friday',
+  sat: 'Saturday',
+  sun: 'Sunday',
+};
+
 interface DayChoice {
+  readonly accessibilityLabel: string;
   readonly label: string;
+  readonly shortLabel: string;
   readonly value: DayOfWeek;
 }
 
 export const DAYS: readonly DayChoice[] = DAY_OF_WEEK_VALUES.map((value) => ({
+  accessibilityLabel: DAY_ACCESSIBILITY_LABELS[value],
   label: DAY_LABELS[value],
+  shortLabel: DAY_SHORT_LABELS[value],
   value,
 }));
 
@@ -160,4 +184,10 @@ export function formatActiveDays(days: readonly DayOfWeek[]): string {
   );
 
   return labels.join(', ');
+}
+
+export function formatTimeRange(startTime: string, endTime: string): string {
+  return isOvernightRange(startTime, endTime)
+    ? `${startTime}–${endTime} next day`
+    : `${startTime}–${endTime}`;
 }

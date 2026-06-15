@@ -2,7 +2,7 @@ import { Pressable, Switch, View } from 'react-native';
 import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
-import { formatActiveDays } from '../../../shared/days';
+import { formatActiveDays, formatTimeRange } from '../../../shared/days';
 import { useThemeColors } from '../../../shared/design/theme';
 import { summarizeActivitySelection } from '../../blocker/types';
 import type { FocusBlock } from '../types';
@@ -70,7 +70,7 @@ export function FocusBlockRow({
             {needsDeviceSelection && (
               <SelectionPill
                 icon="exclamationmark.triangle.fill"
-                label="Pick apps here"
+                label="Needs apps here"
               />
             )}
             {selection.activitySelection.status === 'saved' && (
@@ -128,9 +128,10 @@ function SelectionPill({
 }
 
 function describeRule(block: FocusBlock): string {
-  const schedule = `${formatActiveDays(block.days)} · ${block.startTime}–${
-    block.endTime
-  }`;
+  const schedule = `${formatActiveDays(block.days)} · ${formatTimeRange(
+    block.startTime,
+    block.endTime,
+  )}`;
   switch (block.rule.kind) {
     case 'blockDuringSchedule':
       return schedule;

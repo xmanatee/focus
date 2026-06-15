@@ -7,9 +7,16 @@ import { Card } from '../../shared/components/Card';
 import { Icon } from '../../shared/components/Icon';
 import { Typography } from '../../shared/components/Typography';
 import type { SetupVerification } from '../diagnostics/diagnostics';
-import { shouldShowReviewPrompt } from './reviewEligibility';
+import {
+  type ReviewPromptState,
+  markReviewPromptReviewed,
+  parseReviewPromptState,
+  serializeReviewPromptState,
+  shouldShowReviewPrompt,
+  snoozeReviewPrompt,
+} from './reviewPromptState';
 
-const REVIEW_DISMISSED_KEY = 'focusblocks.reviewPrompt.dismissed';
+const REVIEW_PROMPT_STATE_KEY = 'focusblocks.reviewPrompt.state';
 const APP_STORE_REVIEW_URL =
   'itms-apps://itunes.apple.com/app/id6763754394?action=write-review';
 
@@ -20,38 +27,39 @@ interface ReviewPromptCardProps {
 export function ReviewPromptCard({
   verification,
 }: ReviewPromptCardProps): JSX.Element | null {
-  const [hasDismissed, setHasDismissed] = useState<boolean | null>(null);
+  const [promptState, setPromptState] = useState<ReviewPromptState | null>(
+    null,
+  );
 
   useEffect(() => {
     let isMounted = true;
-    AsyncStorage.getItem(REVIEW_DISMISSED_KEY).then(
-      (value) => {
-        if (isMounted) setHasDismissed(value === 'true');
-      },
-      () => {
-        if (isMounted) setHasDismissed(true);
-      },
-    );
+    void AsyncStorage.getItem(REVIEW_PROMPT_STATE_KEY).then((value) => {
+      if (isMounted) {
+        setPromptState(parseReviewPromptState(value));
+      }
+    });
     return () => {
       isMounted = false;
     };
   }, []);
 
-  if (hasDismissed === null) return null;
+  if (promptState === null) return null;
 
-  const shouldShow = shouldShowReviewPrompt({
-    activeBlockCount: verification.activeBlockCount,
-    applicableBlockCount: verification.applicableBlockCount,
-    hasDismissed,
-    level: verification.level,
-    missingDeviceSelectionCount: verification.missingDeviceSelectionCount,
-  });
+  const nowMs = Date.now();
+  const shouldShow = shouldShowReviewPrompt(verification, promptState, nowMs);
 
   if (!shouldShow) return null;
 
+  const saveState = (next: ReviewPromptState): void => {
+    setPromptState(next);
+    void AsyncStorage.setItem(
+      REVIEW_PROMPT_STATE_KEY,
+      serializeReviewPromptState(next),
+    );
+  };
+
   const dismiss = (): void => {
-    setHasDismissed(true);
-    void AsyncStorage.setItem(REVIEW_DISMISSED_KEY, 'true');
+    saveState(snoozeReviewPrompt(nowMs));
   };
 
   return (
@@ -72,7 +80,7 @@ export function ReviewPromptCard({
           title="Rate on App Store"
           variant="commit"
           onPress={() => {
-            dismiss();
+            saveState(markReviewPromptReviewed(nowMs));
             void Linking.openURL(APP_STORE_REVIEW_URL);
           }}
         />

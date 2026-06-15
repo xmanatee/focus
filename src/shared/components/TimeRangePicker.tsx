@@ -5,13 +5,6 @@ import { View } from 'react-native';
 import { useIsDark, useThemeColors } from '../design/theme';
 import { Typography } from './Typography';
 
-// @react-native-community/datetimepicker (iOS) inflates the picker's measured
-// width by 10pt in RNDateTimePickerShadowView.m (`size.width += 10`). The
-// native UIDatePicker chip renders at the trailing edge of that frame, so the
-// inflation surfaces as empty padding on the leading edge. Counter it on the
-// start side so the chip aligns with the rest of the form.
-const PICKER_LEADING_INFLATION = 10;
-
 interface TimeRangePickerProps {
   readonly start: Date;
   readonly end: Date;
@@ -83,16 +76,11 @@ function Cell({
       <DateTimePicker
         value={value}
         mode="time"
-        display="default"
+        display="compact"
         themeVariant={isDark ? 'dark' : 'light'}
         onChange={handle}
         disabled={disabled}
         textColor={inkColor}
-        style={{
-          marginLeft: isStart ? -PICKER_LEADING_INFLATION : 0,
-          transform: [{ scale: 1.2 }],
-          transformOrigin: isStart ? '0% 50%' : '100% 50%',
-        }}
       />
     </View>
   );

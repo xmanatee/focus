@@ -6,8 +6,8 @@ describe('resolveQuickStartPhase', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'notDetermined',
-        blockCount: 0,
-        hasCompletedQuickStart: false,
+        applicableBlockCount: 0,
+        deviceId: null,
         missingDeviceSelectionCount: 0,
       }),
     ).toBe('grantAccess');
@@ -17,19 +17,30 @@ describe('resolveQuickStartPhase', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'denied',
-        blockCount: 0,
-        hasCompletedQuickStart: false,
+        applicableBlockCount: 0,
+        deviceId: null,
         missingDeviceSelectionCount: 0,
       }),
     ).toBe('openSettings');
   });
 
-  it('asks for the first block after Screen Time access is ready', () => {
+  it('waits for the local device to be ready before setup continues', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'authorized',
-        blockCount: 0,
-        hasCompletedQuickStart: false,
+        applicableBlockCount: 0,
+        deviceId: null,
+        missingDeviceSelectionCount: 0,
+      }),
+    ).toBe('prepareDevice');
+  });
+
+  it('asks for the first block after Screen Time access and device setup are ready', () => {
+    expect(
+      resolveQuickStartPhase({
+        authorizationStatus: 'authorized',
+        applicableBlockCount: 0,
+        deviceId: 'device-a',
         missingDeviceSelectionCount: 0,
       }),
     ).toBe('createFirstBlock');
@@ -39,32 +50,21 @@ describe('resolveQuickStartPhase', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'authorized',
-        blockCount: 2,
-        hasCompletedQuickStart: false,
+        applicableBlockCount: 2,
+        deviceId: 'device-a',
         missingDeviceSelectionCount: 1,
       }),
     ).toBe('finishDevice');
   });
 
-  it('keeps a verification step until the user completes quick start', () => {
+  it('stays hidden once the device is ready to use', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'authorized',
-        blockCount: 1,
-        hasCompletedQuickStart: false,
+        applicableBlockCount: 1,
+        deviceId: 'device-a',
         missingDeviceSelectionCount: 0,
       }),
-    ).toBe('verifySetup');
-  });
-
-  it('stays hidden after quick start is complete', () => {
-    expect(
-      resolveQuickStartPhase({
-        authorizationStatus: 'authorized',
-        blockCount: 1,
-        hasCompletedQuickStart: true,
-        missingDeviceSelectionCount: 0,
-      }),
-    ).toBe('complete');
+    ).toBeNull();
   });
 });

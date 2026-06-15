@@ -49,7 +49,7 @@ function DeviceBlockRow({
             variant="caption"
             tone={needsSelection ? 'signal' : 'muted'}
           >
-            {needsSelection ? 'Pick apps' : 'Ready'}
+            {needsSelection ? 'Needs apps here' : 'Ready'}
           </Typography>
         </View>
       </View>
@@ -67,9 +67,6 @@ export default function FinishDeviceScreen(): JSX.Element {
     [focusBlocks, deviceId],
   );
   const missingBlocks = applicableBlocks.filter(focusBlockNeedsLocalSelection);
-  const readyBlocks = applicableBlocks.filter(
-    (block) => !focusBlockNeedsLocalSelection(block),
-  );
 
   const editBlock = (block: FocusBlock): void => {
     router.push({
@@ -79,7 +76,7 @@ export default function FinishDeviceScreen(): JSX.Element {
   };
 
   return (
-    <Screen padded={false} edges={['bottom']}>
+    <Screen padded={false} edges={['bottom']} edgeEffect="soft">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -139,19 +136,6 @@ export default function FinishDeviceScreen(): JSX.Element {
             ))}
           </Section>
         )}
-
-        {readyBlocks.length > 0 ? (
-          <Section title="Ready Here">
-            {readyBlocks.map((block) => (
-              <DeviceBlockRow
-                key={block.id}
-                block={block}
-                needsSelection={false}
-                onPress={() => editBlock(block)}
-              />
-            ))}
-          </Section>
-        ) : null}
       </ScrollView>
     </Screen>
   );

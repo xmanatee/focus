@@ -6,6 +6,7 @@ export type Ack =
 
 export interface TamperSetup {
   readonly acks: Readonly<Record<DefenseId, Ack>>;
+  readonly hasSeenIntro: boolean;
 }
 
 export interface Defense {

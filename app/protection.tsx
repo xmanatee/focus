@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ConfirmStep } from '../src/features/protection/components/wizard/ConfirmStep';
 import { DefenseSetupStep } from '../src/features/protection/components/wizard/DefenseSetupStep';
 import { IntroStep } from '../src/features/protection/components/wizard/IntroStep';
 import { protectionCopy } from '../src/features/protection/copy';
+import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
+import {
+  type WizardStep,
+  resolveWizardStep,
+} from '../src/features/protection/wizardProgress';
 import { InfoBanner } from '../src/shared/components/InfoBanner';
 import { useDismiss } from '../src/shared/hooks/useDismiss';
-
-type WizardStep = 'intro' | 'screenTimeLock' | 'appDeletion' | 'confirm';
 
 const NEXT: Record<WizardStep, WizardStep> = {
   intro: 'screenTimeLock',
@@ -17,13 +20,28 @@ const NEXT: Record<WizardStep, WizardStep> = {
 
 export default function ProtectionWizardScreen(): JSX.Element {
   const onClose = useDismiss();
-  const [step, setStep] = useState<WizardStep>('intro');
+  const setup = useTamperSetupStore((s) => s.setup);
+  const markIntroSeen = useTamperSetupStore((s) => s.markIntroSeen);
+  const entryStep = resolveWizardStep(setup);
+  const [step, setStep] = useState<WizardStep>(entryStep);
+
+  useEffect(() => {
+    setStep(entryStep);
+  }, [entryStep]);
 
   const onNext = (): void => setStep((current) => NEXT[current]);
 
   switch (step) {
     case 'intro':
-      return <IntroStep onNext={onNext} onClose={onClose} />;
+      return (
+        <IntroStep
+          onNext={() => {
+            markIntroSeen();
+            onNext();
+          }}
+          onClose={onClose}
+        />
+      );
     case 'screenTimeLock':
       return (
         <DefenseSetupStep

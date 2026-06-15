@@ -27,12 +27,15 @@ export function DayPicker({
               onToggle(day.value);
             }}
             disabled={disabled}
+            accessibilityLabel={day.accessibilityLabel}
+            accessibilityRole="button"
+            accessibilityState={{ disabled, selected: active }}
             className={`h-10 w-10 items-center justify-center rounded-full ${
               active ? 'bg-signal' : 'bg-surface-sunken'
             } ${disabled ? 'opacity-50' : ''}`}
           >
             <Typography variant="caption" tone={active ? 'surface' : 'muted'}>
-              {day.label.charAt(0)}
+              {day.shortLabel}
             </Typography>
           </Pressable>
         );

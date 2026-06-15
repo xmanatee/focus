@@ -79,7 +79,7 @@ function RuleDiagnosticRow({
             variant="caption"
             tone={selectionReady ? 'muted' : 'signal'}
           >
-            {selectionReady ? 'Selection ready' : 'Pick apps here'}
+            {selectionReady ? 'Selection ready' : 'Needs apps here'}
           </Typography>
           <Typography
             variant="caption"
@@ -114,7 +114,7 @@ export default function DiagnosticsScreen(): JSX.Element {
   );
 
   return (
-    <Screen padded={false} edges={['bottom']}>
+    <Screen padded={false} edges={['bottom']} edgeEffect="soft">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{

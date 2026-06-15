@@ -1,10 +1,11 @@
+import { useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
 import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Section } from '../../../shared/components/Section';
 import { Typography } from '../../../shared/components/Typography';
 import { useThemeColors } from '../../../shared/design/theme';
-import { BUDGET_WARNING_MINUTES } from '../budget';
+import { BUDGET_WARNING_MINUTES, budgetMinutesError } from '../budget';
 import type { FocusBlockRule } from '../types';
 
 interface RuleCardProps {
@@ -82,6 +83,18 @@ export function RuleCard({
   const showsBudget =
     value.kind === 'dailyBudget' ||
     value.kind === 'allowDuringScheduleWithBudget';
+  const budgetMinutes = minutesFor(value);
+  const [budgetText, setBudgetText] = useState(String(budgetMinutes));
+  const [budgetError, setBudgetError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!showsBudget) {
+      setBudgetError(null);
+      return;
+    }
+    setBudgetText(String(budgetMinutes));
+    setBudgetError(null);
+  }, [budgetMinutes, showsBudget]);
 
   return (
     <Section title="Rule">
@@ -121,10 +134,22 @@ export function RuleCard({
                 Daily Limit
               </Typography>
               <TextInput
-                value={String(minutesFor(value))}
+                value={budgetText}
                 onChangeText={(text) => {
+                  setBudgetText(text);
                   const parsed = Number.parseInt(text, 10);
-                  if (Number.isNaN(parsed)) return;
+                  if (Number.isNaN(parsed)) {
+                    setBudgetError(
+                      'Daily budget must be between 1 minute and 23h 59m.',
+                    );
+                    return;
+                  }
+                  const error = budgetMinutesError(parsed);
+                  if (error !== null) {
+                    setBudgetError(error);
+                    return;
+                  }
+                  setBudgetError(null);
                   onChange(withMinutes(value, parsed));
                 }}
                 keyboardType="number-pad"
@@ -132,6 +157,11 @@ export function RuleCard({
                 className="bg-surface-sunken rounded-xl px-4 py-3 text-[18px] font-semibold"
                 style={{ color: colors.ink }}
               />
+              {budgetError ? (
+                <Typography variant="caption" tone="danger">
+                  {budgetError}
+                </Typography>
+              ) : null}
               <Typography variant="caption" tone="muted">
                 Focus Blocks can warn when {BUDGET_WARNING_MINUTES} minutes
                 remain for budgets above {BUDGET_WARNING_MINUTES} minutes.

@@ -27,6 +27,7 @@ export function DefenseSetupStep({
   const copy = protectionCopy[defense];
   const ack = useTamperSetupStore((s) => s.setup.acks[defense]);
   const toggle = useTamperSetupStore((s) => s.toggle);
+  const isConfirmed = ack.kind === 'set';
 
   return (
     <WizardStepShell step={step} title={copy.title} onClose={onClose}>
@@ -50,7 +51,12 @@ export function DefenseSetupStep({
         onToggle={() => toggle(defense)}
       />
 
-      <Button title={copy.continue} variant="commit" onPress={onNext} />
+      <Button
+        title={copy.continue}
+        variant="commit"
+        onPress={onNext}
+        disabled={!isConfirmed}
+      />
     </WizardStepShell>
   );
 }

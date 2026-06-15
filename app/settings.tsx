@@ -9,6 +9,7 @@ import type {
   AdminState,
   SetupBlock,
 } from '../src/features/settings/adminState';
+import { describeNextUnlock } from '../src/features/settings/lockInCopy';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { Button } from '../src/shared/components/Button';
@@ -22,23 +23,12 @@ import { Typography } from '../src/shared/components/Typography';
 import {
   DAY_ORDER,
   dateToTimeString,
-  formatRelative,
   timeStringToDate,
 } from '../src/shared/days';
 import { haptic } from '../src/shared/design/haptics';
 import { useAsyncAction } from '../src/shared/hooks/useAsyncAction';
 import { useDismiss } from '../src/shared/hooks/useDismiss';
 import { requestNotificationPermissions } from '../src/shared/notifications';
-
-function nextUnlockLabel(state: AdminState, now: Date): string {
-  if (state.kind === 'unlocked') {
-    return '';
-  }
-  if (!state.nextUnlock) {
-    return 'Setup block needs to be configured.';
-  }
-  return `Next unlock ${formatRelative(state.nextUnlock.at, now)}.`;
-}
 
 export default function SettingsScreen(): JSX.Element {
   const router = useRouter();
@@ -151,7 +141,7 @@ export default function SettingsScreen(): JSX.Element {
   };
 
   return (
-    <Screen padded={false} edges={['bottom']}>
+    <Screen padded={false} edges={['bottom']} edgeEffect="soft">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -214,7 +204,7 @@ export default function SettingsScreen(): JSX.Element {
 
           {!isUnlocked && existing ? (
             <Typography variant="caption" tone="muted">
-              {nextUnlockLabel(state, now)}
+              {describeNextUnlock(state, existing, now)}
             </Typography>
           ) : null}
 

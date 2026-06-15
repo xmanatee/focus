@@ -11,6 +11,7 @@ function setupWith(
   overrides: Partial<Record<DefenseId, Ack>> = {},
 ): TamperSetup {
   return {
+    hasSeenIntro: false,
     acks: {
       screenTimeLock: { kind: 'unset' },
       appDeletion: { kind: 'unset' },

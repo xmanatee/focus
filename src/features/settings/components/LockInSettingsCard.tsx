@@ -2,40 +2,33 @@ import { View } from 'react-native';
 import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
-import type { SetupBlock } from '../adminState';
+import type { AdminState, SetupBlock } from '../adminState';
+import { describeLockInCard } from '../lockInCopy';
 
 interface LockInSettingsCardProps {
-  readonly isAdminLocked: boolean;
+  readonly now: Date;
   readonly onPress: () => void;
+  readonly state: AdminState;
   readonly setupBlock: SetupBlock | null;
 }
 
 export function LockInSettingsCard({
-  isAdminLocked,
+  now,
   onPress,
+  state,
   setupBlock,
 }: LockInSettingsCardProps): JSX.Element {
-  const title =
-    setupBlock === null
-      ? 'Set up Lock-in'
-      : isAdminLocked
-        ? 'Locked'
-        : 'Editable now';
-  const subtitle =
-    setupBlock === null
-      ? 'Set a weekly setup window so you can edit blocks only during it.'
-      : isAdminLocked
-        ? `Editable next during your setup block (${setupBlock.startTime}–${setupBlock.endTime}).`
-        : 'You are inside your setup window — edits are allowed.';
+  const { title, subtitle } = describeLockInCard(state, setupBlock, now);
+  const isLocked = state.kind === 'locked';
 
   return (
     <Card onPress={onPress}>
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
           <Icon
-            name={isAdminLocked ? 'lock.fill' : 'lock.open.fill'}
+            name={isLocked ? 'lock.fill' : 'lock.open.fill'}
             size={20}
-            tone={isAdminLocked ? 'signal' : 'muted'}
+            tone={isLocked ? 'signal' : 'muted'}
           />
           <Typography variant="h3" tone="ink">
             {title}

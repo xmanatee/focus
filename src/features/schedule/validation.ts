@@ -3,11 +3,10 @@ import {
   hasSavedActivitySelection,
   selectionHasBlockedTargets,
 } from '../blocker/types';
+import { MAX_DAILY_BUDGET_MINUTES, MIN_DAILY_BUDGET_MINUTES } from './budget';
 import type { FocusBlockInput } from './types';
 
 const MAX_NAME_LENGTH = 50;
-const MIN_DAILY_LIMIT_MINUTES = 1;
-const MAX_DAILY_LIMIT_MINUTES = 23 * 60 + 59;
 export const MAX_WEB_DOMAINS = 50;
 
 export function validateFocusBlockInput(input: FocusBlockInput): void {
@@ -32,8 +31,8 @@ export function validateFocusBlockInput(input: FocusBlockInput): void {
   if (usesDailyBudget) {
     if (
       !Number.isInteger(input.rule.minutes) ||
-      input.rule.minutes < MIN_DAILY_LIMIT_MINUTES ||
-      input.rule.minutes > MAX_DAILY_LIMIT_MINUTES
+      input.rule.minutes < MIN_DAILY_BUDGET_MINUTES ||
+      input.rule.minutes > MAX_DAILY_BUDGET_MINUTES
     ) {
       throw new Error('Daily budget must be between 1 minute and 23h 59m.');
     }

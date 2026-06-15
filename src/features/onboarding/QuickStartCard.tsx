@@ -11,7 +11,7 @@ interface QuickStartCopy {
   readonly action: string;
 }
 
-const COPY: Record<Exclude<QuickStartPhase, 'complete'>, QuickStartCopy> = {
+const COPY: Record<QuickStartPhase, QuickStartCopy> = {
   grantAccess: {
     title: 'Start with Screen Time access',
     body: 'Focus Blocks needs iOS Screen Time permission before it can shield apps system-wide.',
@@ -22,6 +22,11 @@ const COPY: Record<Exclude<QuickStartPhase, 'complete'>, QuickStartCopy> = {
     body: "Screen Time access was denied. iOS won't show the prompt again, so Focus Blocks needs to be allowed from Settings.",
     action: 'Open Settings',
   },
+  prepareDevice: {
+    title: 'Prepare this device',
+    body: 'Focus Blocks is still getting this iPhone or iPad ready for local setup. If this does not clear, open troubleshooting details.',
+    action: 'Open troubleshooting',
+  },
   createFirstBlock: {
     title: 'Create your first block',
     body: 'Pick a template, choose the apps that pull you in, and save one rule you can trust today.',
@@ -30,25 +35,20 @@ const COPY: Record<Exclude<QuickStartPhase, 'complete'>, QuickStartCopy> = {
   finishDevice: {
     title: 'Finish this device',
     body: 'Your rules synced, but iOS app selections must be confirmed once on this iPhone or iPad.',
-    action: 'Pick apps here',
-  },
-  verifySetup: {
-    title: 'Test your setup',
-    body: 'Run the setup check once so you know Screen Time access, device selections, and active rules are ready.',
-    action: 'Run setup check',
+    action: 'Open blocks to finish',
   },
 };
 
 interface QuickStartCardProps {
-  readonly phase: Exclude<QuickStartPhase, 'complete'>;
-  readonly onComplete: () => void;
+  readonly phase: QuickStartPhase;
+  readonly isPrimaryLoading?: boolean;
   readonly onPrimary: () => void;
 }
 
 export function QuickStartCard({
-  onComplete,
   onPrimary,
   phase,
+  isPrimaryLoading = false,
 }: QuickStartCardProps): JSX.Element {
   const copy = COPY[phase];
 
@@ -58,7 +58,7 @@ export function QuickStartCard({
         <Icon name="sparkles" size={24} tone="signal" />
         <View className="flex-1 gap-1">
           <Typography variant="label" tone="faint">
-            Quick start
+            Setup guide
           </Typography>
           <Typography variant="h3" tone="ink">
             {copy.title}
@@ -68,12 +68,12 @@ export function QuickStartCard({
           </Typography>
         </View>
       </View>
-      <View className="gap-2">
-        <Button title={copy.action} variant="commit" onPress={onPrimary} />
-        {phase === 'verifySetup' ? (
-          <Button title="Looks ready" variant="ghost" onPress={onComplete} />
-        ) : null}
-      </View>
+      <Button
+        title={copy.action}
+        variant="commit"
+        onPress={onPrimary}
+        isLoading={isPrimaryLoading}
+      />
     </Card>
   );
 }

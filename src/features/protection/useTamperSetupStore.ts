@@ -4,11 +4,13 @@ import { persistedStorage } from '../../shared/storage';
 import type { Ack, DefenseId, TamperSetup } from './types';
 
 interface TamperSetupState {
+  readonly markIntroSeen: () => void;
   readonly setup: TamperSetup;
   readonly toggle: (id: DefenseId) => void;
 }
 
 const EMPTY_SETUP: TamperSetup = {
+  hasSeenIntro: false,
   acks: {
     screenTimeLock: { kind: 'unset' },
     appDeletion: { kind: 'unset' },
@@ -20,6 +22,15 @@ export const useTamperSetupStore = create<TamperSetupState>()(
     (set) => ({
       setup: EMPTY_SETUP,
 
+      markIntroSeen: () => {
+        set((state) => ({
+          setup: {
+            ...state.setup,
+            hasSeenIntro: true,
+          },
+        }));
+      },
+
       toggle: (id) => {
         set((state) => {
           const current = state.setup.acks[id];
@@ -28,7 +39,10 @@ export const useTamperSetupStore = create<TamperSetupState>()(
               ? { kind: 'unset' }
               : { kind: 'set', at: Date.now() };
           return {
-            setup: { acks: { ...state.setup.acks, [id]: next } },
+            setup: {
+              ...state.setup,
+              acks: { ...state.setup.acks, [id]: next },
+            },
           };
         });
       },

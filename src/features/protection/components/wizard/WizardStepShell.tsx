@@ -18,7 +18,7 @@ export function WizardStepShell({
   children,
 }: WizardStepShellProps): JSX.Element {
   return (
-    <Screen padded={false} edges={['bottom']}>
+    <Screen padded={false} edges={['bottom']} edgeEffect="soft">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{

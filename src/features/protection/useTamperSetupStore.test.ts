@@ -7,6 +7,7 @@ function reset(): void {
   storageMap.clear();
   useTamperSetupStore.setState({
     setup: {
+      hasSeenIntro: false,
       acks: {
         screenTimeLock: { kind: 'unset' },
         appDeletion: { kind: 'unset' },
@@ -20,8 +21,14 @@ describe('useTamperSetupStore', () => {
 
   it('starts with all defenses unset', () => {
     const setup = useTamperSetupStore.getState().setup;
+    expect(setup.hasSeenIntro).toBe(false);
     expect(setup.acks.screenTimeLock.kind).toBe('unset');
     expect(setup.acks.appDeletion.kind).toBe('unset');
+  });
+
+  it('remembers when setup has been started', () => {
+    useTamperSetupStore.getState().markIntroSeen();
+    expect(useTamperSetupStore.getState().setup.hasSeenIntro).toBe(true);
   });
 
   it('toggle moves an ack from unset to set with a timestamp', () => {

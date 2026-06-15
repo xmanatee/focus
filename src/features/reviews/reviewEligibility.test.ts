@@ -1,48 +1,69 @@
 import { describe, expect, it } from 'vitest';
-import { shouldShowReviewPrompt } from './reviewEligibility';
+import {
+  markReviewPromptReviewed,
+  shouldShowReviewPrompt,
+  snoozeReviewPrompt,
+} from './reviewPromptState';
+
+const readyVerification = {
+  activeBlockCount: 0,
+  applicableBlockCount: 1,
+  checks: [],
+  level: 'ready',
+  missingDeviceSelectionCount: 0,
+  summary: 'Ready',
+  title: 'Ready',
+} as const;
 
 describe('shouldShowReviewPrompt', () => {
   it('waits until setup is ready and no block is actively shielding', () => {
     expect(
-      shouldShowReviewPrompt({
-        activeBlockCount: 0,
-        applicableBlockCount: 1,
-        hasDismissed: false,
-        level: 'ready',
-        missingDeviceSelectionCount: 0,
-      }),
+      shouldShowReviewPrompt(
+        readyVerification,
+        { kind: 'eligible' },
+        Date.now(),
+      ),
     ).toBe(true);
 
     expect(
-      shouldShowReviewPrompt({
-        activeBlockCount: 1,
-        applicableBlockCount: 1,
-        hasDismissed: false,
-        level: 'ready',
-        missingDeviceSelectionCount: 0,
-      }),
+      shouldShowReviewPrompt(
+        {
+          ...readyVerification,
+          activeBlockCount: 1,
+        },
+        { kind: 'eligible' },
+        Date.now(),
+      ),
     ).toBe(false);
   });
 
-  it('does not ask during setup trouble or after dismissal', () => {
+  it('does not ask during setup trouble, snooze, or after review', () => {
     expect(
-      shouldShowReviewPrompt({
-        activeBlockCount: 0,
-        applicableBlockCount: 1,
-        hasDismissed: false,
-        level: 'blocked',
-        missingDeviceSelectionCount: 1,
-      }),
+      shouldShowReviewPrompt(
+        {
+          ...readyVerification,
+          level: 'blocked',
+          missingDeviceSelectionCount: 1,
+        },
+        { kind: 'eligible' },
+        Date.now(),
+      ),
     ).toBe(false);
 
     expect(
-      shouldShowReviewPrompt({
-        activeBlockCount: 0,
-        applicableBlockCount: 1,
-        hasDismissed: true,
-        level: 'ready',
-        missingDeviceSelectionCount: 0,
-      }),
+      shouldShowReviewPrompt(
+        readyVerification,
+        snoozeReviewPrompt(Date.now()),
+        Date.now(),
+      ),
+    ).toBe(false);
+
+    expect(
+      shouldShowReviewPrompt(
+        readyVerification,
+        markReviewPromptReviewed(Date.now()),
+        Date.now(),
+      ),
     ).toBe(false);
   });
 });

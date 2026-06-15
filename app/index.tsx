@@ -1,15 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { ScrollView } from 'react-native';
-import { ScreenTimeAccessCard } from '../src/features/blocker/components/ScreenTimeAccessCard';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
-import { SetupVerificationCard } from '../src/features/diagnostics/components/SetupVerificationCard';
 import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
 import { useSetupVerification } from '../src/features/diagnostics/useSetupVerification';
 import { QuickStartCard } from '../src/features/onboarding/QuickStartCard';
 import { resolveQuickStartPhase } from '../src/features/onboarding/quickStart';
-import { useQuickStartStore } from '../src/features/onboarding/useQuickStartStore';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { ReviewPromptCard } from '../src/features/reviews/ReviewPromptCard';
 import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSessionCard';
@@ -36,7 +33,6 @@ export default function MainFeedScreen(): JSX.Element {
   const busyState = useBlockerStore((s) => s.busyState);
   const requestPermissions = useBlockerStore((s) => s.requestPermissions);
   const hasPermissions = authorizationStatus === 'authorized';
-  const permissionsDenied = authorizationStatus === 'denied';
 
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const toggleFocusBlock = useFocusBlockStore((s) => s.toggleFocusBlock);
@@ -57,7 +53,7 @@ export default function MainFeedScreen(): JSX.Element {
   );
   const { active, activeBlocks, now } = useActiveBlock(runnableBlocks);
 
-  const { state: adminState } = useAdminState();
+  const { state: adminState, now: adminNow } = useAdminState();
   const isAdminLocked = adminState.kind === 'locked';
   const setupBlock = useSettingsStore((s) => s.setupBlock);
 
@@ -65,19 +61,13 @@ export default function MainFeedScreen(): JSX.Element {
   const showProtectionCard = posture.score !== 'full';
   const setupVerification = useSetupVerification();
   const handleSetupAction = useSetupActionHandler();
-  const hasCompletedQuickStart = useQuickStartStore(
-    (s) => s.hasCompletedQuickStart,
-  );
-  const completeQuickStart = useQuickStartStore((s) => s.completeQuickStart);
 
   const quickStartPhase = resolveQuickStartPhase({
     authorizationStatus,
-    blockCount: applicableBlocks.length,
-    hasCompletedQuickStart,
+    applicableBlockCount: applicableBlocks.length,
+    deviceId,
     missingDeviceSelectionCount,
   });
-  const quickStartVisiblePhase =
-    quickStartPhase === 'complete' ? null : quickStartPhase;
 
   useEffect(() => {
     if (!hasPermissions || deviceId === null) return;
@@ -105,16 +95,16 @@ export default function MainFeedScreen(): JSX.Element {
       handleSetupAction('requestScreenTime');
       return;
     }
+    if (quickStartPhase === 'prepareDevice') {
+      router.push('/diagnostics');
+      return;
+    }
     if (quickStartPhase === 'createFirstBlock') {
       router.push('/add-focus-block');
       return;
     }
     if (quickStartPhase === 'finishDevice') {
       handleSetupAction('finishDeviceSetup');
-      return;
-    }
-    if (quickStartPhase === 'verifySetup') {
-      router.push('/diagnostics');
     }
   };
 
@@ -124,7 +114,7 @@ export default function MainFeedScreen(): JSX.Element {
   );
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} edgeEffect="soft">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
@@ -144,42 +134,15 @@ export default function MainFeedScreen(): JSX.Element {
         )}
 
         <Section title="Configuration">
-          {quickStartVisiblePhase !== null ? (
+          {quickStartPhase !== null ? (
             <QuickStartCard
-              phase={quickStartVisiblePhase}
+              phase={quickStartPhase}
+              isPrimaryLoading={
+                quickStartPhase === 'grantAccess' && busyState === 'authorizing'
+              }
               onPrimary={handleQuickStartPrimary}
-              onComplete={() => {
-                void haptic.commit();
-                completeQuickStart();
-              }}
-            />
-          ) : permissionsDenied ? (
-            <ScreenTimeAccessCard
-              denied
-              isAuthorizing={false}
-              onGrant={() => void handleGrant()}
-              onOpenSettings={() => {
-                void haptic.select();
-                handleSetupAction('requestScreenTime');
-              }}
-            />
-          ) : !hasPermissions ? (
-            <ScreenTimeAccessCard
-              denied={false}
-              isAuthorizing={busyState === 'authorizing'}
-              onGrant={() => void handleGrant()}
-              onOpenSettings={() => {
-                void haptic.select();
-                handleSetupAction('requestScreenTime');
-              }}
             />
           ) : null}
-
-          <SetupVerificationCard
-            verification={setupVerification}
-            onAction={handleSetupAction}
-            onOpenDetails={() => router.push('/diagnostics')}
-          />
 
           <ReviewPromptCard verification={setupVerification} />
 
@@ -193,7 +156,8 @@ export default function MainFeedScreen(): JSX.Element {
           )}
 
           <LockInSettingsCard
-            isAdminLocked={isAdminLocked}
+            now={adminNow}
+            state={adminState}
             setupBlock={setupBlock}
             onPress={() => router.push('/settings')}
           />
@@ -203,7 +167,6 @@ export default function MainFeedScreen(): JSX.Element {
           applicableBlocks={applicableBlocks}
           deviceId={deviceId}
           isAdminLocked={isAdminLocked}
-          missingDeviceSelectionCount={missingDeviceSelectionCount}
           now={now}
           onAdd={() => {
             void haptic.select();
@@ -216,7 +179,6 @@ export default function MainFeedScreen(): JSX.Element {
               params: { id: blockId },
             });
           }}
-          onFinishDeviceSetup={() => handleSetupAction('finishDeviceSetup')}
           onToggle={handleToggle}
         />
       </ScrollView>
