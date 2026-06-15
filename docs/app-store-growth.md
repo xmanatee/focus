@@ -8,7 +8,7 @@ metadata changes should be reviewed in Git and pushed with EAS Metadata.
 
 Current target metadata:
 
-- Version: `1.0.2`
+- Version: `1.0.3`
 - Title: `Focus Blocks: App Blocker`
 - Subtitle: `Screen time app limits`
 - Locales: `en-GB`, `en-US`, `ru`
