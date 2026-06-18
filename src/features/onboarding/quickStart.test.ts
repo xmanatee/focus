@@ -6,8 +6,7 @@ describe('resolveQuickStartPhase', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'notDetermined',
-        applicableBlockCount: 0,
-        deviceId: null,
+        blockCount: 0,
         missingDeviceSelectionCount: 0,
       }),
     ).toBe('grantAccess');
@@ -17,30 +16,17 @@ describe('resolveQuickStartPhase', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'denied',
-        applicableBlockCount: 0,
-        deviceId: null,
+        blockCount: 0,
         missingDeviceSelectionCount: 0,
       }),
     ).toBe('openSettings');
   });
 
-  it('waits for the local device to be ready before setup continues', () => {
+  it('asks for the first block after Screen Time access is ready', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'authorized',
-        applicableBlockCount: 0,
-        deviceId: null,
-        missingDeviceSelectionCount: 0,
-      }),
-    ).toBe('prepareDevice');
-  });
-
-  it('asks for the first block after Screen Time access and device setup are ready', () => {
-    expect(
-      resolveQuickStartPhase({
-        authorizationStatus: 'authorized',
-        applicableBlockCount: 0,
-        deviceId: 'device-a',
+        blockCount: 0,
         missingDeviceSelectionCount: 0,
       }),
     ).toBe('createFirstBlock');
@@ -50,8 +36,7 @@ describe('resolveQuickStartPhase', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'authorized',
-        applicableBlockCount: 2,
-        deviceId: 'device-a',
+        blockCount: 2,
         missingDeviceSelectionCount: 1,
       }),
     ).toBe('finishDevice');
@@ -61,8 +46,7 @@ describe('resolveQuickStartPhase', () => {
     expect(
       resolveQuickStartPhase({
         authorizationStatus: 'authorized',
-        applicableBlockCount: 1,
-        deviceId: 'device-a',
+        blockCount: 1,
         missingDeviceSelectionCount: 0,
       }),
     ).toBeNull();

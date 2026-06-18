@@ -59,16 +59,6 @@ export function FocusBlockRow({
             {describeRule(block)}
           </Typography>
           <View className="flex-row items-center gap-2 flex-wrap">
-            <SelectionPill
-              icon={
-                block.scope.kind === 'allDevices' ? 'icloud.fill' : 'iphone'
-              }
-              label={
-                block.scope.kind === 'allDevices'
-                  ? 'All devices'
-                  : 'This device'
-              }
-            />
             {needsDeviceSelection && (
               <SelectionPill
                 icon="exclamationmark.triangle.fill"
@@ -114,8 +104,6 @@ function SelectionPill({
     | 'app.badge'
     | 'exclamationmark.triangle.fill'
     | 'globe'
-    | 'icloud.fill'
-    | 'iphone'
     | 'square.grid.2x2.fill';
   label: string;
 }): JSX.Element {

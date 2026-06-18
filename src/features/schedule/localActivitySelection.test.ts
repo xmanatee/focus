@@ -17,9 +17,6 @@ function block(overrides: Partial<FocusBlock> = {}): FocusBlock {
     startTime: '09:00',
     endTime: '17:00',
     days: ['mon'],
-    isEnabled: true,
-    enabledDeviceIds: ['device-a'],
-    scope: { kind: 'allDevices' },
     rule: { kind: 'blockDuringSchedule' },
     selection: {
       activitySelection: {
@@ -57,14 +54,12 @@ describe('local activity selection helpers', () => {
     expect(activitySelectionHasLocalSlot('block-a', saved)).toBe(true);
   });
 
-  it('tracks missing local setup even before a block is armed here', () => {
-    const enabled = block();
-    const disabled = block({ isEnabled: false });
+  it('tracks missing local setup independently from local activation', () => {
+    const synced = block();
     const populatedSlots = new Set<string>([selectionIdForBlock('block-a')]);
 
-    expect(focusBlockNeedsLocalSelection(enabled)).toBe(true);
-    expect(focusBlockNeedsLocalSelection(disabled)).toBe(true);
-    expect(focusBlockSelectionReadyInSlots(enabled, populatedSlots)).toBe(true);
-    expect(focusBlockSelectionReadyInSlots(enabled, new Set())).toBe(false);
+    expect(focusBlockNeedsLocalSelection(synced)).toBe(true);
+    expect(focusBlockSelectionReadyInSlots(synced, populatedSlots)).toBe(true);
+    expect(focusBlockSelectionReadyInSlots(synced, new Set())).toBe(false);
   });
 });

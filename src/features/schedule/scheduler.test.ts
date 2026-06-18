@@ -8,9 +8,24 @@ import {
   slotStore,
 } from '../../test-helpers/mockDeviceActivity';
 import { reconcileFocusBlocks } from './scheduler';
-import type { FocusBlock } from './types';
+import type { RuntimeFocusBlock } from './types';
 
-function block(overrides: Partial<FocusBlock>): FocusBlock {
+function savedSelection(
+  webDomains: readonly string[] = [],
+): RuntimeFocusBlock['selection'] {
+  return {
+    activitySelection: {
+      status: 'saved',
+      applicationCount: 1,
+      categoryCount: 0,
+      webDomainCount: 0,
+      includeEntireCategory: true,
+    },
+    webDomains,
+  };
+}
+
+function block(overrides: Partial<RuntimeFocusBlock>): RuntimeFocusBlock {
   return {
     id: 'block',
     name: 'Block',
@@ -18,21 +33,10 @@ function block(overrides: Partial<FocusBlock>): FocusBlock {
     endTime: '17:00',
     days: ['mon'],
     isEnabled: true,
-    enabledDeviceIds: ['device-a'],
-    selection: {
-      activitySelection: {
-        status: 'saved',
-        applicationCount: 1,
-        categoryCount: 0,
-        webDomainCount: 0,
-        includeEntireCategory: true,
-      },
-      webDomains: [],
-    },
+    selection: savedSelection(),
     notifyOnStart: false,
     notifyOnEnd: false,
     strict: false,
-    scope: { kind: 'allDevices' },
     rule: { kind: 'blockDuringSchedule' },
     ...overrides,
   };
@@ -64,32 +68,14 @@ describe('reconcileFocusBlocks', () => {
           name: 'A',
           startTime: '09:00',
           endTime: '11:00',
-          selection: {
-            activitySelection: {
-              status: 'saved',
-              applicationCount: 1,
-              categoryCount: 0,
-              webDomainCount: 0,
-              includeEntireCategory: true,
-            },
-            webDomains: ['a.example'],
-          },
+          selection: savedSelection(['a.example']),
         }),
         block({
           id: 'b',
           name: 'B',
           startTime: '10:00',
           endTime: '12:00',
-          selection: {
-            activitySelection: {
-              status: 'saved',
-              applicationCount: 1,
-              categoryCount: 0,
-              webDomainCount: 0,
-              includeEntireCategory: true,
-            },
-            webDomains: ['b.example'],
-          },
+          selection: savedSelection(['b.example']),
         }),
       ],
       null,
@@ -140,6 +126,22 @@ describe('reconcileFocusBlocks', () => {
         (action) => action.type,
       ),
     ).toEqual(['resetBlocks', 'clearWebContentFilterPolicy', 'blockSelection']);
+  });
+
+  it('applies an active scheduled app block immediately during reconcile', async () => {
+    slotStore.set('block.local', 'selection-local');
+
+    await reconcileFocusBlocks(
+      [block({ id: 'local' })],
+      null,
+      new Date('2026-04-27T10:00:00'),
+    );
+
+    expect(manualActions.map((action) => action.type)).toEqual([
+      'resetBlocks',
+      'blockSelection',
+      'clearWebContentFilterPolicy',
+    ]);
   });
 
   it('configures daily budget monitors with past activity included', async () => {
@@ -220,16 +222,7 @@ describe('reconcileFocusBlocks', () => {
         block({
           id: 'budget-web',
           rule: { kind: 'dailyBudget', minutes: 10 },
-          selection: {
-            activitySelection: {
-              status: 'saved',
-              applicationCount: 1,
-              categoryCount: 0,
-              webDomainCount: 0,
-              includeEntireCategory: true,
-            },
-            webDomains: ['youtube.com', 'm.youtube.com'],
-          },
+          selection: savedSelection(['youtube.com', 'm.youtube.com']),
         }),
       ],
       null,
@@ -264,16 +257,7 @@ describe('reconcileFocusBlocks', () => {
         block({
           id: 'budget-web',
           rule: { kind: 'dailyBudget', minutes: 10 },
-          selection: {
-            activitySelection: {
-              status: 'saved',
-              applicationCount: 1,
-              categoryCount: 0,
-              webDomainCount: 0,
-              includeEntireCategory: true,
-            },
-            webDomains: ['youtube.com'],
-          },
+          selection: savedSelection(['youtube.com']),
         }),
       ],
       null,

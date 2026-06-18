@@ -6,10 +6,10 @@ import {
 } from '../../shared/hooks/useAsyncAction';
 import { requestNotificationPermissions } from '../../shared/notifications';
 import { selectionHasBlockedTargets } from '../blocker/types';
-import { getLocalDeviceId } from '../device/deviceId';
 import { inputUsesBudgetWarning } from './budget';
 import { activitySelectionNeedsLocalSlot } from './localActivitySelection';
 import type { FocusBlockInput } from './types';
+import { useBlockActivationStore } from './useBlockActivationStore';
 import { useFocusBlockStore } from './useFocusBlockStore';
 import { validateFocusBlockInput } from './validation';
 
@@ -39,6 +39,7 @@ export function useFocusBlockSave({
   const addFocusBlock = useFocusBlockStore((s) => s.addFocusBlock);
   const updateFocusBlock = useFocusBlockStore((s) => s.updateFocusBlock);
   const deleteFocusBlock = useFocusBlockStore((s) => s.deleteFocusBlock);
+  const setBlockEnabled = useBlockActivationStore((s) => s.setBlockEnabled);
   const { error, isPending, run } = useAsyncAction();
 
   const save = async (): Promise<void> => {
@@ -68,9 +69,11 @@ export function useFocusBlockSave({
         await requestNotificationPermissions();
       }
       void haptic.commit();
-      const deviceId = await getLocalDeviceId();
-      if (editId) updateFocusBlock(editId, input, deviceId);
-      else addFocusBlock(newBlockId, input);
+      if (editId) updateFocusBlock(editId, input);
+      else {
+        addFocusBlock(newBlockId, input);
+        setBlockEnabled(newBlockId, true);
+      }
       markSelectionSaved();
     }, 'Could not save block.');
     if (success) dismiss();
@@ -89,8 +92,7 @@ export function useFocusBlockSave({
           onPress: () => {
             void run(async () => {
               void haptic.abandon();
-              const deviceId = await getLocalDeviceId();
-              deleteFocusBlock(editId, deviceId);
+              deleteFocusBlock(editId);
               markSelectionSaved();
             }, 'Could not delete block.').then((success) => {
               if (success) dismiss();

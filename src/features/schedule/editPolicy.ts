@@ -1,7 +1,7 @@
 import { formatRelative } from '../../shared/days';
 import type { AdminState } from '../settings/adminState';
 import { getFocusBlockRuntimeStatus } from './runtimeStatus';
-import type { FocusBlock } from './types';
+import type { RuntimeFocusBlock } from './types';
 
 interface EditPolicy {
   readonly readOnly: boolean;
@@ -11,7 +11,7 @@ interface EditPolicy {
 
 export function resolveEditPolicy(
   adminState: AdminState,
-  existing: FocusBlock | null,
+  existing: RuntimeFocusBlock | null,
   now: Date,
 ): EditPolicy {
   if (adminState.kind === 'locked') {
@@ -22,6 +22,9 @@ export function resolveEditPolicy(
         message:
           'You can add new blocks, but they cannot be edited or removed until your next setup window.',
       };
+    }
+    if (!existing.isEnabled) {
+      return { readOnly: false, title: null, message: null };
     }
     const next = adminState.nextUnlock;
     return {

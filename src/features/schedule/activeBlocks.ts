@@ -2,7 +2,7 @@ import {
   type FocusBlockRuntimeStatus,
   getFocusBlockRuntimeStatus,
 } from './runtimeStatus';
-import type { FocusBlock } from './types';
+import type { RuntimeFocusBlock } from './types';
 
 export type ActiveFocusBlockStatus = Extract<
   FocusBlockRuntimeStatus,
@@ -16,7 +16,7 @@ function isActiveStatus(
 }
 
 export function getActiveBlockStatuses(
-  focusBlocks: readonly FocusBlock[],
+  focusBlocks: readonly RuntimeFocusBlock[],
   at: Date,
 ): readonly ActiveFocusBlockStatus[] {
   return focusBlocks

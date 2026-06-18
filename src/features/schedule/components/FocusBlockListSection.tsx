@@ -4,16 +4,15 @@ import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Section } from '../../../shared/components/Section';
 import { Typography } from '../../../shared/components/Typography';
-import { focusBlockIsEnabledOnDevice } from '../deviceActivation';
-import { focusBlockRunnableOnDevice } from '../deviceRuntime';
 import { focusBlockNeedsLocalSelection } from '../localActivitySelection';
+import { focusBlockRunnableLocally } from '../localRuntime';
 import { getFocusBlockRuntimeStatus } from '../runtimeStatus';
 import type { FocusBlock } from '../types';
 import { FocusBlockRow } from './FocusBlockRow';
 
 interface FocusBlockListSectionProps {
-  readonly applicableBlocks: readonly FocusBlock[];
-  readonly deviceId: string | null;
+  readonly enabledBlockIds: readonly string[];
+  readonly focusBlocks: readonly FocusBlock[];
   readonly isAdminLocked: boolean;
   readonly now: Date;
   readonly onAdd: () => void;
@@ -22,8 +21,8 @@ interface FocusBlockListSectionProps {
 }
 
 export function FocusBlockListSection({
-  applicableBlocks,
-  deviceId,
+  enabledBlockIds,
+  focusBlocks,
   isAdminLocked,
   now,
   onAdd,
@@ -44,7 +43,7 @@ export function FocusBlockListSection({
         </Pressable>
       }
     >
-      {applicableBlocks.length === 0 ? (
+      {focusBlocks.length === 0 ? (
         <Card tone="dashed" className="py-10 items-center">
           <Icon name="sparkles" size={24} tone="signal" />
           <Typography variant="h3" tone="ink" align="center">
@@ -57,26 +56,23 @@ export function FocusBlockListSection({
           <Button title="Add a block" variant="commit" onPress={onAdd} />
         </Card>
       ) : (
-        applicableBlocks.map((block) => {
-          const runnableBlock = focusBlockRunnableOnDevice(block, deviceId);
+        focusBlocks.map((block) => {
+          const isEnabled = enabledBlockIds.includes(block.id);
+          const runnableBlock = focusBlockRunnableLocally(block, isEnabled);
           const status = getFocusBlockRuntimeStatus(runnableBlock, now);
           const isActive = status.kind === 'active';
           const needsDeviceSelection = focusBlockNeedsLocalSelection(block);
-          const isEnabledOnDevice = focusBlockIsEnabledOnDevice(
-            block,
-            deviceId,
-          );
           return (
             <FocusBlockRow
               key={block.id}
               block={block}
-              isEnabled={isEnabledOnDevice}
+              isEnabled={isEnabled}
               isActive={isActive}
               needsDeviceSelection={needsDeviceSelection}
               toggleDisabled={
                 isActive ||
-                isAdminLocked ||
-                (!isEnabledOnDevice && needsDeviceSelection)
+                (isAdminLocked && runnableBlock.isEnabled) ||
+                (!isEnabled && needsDeviceSelection)
               }
               onPress={() => onEdit(block.id)}
               onToggle={(next) => onToggle(block.id, next)}

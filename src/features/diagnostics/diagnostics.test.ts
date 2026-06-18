@@ -37,10 +37,10 @@ function block(id: string, overrides: Partial<FocusBlock> = {}): FocusBlock {
 }
 
 describe('evaluateSetupVerification', () => {
-  it('flags synced all-device blocks that need local app selection', () => {
+  it('flags synced blocks that need local app selection', () => {
     const result = evaluateSetupVerification({
       authorizationStatus: 'authorized',
-      deviceId: 'device-a',
+      enabledBlockIds: ['one'],
       focusBlocks: [block('one')],
       now: new Date('2026-06-05T10:00:00'),
       populatedSelectionSlots: new Set(),
@@ -62,7 +62,7 @@ describe('evaluateSetupVerification', () => {
   it('reports ready when permissions and device selections are complete', () => {
     const result = evaluateSetupVerification({
       authorizationStatus: 'authorized',
-      deviceId: 'device-a',
+      enabledBlockIds: ['one'],
       focusBlocks: [block('one')],
       now: new Date('2026-06-05T10:00:00'),
       populatedSelectionSlots: new Set(['block.one']),
@@ -89,7 +89,7 @@ describe('buildDiagnosticsReport', () => {
     const report = buildDiagnosticsReport({
       appVersion: '1.0.1',
       authorizationStatus: 'authorized',
-      deviceId: 'device-a',
+      enabledBlockIds: ['one'],
       focusBlocks: [block('one', { name: 'Secret YouTube Block' })],
       generatedAt: new Date('2026-06-05T10:00:00Z'),
       now: new Date('2026-06-05T10:00:00'),

@@ -1,23 +1,27 @@
 import '../global.css';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { AppState, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
+import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useSetupBlockDeviceStore } from '../src/features/settings/setupBlockDeviceStore';
-import { SETTINGS_STORAGE_KEY } from '../src/features/settings/storageKeys';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
-import { attachCloudSync, hasLocalStorageValue } from '../src/shared/storage';
+import { attachCloudSync } from '../src/shared/storage';
 
 async function rehydrateAll(): Promise<void> {
-  const hadLocalSetupBlock = await hasLocalStorageValue(SETTINGS_STORAGE_KEY);
   await useFocusBlockStore.persist.rehydrate();
+  await useBlockActivationStore.persist.rehydrate();
   await useSettingsStore.persist.rehydrate();
   await useSetupBlockDeviceStore.persist.rehydrate();
   await useTamperSetupStore.persist.rehydrate();
-  useSetupBlockDeviceStore.getState().initialize(hadLocalSetupBlock);
+  const focusBlocks = useFocusBlockStore.getState().focusBlocks;
+  useBlockActivationStore
+    .getState()
+    .syncBlockPresence(focusBlocks.map((block) => block.id));
   const setupBlock = useSettingsStore.getState().setupBlock;
   useSetupBlockDeviceStore
     .getState()
@@ -37,6 +41,16 @@ export default function RootLayout(): JSX.Element {
     return attachCloudSync(() => {
       void rehydrateAll();
     });
+  }, []);
+
+  useEffect(() => {
+    const refreshAuthorizationStatus =
+      useBlockerStore.getState().refreshAuthorizationStatus;
+    refreshAuthorizationStatus();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refreshAuthorizationStatus();
+    });
+    return () => subscription.remove();
   }, []);
 
   if (!isHydrated) {

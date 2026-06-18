@@ -1,11 +1,7 @@
 import type { AuthorizationStatus } from '../../bridge/BlockerBridge';
 import type { ProtectionPosture } from '../protection/types';
-import {
-  focusBlockIsEnabledOnDevice,
-  focusBlockWithDeviceEnabledState,
-} from '../schedule/deviceActivation';
-import { focusBlocksForDevice } from '../schedule/deviceScope';
 import { focusBlockSelectionReadyInSlots } from '../schedule/localActivitySelection';
+import { focusBlockRunnableLocally } from '../schedule/localRuntime';
 import { getFocusBlockRuntimeStatus } from '../schedule/runtimeStatus';
 import type { FocusBlock } from '../schedule/types';
 import { type SetupBlock, resolveAdminState } from '../settings/adminState';
@@ -22,7 +18,6 @@ export type SetupVerificationAction =
 export interface SetupVerificationCheck {
   readonly id:
     | 'screenTime'
-    | 'device'
     | 'blocks'
     | 'deviceSelections'
     | 'protection'
@@ -38,7 +33,6 @@ export function setupActionForCheck(
   switch (id) {
     case 'screenTime':
       return 'requestScreenTime';
-    case 'device':
     case 'activeNow':
       return 'openDiagnostics';
     case 'blocks':
@@ -53,7 +47,7 @@ export function setupActionForCheck(
 export interface DiagnosticsInput {
   readonly appVersion?: string;
   readonly authorizationStatus: AuthorizationStatus;
-  readonly deviceId: string | null;
+  readonly enabledBlockIds: readonly string[];
   readonly focusBlocks: readonly FocusBlock[];
   readonly generatedAt?: Date;
   readonly now: Date;
@@ -65,7 +59,7 @@ export interface DiagnosticsInput {
 
 export interface SetupVerification {
   readonly activeBlockCount: number;
-  readonly applicableBlockCount: number;
+  readonly blockCount: number;
   readonly checks: readonly SetupVerificationCheck[];
   readonly level: SetupVerificationLevel;
   readonly missingDeviceSelectionCount: number;
@@ -100,20 +94,18 @@ function summaryFor(level: SetupVerificationLevel): string {
 export function evaluateSetupVerification(
   input: DiagnosticsInput,
 ): SetupVerification {
-  const applicable = focusBlocksForDevice(input.focusBlocks, input.deviceId);
-  const missingDeviceSelectionCount = applicable.filter(
+  const missingDeviceSelectionCount = input.focusBlocks.filter(
     (block) =>
       !focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
   ).length;
-  const runnable = applicable.map((block) => {
-    const blockOnThisDevice = focusBlockWithDeviceEnabledState(
+  const runnable = input.focusBlocks.map((block) =>
+    focusBlockRunnableLocally(
       block,
-      input.deviceId,
-    );
-    return focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots)
-      ? blockOnThisDevice
-      : { ...blockOnThisDevice, isEnabled: false };
-  });
+      input.enabledBlockIds.includes(block.id) &&
+        focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
+      focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
+    ),
+  );
   const enabled = runnable.filter((block) => block.isEnabled);
   const activeBlockCount = enabled.filter(
     (block) => getFocusBlockRuntimeStatus(block, input.now).kind === 'active',
@@ -132,17 +124,11 @@ export function evaluateSetupVerification(
       status: input.authorizationStatus === 'authorized' ? 'pass' : 'fail',
     },
     {
-      id: 'device',
-      title: 'This device',
-      detail: input.deviceId === null ? 'Local device id missing' : 'Detected',
-      status: input.deviceId === null ? 'fail' : 'pass',
-    },
-    {
       id: 'blocks',
       title: 'Enabled blocks',
       detail:
         enabled.length === 0
-          ? 'No enabled blocks apply to this device'
+          ? 'No blocks are enabled on this device'
           : `${enabled.length} enabled on this device`,
       status: enabled.length === 0 ? 'warn' : 'pass',
     },
@@ -178,18 +164,13 @@ export function evaluateSetupVerification(
   const level = statusLevel(checks);
   return {
     activeBlockCount,
-    applicableBlockCount: applicable.length,
+    blockCount: input.focusBlocks.length,
     checks,
     level,
     missingDeviceSelectionCount,
     summary: summaryFor(level),
     title: titleFor(level),
   };
-}
-
-function safeScope(block: FocusBlock, deviceId: string | null): string {
-  if (block.scope.kind === 'allDevices') return 'allDevices';
-  return block.scope.deviceId === deviceId ? 'thisDevice' : 'otherDevice';
 }
 
 function diagnosticsLockInState(input: DiagnosticsInput): string {
@@ -215,11 +196,10 @@ export function buildDiagnosticsReport(input: DiagnosticsInput): string {
     `Generated: ${generatedAt.toISOString()}`,
     `Version: ${input.appVersion ?? 'unknown'}`,
     `Screen Time: ${input.authorizationStatus}`,
-    `Device id: ${input.deviceId === null ? 'missing' : 'present'}`,
     `Protection: ${input.posture.score}`,
     `Lock-in: ${diagnosticsLockInState(input)}`,
     `Blocks: ${input.focusBlocks.length}`,
-    `Applicable blocks: ${verification.applicableBlockCount}`,
+    `Synced blocks: ${verification.blockCount}`,
     `Missing device selections: ${verification.missingDeviceSelectionCount}`,
     '',
     'Setup checks:',
@@ -236,20 +216,17 @@ export function buildDiagnosticsReport(input: DiagnosticsInput): string {
       block,
       input.populatedSelectionSlots,
     );
-    const blockOnThisDevice = focusBlockWithDeviceEnabledState(
+    const runnableBlock = focusBlockRunnableLocally(
       block,
-      input.deviceId,
+      input.enabledBlockIds.includes(block.id) && selectionReady,
+      selectionReady,
     );
-    const runnableBlock = selectionReady
-      ? blockOnThisDevice
-      : { ...blockOnThisDevice, isEnabled: false };
     const runtime = getFocusBlockRuntimeStatus(runnableBlock, input.now);
     lines.push(
       [
         `Block ${index + 1}:`,
         `enabledHere=${runnableBlock.isEnabled}`,
-        `armedHere=${focusBlockIsEnabledOnDevice(block, input.deviceId)}`,
-        `scope=${safeScope(block, input.deviceId)}`,
+        `localActivation=${input.enabledBlockIds.includes(block.id)}`,
         `rule=${block.rule.kind}`,
         `days=${block.days.length}`,
         `schedule=${block.startTime}-${block.endTime}`,

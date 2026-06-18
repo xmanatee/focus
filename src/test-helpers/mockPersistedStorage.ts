@@ -22,7 +22,6 @@ vi.mock('../shared/storage', () => ({
       storageMap.delete(key);
     },
   })),
-  hasLocalStorageValue: async (key: string) => storageMap.has(key),
   attachCloudSync: () => () => {},
   newId: () => 'test-id',
 }));

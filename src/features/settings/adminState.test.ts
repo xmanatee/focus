@@ -86,8 +86,7 @@ describe('resolveAdminState', () => {
     expect(state.kind).toBe('locked');
   });
 
-  it('computes the next unlock for a weekly single-day block', () => {
-    // Sunday night setup. Check it on Monday morning.
+  it('computes the next unlock for a Sunday setup checked on Monday morning', () => {
     const state = resolveAdminState(
       sundayNight,
       true,
@@ -96,7 +95,7 @@ describe('resolveAdminState', () => {
     expect(state.kind).toBe('locked');
     if (state.kind === 'locked') {
       expect(state.nextUnlock?.day).toBe('sun');
-      expect(state.nextUnlock?.at.getDate()).toBe(3); // Sunday May 3rd
+      expect(state.nextUnlock?.at).toEqual(new Date('2026-05-03T20:00:00'));
     }
   });
 });

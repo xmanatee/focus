@@ -12,7 +12,7 @@ import {
 import { getSlotValue } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
 import { activitySelectionHasLocalSlot } from './localActivitySelection';
-import type { DayOfWeek, FocusBlock } from './types';
+import type { DayOfWeek, RuntimeFocusBlock } from './types';
 import {
   isActiveAtWeeklyInstant,
   scheduleTimeComponents,
@@ -71,14 +71,14 @@ export interface MonitorPlan {
   }[];
 }
 
-export function hasLocalActivitySelection(block: FocusBlock): boolean {
+export function hasLocalActivitySelection(block: RuntimeFocusBlock): boolean {
   return activitySelectionHasLocalSlot(
     block.id,
     block.selection.activitySelection,
   );
 }
 
-export function budgetMinutes(block: FocusBlock): number | null {
+export function budgetMinutes(block: RuntimeFocusBlock): number | null {
   if (block.rule.kind === 'dailyBudget') return block.rule.minutes;
   if (block.rule.kind === 'allowDuringScheduleWithBudget') {
     return block.rule.minutes;
@@ -86,7 +86,10 @@ export function budgetMinutes(block: FocusBlock): number | null {
   return null;
 }
 
-export function budgetActivityName(block: FocusBlock, day: DayOfWeek): string {
+export function budgetActivityName(
+  block: RuntimeFocusBlock,
+  day: DayOfWeek,
+): string {
   return `${BUDGET_ACTIVITY_PREFIX}${block.id}.${day}`;
 }
 
@@ -99,7 +102,7 @@ function thresholdForMinutes(
 }
 
 function budgetCondition(
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
   day: DayOfWeek,
 ): TriggeredAfterCondition {
   const activityName = budgetActivityName(block, day);
@@ -130,7 +133,7 @@ export function budgetEventReachedAfterIntervalStart(
 }
 
 export function budgetOriginDaysAtWeeklyInstant(
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
   day: DayOfWeek,
   minute: number,
 ): DayOfWeek[] {
@@ -159,7 +162,7 @@ export function budgetOriginDaysAtWeeklyInstant(
 
 function addSelectionAction(
   actions: FocusAction[],
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
   condition?: TriggeredAfterCondition,
 ): void {
   if (!hasLocalActivitySelection(block)) return;
@@ -172,7 +175,7 @@ function addSelectionAction(
 
 function addWebDomainAction(
   actions: FocusAction[],
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
   condition?: TriggeredAfterCondition,
 ): void {
   if (block.selection.webDomains.length === 0) return;
@@ -184,7 +187,7 @@ function addWebDomainAction(
 }
 
 export function reconcileActionsForInstant(
-  blocks: readonly FocusBlock[],
+  blocks: readonly RuntimeFocusBlock[],
   day: DayOfWeek,
   minute: number,
 ): FocusAction[] {
@@ -215,7 +218,7 @@ export function reconcileActionsForInstant(
   return actions;
 }
 
-export function budgetEvents(block: FocusBlock): DeviceActivityEvent[] {
+export function budgetEvents(block: RuntimeFocusBlock): DeviceActivityEvent[] {
   const minutes = budgetMinutes(block);
   const selection = getSlotValue(selectionIdForBlock(block.id));
   if (minutes === null || selection === undefined) return [];
@@ -230,7 +233,7 @@ export function budgetEvents(block: FocusBlock): DeviceActivityEvent[] {
 }
 
 export function budgetEventActions(
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
 ): MonitorPlan['eventActions'] {
   const minutes = budgetMinutes(block);
   if (minutes === null || !hasLocalActivitySelection(block)) return [];

@@ -36,17 +36,8 @@ const cloudBackedStorage: StateStorage = {
   },
 };
 
-// When a persisted store's schema changes incompatibly, bump the `.vN`
-// suffix on its `name`. The new key starts empty and the v(N-1) payload
-// is stranded in iCloud rather than carrying a translation shim — no
-// migrate callbacks, no defensive null checks downstream. See
-// useTamperSetupStore for the canonical pattern.
 export const persistedStorage = createJSONStorage(() => cloudBackedStorage);
 export const localStorage = createJSONStorage(() => AsyncStorage);
-
-export async function hasLocalStorageValue(key: string): Promise<boolean> {
-  return (await AsyncStorage.getItem(key)) !== null;
-}
 
 export function attachCloudSync(onRemoteChange: () => void): () => void {
   if (!cloudIsUsable()) {

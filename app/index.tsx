@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo } from 'react';
 import { ScrollView } from 'react-native';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
-import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
 import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
 import { useSetupVerification } from '../src/features/diagnostics/useSetupVerification';
 import { QuickStartCard } from '../src/features/onboarding/QuickStartCard';
@@ -12,12 +11,12 @@ import { ReviewPromptCard } from '../src/features/reviews/ReviewPromptCard';
 import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSessionCard';
 import { FocusBlockListSection } from '../src/features/schedule/components/FocusBlockListSection';
 import { ProgressCard } from '../src/features/schedule/components/ProgressCard';
-import { focusBlocksRunnableOnDevice } from '../src/features/schedule/deviceRuntime';
-import { focusBlocksForDevice } from '../src/features/schedule/deviceScope';
 import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
+import { focusBlocksRunnableLocally } from '../src/features/schedule/localRuntime';
 import { buildFocusProgress } from '../src/features/schedule/progress';
 import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
 import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
+import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { LockInSettingsCard } from '../src/features/settings/components/LockInSettingsCard';
 import { useAdminState } from '../src/features/settings/useAdminState';
@@ -35,21 +34,17 @@ export default function MainFeedScreen(): JSX.Element {
   const hasPermissions = authorizationStatus === 'authorized';
 
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
-  const toggleFocusBlock = useFocusBlockStore((s) => s.toggleFocusBlock);
-  const deviceId = useLocalDeviceId();
-  const applicableBlocks = useMemo(
-    () => focusBlocksForDevice(focusBlocks, deviceId),
-    [focusBlocks, deviceId],
-  );
+  const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
+  const setBlockEnabled = useBlockActivationStore((s) => s.setBlockEnabled);
   const missingDeviceSelectionCount = useMemo(
     () =>
-      applicableBlocks.filter((block) => focusBlockNeedsLocalSelection(block))
+      focusBlocks.filter((block) => focusBlockNeedsLocalSelection(block))
         .length,
-    [applicableBlocks],
+    [focusBlocks],
   );
   const runnableBlocks = useMemo(
-    () => focusBlocksRunnableOnDevice(applicableBlocks, deviceId),
-    [applicableBlocks, deviceId],
+    () => focusBlocksRunnableLocally(focusBlocks, enabledBlockIds),
+    [enabledBlockIds, focusBlocks],
   );
   const { active, activeBlocks, now } = useActiveBlock(runnableBlocks);
 
@@ -70,15 +65,14 @@ export default function MainFeedScreen(): JSX.Element {
 
   const quickStartPhase = resolveQuickStartPhase({
     authorizationStatus,
-    applicableBlockCount: applicableBlocks.length,
-    deviceId,
+    blockCount: focusBlocks.length,
     missingDeviceSelectionCount,
   });
 
   useEffect(() => {
-    if (!hasPermissions || deviceId === null) return;
+    if (!hasPermissions) return;
     void reconcileFocusBlocks(runnableBlocks, setupBlockForThisDevice);
-  }, [runnableBlocks, setupBlockForThisDevice, hasPermissions, deviceId]);
+  }, [runnableBlocks, setupBlockForThisDevice, hasPermissions]);
 
   const handleGrant = async (): Promise<void> => {
     void haptic.commit();
@@ -86,9 +80,8 @@ export default function MainFeedScreen(): JSX.Element {
   };
 
   const handleToggle = (blockId: string, nextIsEnabled: boolean): void => {
-    if (deviceId === null) return;
     void haptic.select();
-    toggleFocusBlock(blockId, deviceId, nextIsEnabled);
+    setBlockEnabled(blockId, nextIsEnabled);
   };
 
   const handleQuickStartPrimary = (): void => {
@@ -99,10 +92,6 @@ export default function MainFeedScreen(): JSX.Element {
     void haptic.select();
     if (quickStartPhase === 'openSettings') {
       handleSetupAction('requestScreenTime');
-      return;
-    }
-    if (quickStartPhase === 'prepareDevice') {
-      router.push('/diagnostics');
       return;
     }
     if (quickStartPhase === 'createFirstBlock') {
@@ -170,8 +159,8 @@ export default function MainFeedScreen(): JSX.Element {
         </Section>
 
         <FocusBlockListSection
-          applicableBlocks={applicableBlocks}
-          deviceId={deviceId}
+          focusBlocks={focusBlocks}
+          enabledBlockIds={enabledBlockIds}
           isAdminLocked={isAdminLocked}
           now={now}
           onAdd={() => {

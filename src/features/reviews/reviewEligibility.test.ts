@@ -7,7 +7,7 @@ import {
 
 const readyVerification = {
   activeBlockCount: 0,
-  applicableBlockCount: 1,
+  blockCount: 1,
   checks: [],
   level: 'ready',
   missingDeviceSelectionCount: 0,

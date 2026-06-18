@@ -1,6 +1,6 @@
 import { isOvernightRange, minutesOf } from '../../shared/days';
 import { getActiveBlockStatuses } from './activeBlocks';
-import type { DayOfWeek, FocusBlock } from './types';
+import type { DayOfWeek, RuntimeFocusBlock } from './types';
 
 export interface FocusProgress {
   readonly activeBlockCount: number;
@@ -20,7 +20,7 @@ const DAY_BY_DATE_INDEX: readonly DayOfWeek[] = [
   'sat',
 ];
 
-function hasScheduledWindow(block: FocusBlock): boolean {
+function hasScheduledWindow(block: RuntimeFocusBlock): boolean {
   return (
     block.rule.kind === 'blockDuringSchedule' ||
     block.rule.kind === 'allowDuringSchedule' ||
@@ -28,7 +28,7 @@ function hasScheduledWindow(block: FocusBlock): boolean {
   );
 }
 
-function targetCount(block: FocusBlock): number {
+function targetCount(block: RuntimeFocusBlock): number {
   const activity = block.selection.activitySelection;
   const nativeTargets =
     activity.status === 'saved'
@@ -51,7 +51,10 @@ function dateWithMinutes(day: Date, minuteOfDay: number): Date {
   return date;
 }
 
-function completedScheduledWindows(block: FocusBlock, now: Date): number {
+function completedScheduledWindows(
+  block: RuntimeFocusBlock,
+  now: Date,
+): number {
   if (!block.isEnabled || !hasScheduledWindow(block)) return 0;
 
   let count = 0;
@@ -77,7 +80,7 @@ function completedScheduledWindows(block: FocusBlock, now: Date): number {
 }
 
 export function buildFocusProgress(
-  blocks: readonly FocusBlock[],
+  blocks: readonly RuntimeFocusBlock[],
   now: Date,
 ): FocusProgress {
   const enabled = blocks.filter((block) => block.isEnabled);

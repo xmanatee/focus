@@ -5,22 +5,20 @@ import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-a
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
 import { EMPTY_BLOCK_SELECTION } from '../src/features/blocker/types';
-import { getLocalDeviceId } from '../src/features/device/deviceId';
-import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
-import { DeviceScopeCard } from '../src/features/schedule/components/DeviceScopeCard';
 import { FormActions } from '../src/features/schedule/components/FormActions';
 import { NotificationsCard } from '../src/features/schedule/components/NotificationsCard';
 import { PresetRow } from '../src/features/schedule/components/PresetRow';
 import { RuleCard } from '../src/features/schedule/components/RuleCard';
 import { StrictModeCard } from '../src/features/schedule/components/StrictModeCard';
-import { focusBlockRunnableOnDevice } from '../src/features/schedule/deviceRuntime';
 import { resolveEditPolicy } from '../src/features/schedule/editPolicy';
 import { activitySelectionNeedsLocalSlot } from '../src/features/schedule/localActivitySelection';
+import { focusBlockRunnableLocally } from '../src/features/schedule/localRuntime';
 import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
 import { confirmStrictModeOn } from '../src/features/schedule/strictModeConfirm';
 import { useActivitySelection } from '../src/features/schedule/useActivitySelection';
+import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
 import { useFocusBlockForm } from '../src/features/schedule/useFocusBlockForm';
 import { useFocusBlockSave } from '../src/features/schedule/useFocusBlockSave';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
@@ -51,9 +49,14 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const { state: adminState, now } = useAdminState();
   const setupBlock = useSettingsStore((s) => s.setupBlock);
   const tamperReady = useProtectionPosture().score === 'full';
-  const deviceId = useLocalDeviceId();
+  const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
   const existingOnThisDevice =
-    existing === null ? null : focusBlockRunnableOnDevice(existing, deviceId);
+    existing === null
+      ? null
+      : focusBlockRunnableLocally(
+          existing,
+          enabledBlockIds.includes(existing.id),
+        );
 
   const policy = resolveEditPolicy(
     adminState,
@@ -80,29 +83,20 @@ export default function AddFocusBlockScreen(): JSX.Element {
   const { error, isPending, run, save, requestDelete } = useFocusBlockSave({
     editId,
     newBlockId: blockId,
-    buildInput: async () => {
-      const localDeviceId = deviceId ?? (await getLocalDeviceId());
-      return {
-        name: form.name,
-        startTime: form.startTime,
-        endTime: form.endTime,
-        days: form.selectedDays,
-        isEnabled: existing?.isEnabled ?? true,
-        enabledDeviceIds: existing?.enabledDeviceIds ?? [localDeviceId],
-        scope:
-          form.scopeChoice === 'allDevices'
-            ? { kind: 'allDevices' }
-            : { kind: 'device', deviceId: localDeviceId },
-        rule: form.rule,
-        selection: {
-          activitySelection: selection.activitySelection,
-          webDomains: form.webDomains,
-        },
-        notifyOnStart: usesScheduleWindow && form.notifyOnStart,
-        notifyOnEnd: usesScheduleWindow && form.notifyOnEnd,
-        strict: form.strict,
-      };
-    },
+    buildInput: () => ({
+      name: form.name,
+      startTime: form.startTime,
+      endTime: form.endTime,
+      days: form.selectedDays,
+      rule: form.rule,
+      selection: {
+        activitySelection: selection.activitySelection,
+        webDomains: form.webDomains,
+      },
+      notifyOnStart: usesScheduleWindow && form.notifyOnStart,
+      notifyOnEnd: usesScheduleWindow && form.notifyOnEnd,
+      strict: form.strict,
+    }),
     markSelectionSaved: selection.markSaved,
     dismiss,
   });
@@ -195,14 +189,6 @@ export default function AddFocusBlockScreen(): JSX.Element {
           onChange={(next) => {
             void haptic.select();
             form.setRule(next);
-          }}
-          disabled={readOnly}
-        />
-        <DeviceScopeCard
-          value={form.scopeChoice}
-          onChange={(next) => {
-            void haptic.select();
-            form.setScopeChoice(next);
           }}
           disabled={readOnly}
         />

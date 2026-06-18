@@ -22,11 +22,6 @@ const COPY: Record<QuickStartPhase, QuickStartCopy> = {
     body: "Screen Time access was denied. iOS won't show the prompt again, so Focus Blocks needs to be allowed from Settings.",
     action: 'Open Settings',
   },
-  prepareDevice: {
-    title: 'Prepare this device',
-    body: 'Focus Blocks is still getting this iPhone or iPad ready for local setup. If this does not clear, open troubleshooting details.',
-    action: 'Open troubleshooting',
-  },
   createFirstBlock: {
     title: 'Create your first block',
     body: 'Pick a template, choose the apps that pull you in, and save one rule you can trust today.',

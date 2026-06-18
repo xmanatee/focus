@@ -6,7 +6,7 @@ import {
   budgetMinutes,
   budgetOriginDaysAtWeeklyInstant,
 } from './schedulerActions';
-import type { DayOfWeek, FocusBlock } from './types';
+import type { DayOfWeek, RuntimeFocusBlock } from './types';
 
 const DAY_BY_DATE_INDEX: readonly DayOfWeek[] = [
   'sun',
@@ -24,7 +24,7 @@ export type FocusBlockRuntimeStatus =
   | { readonly kind: 'inactive' }
   | {
       readonly kind: 'active';
-      readonly block: FocusBlock;
+      readonly block: RuntimeFocusBlock;
       readonly reason: ActiveReason;
       readonly endsAt: Date;
     };
@@ -40,7 +40,7 @@ function nextMidnight(after: Date): Date {
   return at;
 }
 
-function isBudgetExceededAt(block: FocusBlock, at: Date): boolean {
+function isBudgetExceededAt(block: RuntimeFocusBlock, at: Date): boolean {
   if (!block.isEnabled || budgetMinutes(block) === null) return false;
 
   const day = DAY_BY_DATE_INDEX[at.getDay()];
@@ -51,7 +51,7 @@ function isBudgetExceededAt(block: FocusBlock, at: Date): boolean {
 }
 
 export function getFocusBlockRuntimeStatus(
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
   at: Date,
 ): FocusBlockRuntimeStatus {
   if (!block.isEnabled) return { kind: 'inactive' };

@@ -16,11 +16,11 @@ import {
   budgetEventWarningActions,
   budgetWarningTime,
 } from './schedulerWarnings';
-import type { DayOfWeek, FocusBlock } from './types';
+import type { DayOfWeek, RuntimeFocusBlock } from './types';
 
 function dailyBudgetPlan(
-  block: FocusBlock,
-  allBlocks: readonly FocusBlock[],
+  block: RuntimeFocusBlock,
+  allBlocks: readonly RuntimeFocusBlock[],
 ): MonitorPlan[] {
   if (!block.isEnabled || block.rule.kind !== 'dailyBudget') return [];
   const events = budgetEvents(block);
@@ -49,8 +49,8 @@ function dailyBudgetPlan(
 }
 
 export function materializeFocusBlock(
-  block: FocusBlock,
-  allBlocks: readonly FocusBlock[],
+  block: RuntimeFocusBlock,
+  allBlocks: readonly RuntimeFocusBlock[],
 ): MonitorPlan[] {
   if (!block.isEnabled || block.days.length === 0) return [];
   if (block.rule.kind === 'dailyBudget')

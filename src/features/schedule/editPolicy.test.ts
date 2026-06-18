@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { EMPTY_BLOCK_SELECTION } from '../blocker/types';
 import type { AdminState } from '../settings/adminState';
 import { resolveEditPolicy } from './editPolicy';
-import type { FocusBlock } from './types';
+import type { RuntimeFocusBlock } from './types';
 
 describe('resolveEditPolicy', () => {
   const now = new Date('2026-04-28T10:00:00');
@@ -12,15 +12,13 @@ describe('resolveEditPolicy', () => {
   };
   const unlockedState: AdminState = { kind: 'unlocked', reason: 'always' };
 
-  const mockBlock: FocusBlock = {
+  const mockBlock: RuntimeFocusBlock = {
     id: '1',
     name: 'Work',
     startTime: '09:00',
     endTime: '17:00',
     days: ['mon', 'tue', 'wed', 'thu', 'fri'],
     isEnabled: true,
-    enabledDeviceIds: ['device-a'],
-    scope: { kind: 'allDevices' },
     rule: { kind: 'blockDuringSchedule' },
     selection: EMPTY_BLOCK_SELECTION,
     notifyOnStart: false,
@@ -39,6 +37,16 @@ describe('resolveEditPolicy', () => {
     const policy = resolveEditPolicy(lockedState, mockBlock, now);
     expect(policy.readOnly).toBe(true);
     expect(policy.title).toBe('Read-only');
+  });
+
+  it('allows editing a non-runnable block while admin is locked', () => {
+    const policy = resolveEditPolicy(
+      lockedState,
+      { ...mockBlock, isEnabled: false },
+      now,
+    );
+    expect(policy.readOnly).toBe(false);
+    expect(policy.title).toBeNull();
   });
 
   it('is editable when admin is unlocked and block is not active', () => {

@@ -48,7 +48,7 @@ export function shouldShowReviewPrompt(
 
   return (
     verification.level === 'ready' &&
-    verification.applicableBlockCount > 0 &&
+    verification.blockCount > 0 &&
     verification.activeBlockCount === 0 &&
     verification.missingDeviceSelectionCount === 0
   );

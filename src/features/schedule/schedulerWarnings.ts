@@ -5,10 +5,10 @@ import {
   budgetMinutes,
   hasLocalActivitySelection,
 } from './schedulerActions';
-import type { FocusBlock } from './types';
+import type { RuntimeFocusBlock } from './types';
 
 export function budgetEventWarningActions(
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
 ): MonitorPlan['eventWarningActions'] {
   const minutes = budgetMinutes(block);
   if (
@@ -37,7 +37,7 @@ export function budgetEventWarningActions(
 }
 
 export function budgetWarningTime(
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
 ): MonitorPlan['schedule']['warningTime'] {
   const minutes = budgetMinutes(block);
   if (minutes === null || minutes <= BUDGET_WARNING_MINUTES) return undefined;

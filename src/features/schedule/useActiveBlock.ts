@@ -3,7 +3,7 @@ import {
   type ActiveFocusBlockStatus,
   getActiveBlockStatuses,
 } from './activeBlocks';
-import type { FocusBlock } from './types';
+import type { RuntimeFocusBlock } from './types';
 
 interface ActiveBlockView {
   readonly active: ActiveFocusBlockStatus | null;
@@ -14,7 +14,7 @@ interface ActiveBlockView {
 const TICK_MS = 15_000;
 
 export function useActiveBlock(
-  focusBlocks: readonly FocusBlock[],
+  focusBlocks: readonly RuntimeFocusBlock[],
 ): ActiveBlockView {
   const [now, setNow] = useState(() => new Date());
 

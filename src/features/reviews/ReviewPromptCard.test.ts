@@ -44,7 +44,7 @@ vi.mock('../../shared/components/Typography', () => ({
 
 const readyVerification: SetupVerification = {
   activeBlockCount: 0,
-  applicableBlockCount: 1,
+  blockCount: 1,
   checks: [],
   level: 'ready',
   missingDeviceSelectionCount: 0,

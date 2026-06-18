@@ -1,9 +1,6 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
 import { ScrollView, View } from 'react-native';
 import { summarizeActivitySelection } from '../src/features/blocker/types';
-import { useLocalDeviceId } from '../src/features/device/useLocalDeviceId';
-import { focusBlocksForDevice } from '../src/features/schedule/deviceScope';
 import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
 import type { FocusBlock } from '../src/features/schedule/types';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
@@ -60,13 +57,8 @@ function DeviceBlockRow({
 export default function FinishDeviceScreen(): JSX.Element {
   const router = useRouter();
   const dismiss = useDismiss();
-  const deviceId = useLocalDeviceId();
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
-  const applicableBlocks = useMemo(
-    () => focusBlocksForDevice(focusBlocks, deviceId),
-    [focusBlocks, deviceId],
-  );
-  const missingBlocks = applicableBlocks.filter(focusBlockNeedsLocalSelection);
+  const missingBlocks = focusBlocks.filter(focusBlockNeedsLocalSelection);
 
   const editBlock = (block: FocusBlock): void => {
     router.push({
@@ -98,17 +90,7 @@ export default function FinishDeviceScreen(): JSX.Element {
           </Typography>
         </View>
 
-        {deviceId === null ? (
-          <Card tone="signal">
-            <Typography variant="h3" tone="signal">
-              Device id is not ready
-            </Typography>
-            <Typography variant="body" tone="ink">
-              Reopen Focus Blocks and return here after the local device id is
-              created.
-            </Typography>
-          </Card>
-        ) : missingBlocks.length === 0 ? (
+        {missingBlocks.length === 0 ? (
           <Card>
             <View className="flex-row items-center gap-3">
               <Icon name="checkmark.seal.fill" size={22} tone="signal" />
@@ -117,8 +99,8 @@ export default function FinishDeviceScreen(): JSX.Element {
                   This device is ready
                 </Typography>
                 <Typography variant="body" tone="muted">
-                  Every synced block for this device has the local selection
-                  data it needs before you turn it on here.
+                  Every synced block has the local selection data it needs
+                  before you turn it on here.
                 </Typography>
               </View>
             </View>

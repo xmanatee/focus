@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { isSlotPopulated } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
 import { useBlockerStore } from '../blocker/useBlockerStore';
-import { useLocalDeviceId } from '../device/useLocalDeviceId';
 import { useProtectionPosture } from '../protection/useProtectionPosture';
+import { useBlockActivationStore } from '../schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../schedule/useFocusBlockStore';
 import { useSetupBlockDeviceStore } from '../settings/setupBlockDeviceStore';
 import { useSettingsStore } from '../settings/useSettingsStore';
@@ -13,7 +13,7 @@ type DiagnosticsSnapshot = Omit<DiagnosticsInput, 'generatedAt' | 'now'>;
 
 export function useDiagnosticsSnapshot(): DiagnosticsSnapshot {
   const authorizationStatus = useBlockerStore((s) => s.authorizationStatus);
-  const deviceId = useLocalDeviceId();
+  const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const posture = useProtectionPosture();
   const setupBlock = useSettingsStore((s) => s.setupBlock);
@@ -32,7 +32,7 @@ export function useDiagnosticsSnapshot(): DiagnosticsSnapshot {
 
   return {
     authorizationStatus,
-    deviceId,
+    enabledBlockIds,
     focusBlocks,
     populatedSelectionSlots,
     posture,

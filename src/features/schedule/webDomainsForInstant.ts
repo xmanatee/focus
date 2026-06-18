@@ -4,11 +4,11 @@ import {
   budgetMinutes,
   budgetOriginDaysAtWeeklyInstant,
 } from './schedulerActions';
-import type { DayOfWeek, FocusBlock } from './types';
+import type { DayOfWeek, RuntimeFocusBlock } from './types';
 import { isActiveAtWeeklyInstant } from './weeklyInstant';
 
 function budgetTriggeredAtWeeklyInstant(
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
   day: DayOfWeek,
   minute: number,
 ): boolean {
@@ -18,7 +18,7 @@ function budgetTriggeredAtWeeklyInstant(
 }
 
 export function webDomainsForInstant(
-  blocks: readonly FocusBlock[],
+  blocks: readonly RuntimeFocusBlock[],
   day: DayOfWeek,
   minute: number,
 ): readonly string[] {

@@ -5,11 +5,13 @@ import { SetupVerificationCard } from '../src/features/diagnostics/components/Se
 import { evaluateSetupVerification } from '../src/features/diagnostics/diagnostics';
 import { useDiagnosticsSnapshot } from '../src/features/diagnostics/useDiagnosticsSnapshot';
 import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
-import { focusBlockWithDeviceEnabledState } from '../src/features/schedule/deviceActivation';
-import { focusBlocksForDevice } from '../src/features/schedule/deviceScope';
 import { focusBlockSelectionReadyInSlots } from '../src/features/schedule/localActivitySelection';
+import { focusBlockRunnableLocally } from '../src/features/schedule/localRuntime';
 import { getFocusBlockRuntimeStatus } from '../src/features/schedule/runtimeStatus';
-import type { FocusBlock } from '../src/features/schedule/types';
+import type {
+  FocusBlock,
+  RuntimeFocusBlock,
+} from '../src/features/schedule/types';
 import { Button } from '../src/shared/components/Button';
 import { Card } from '../src/shared/components/Card';
 import { Icon } from '../src/shared/components/Icon';
@@ -38,7 +40,7 @@ function ruleLabel(block: FocusBlock): string {
 }
 
 function statusLabel(
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
   now: Date,
   selectionReady: boolean,
 ): string {
@@ -56,7 +58,7 @@ function RuleDiagnosticRow({
   selectionReady,
   now,
 }: {
-  readonly block: FocusBlock;
+  readonly block: RuntimeFocusBlock;
   readonly selectionReady: boolean;
   readonly now: Date;
 }): JSX.Element {
@@ -85,7 +87,7 @@ function RuleDiagnosticRow({
             variant="caption"
             tone={block.isEnabled ? 'muted' : 'faint'}
           >
-            {block.scope.kind === 'allDevices' ? 'All devices' : 'This device'}
+            {block.isEnabled ? 'On here' : 'Off here'}
           </Typography>
         </View>
       </View>
@@ -104,10 +106,6 @@ export default function DiagnosticsScreen(): JSX.Element {
     return () => clearInterval(interval);
   }, []);
 
-  const applicableBlocks = useMemo(
-    () => focusBlocksForDevice(snapshot.focusBlocks, snapshot.deviceId),
-    [snapshot.deviceId, snapshot.focusBlocks],
-  );
   const verification = useMemo(
     () => evaluateSetupVerification({ ...snapshot, now }),
     [snapshot, now],
@@ -148,9 +146,9 @@ export default function DiagnosticsScreen(): JSX.Element {
                 Why something may not block
               </Typography>
               <Typography variant="body" tone="muted">
-                Screen Time access must be authorized, the rule must apply to
-                this device, the current time must match the rule, and synced
-                app selections must be picked locally on this iPhone or iPad.
+                Screen Time access must be authorized, the block must be turned
+                on here, the current time must match the rule, and synced app
+                selections must be picked locally on this iPhone or iPad.
               </Typography>
             </View>
           </View>
@@ -162,26 +160,26 @@ export default function DiagnosticsScreen(): JSX.Element {
         </Card>
 
         <Section title="Rules On This Device">
-          {applicableBlocks.length === 0 ? (
+          {snapshot.focusBlocks.length === 0 ? (
             <Card tone="dashed">
               <Typography variant="body" tone="muted" align="center">
-                No rules currently apply to this device.
+                No synced rules are available yet.
               </Typography>
             </Card>
           ) : (
-            applicableBlocks.map((block) => {
-              const blockOnThisDevice = focusBlockWithDeviceEnabledState(
-                block,
-                snapshot.deviceId,
-              );
+            snapshot.focusBlocks.map((block) => {
               const selectionReady = focusBlockSelectionReadyInSlots(
                 block,
                 snapshot.populatedSelectionSlots,
               );
+              const runtimeBlock = focusBlockRunnableLocally(
+                block,
+                snapshot.enabledBlockIds.includes(block.id) && selectionReady,
+              );
               return (
                 <RuleDiagnosticRow
                   key={block.id}
-                  block={blockOnThisDevice}
+                  block={runtimeBlock}
                   now={now}
                   selectionReady={selectionReady}
                 />

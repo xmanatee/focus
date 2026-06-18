@@ -5,8 +5,11 @@ import { DiagnosticsCard } from '../src/features/diagnostics/components/Diagnost
 import { protectionCopy } from '../src/features/protection/copy';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import type { DayOfWeek } from '../src/features/schedule/types';
+import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
+import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import type { SetupBlock } from '../src/features/settings/adminState';
 import { SetupBlockEditorCard } from '../src/features/settings/components/SetupBlockEditorCard';
+import { resolveLockInEnablement } from '../src/features/settings/lockInEnablement';
 import { useSetupBlockDeviceStore } from '../src/features/settings/setupBlockDeviceStore';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
@@ -32,6 +35,8 @@ export default function SettingsScreen(): JSX.Element {
   const clearSetupBlock = useSettingsStore((s) => s.clearSetupBlock);
   const enableOnDevice = useSetupBlockDeviceStore((s) => s.enableOnDevice);
   const disableOnDevice = useSetupBlockDeviceStore((s) => s.disableOnDevice);
+  const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
+  const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
   const { isEnabledOnDevice, state, now } = useAdminState();
 
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>(
@@ -100,6 +105,15 @@ export default function SettingsScreen(): JSX.Element {
 
     const performSave = async (): Promise<void> => {
       const success = await run(async () => {
+        if (nextAction === 'saveAndEnable') {
+          const enablement = resolveLockInEnablement(
+            focusBlocks,
+            enabledBlockIds,
+          );
+          if (enablement.kind === 'blocked') {
+            throw new Error(enablement.message);
+          }
+        }
         if (shouldEnableOnDevice && nextBlock.notifyOnStart) {
           const granted = await requestNotificationPermissions();
           if (!granted) {

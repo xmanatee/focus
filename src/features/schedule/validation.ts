@@ -22,9 +22,6 @@ export function validateFocusBlockInput(input: FocusBlockInput): void {
   if (input.selection.webDomains.length > MAX_WEB_DOMAINS) {
     throw new Error('iOS can filter up to 50 websites per block.');
   }
-  if (input.enabledDeviceIds.some((id) => id.trim().length === 0)) {
-    throw new Error('Enabled device ids cannot be empty.');
-  }
   const usesDailyBudget =
     input.rule.kind === 'dailyBudget' ||
     input.rule.kind === 'allowDuringScheduleWithBudget';
@@ -41,12 +38,6 @@ export function validateFocusBlockInput(input: FocusBlockInput): void {
         'Daily budgets require apps, categories, or domains from the Screen Time picker.',
       );
     }
-  }
-  if (
-    input.scope.kind === 'device' &&
-    input.scope.deviceId.trim().length === 0
-  ) {
-    throw new Error('Device-scoped blocks require a device ID.');
   }
   if (input.strict && !selectionHasBlockedTargets(input.selection)) {
     throw new Error('A strict block must block at least one app or site.');

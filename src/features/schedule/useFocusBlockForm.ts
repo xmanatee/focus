@@ -7,8 +7,6 @@ import {
 import { PRESETS, type PresetKind } from './presets';
 import type { DayOfWeek, FocusBlock, FocusBlockRule } from './types';
 
-export type ScopeChoice = 'allDevices' | 'thisDevice';
-
 interface FocusBlockFormState {
   readonly name: string;
   readonly setName: (next: string) => void;
@@ -28,8 +26,6 @@ interface FocusBlockFormState {
   readonly setStrict: (next: boolean) => void;
   readonly rule: FocusBlockRule;
   readonly setRule: (next: FocusBlockRule) => void;
-  readonly scopeChoice: ScopeChoice;
-  readonly setScopeChoice: (next: ScopeChoice) => void;
   readonly startTime: string;
   readonly endTime: string;
   readonly applyPreset: (kind: PresetKind) => void;
@@ -60,9 +56,6 @@ export function useFocusBlockForm(
   const [strict, setStrict] = useState<boolean>(existing?.strict ?? false);
   const [rule, setRule] = useState<FocusBlockRule>(
     existing?.rule ?? { kind: 'blockDuringSchedule' },
-  );
-  const [scopeChoice, setScopeChoice] = useState<ScopeChoice>(
-    existing?.scope.kind === 'device' ? 'thisDevice' : 'allDevices',
   );
 
   const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
@@ -107,8 +100,6 @@ export function useFocusBlockForm(
     setStrict,
     rule,
     setRule,
-    scopeChoice,
-    setScopeChoice,
     startTime,
     endTime,
     applyPreset,

@@ -12,8 +12,6 @@ function reset(): void {
   storageMap.clear();
   useFocusBlockStore.setState({ focusBlocks: [] });
   useSetupBlockDeviceStore.setState({
-    hasResolvedInitialState: false,
-    initialDeviceActivation: null,
     isEnabledOnDevice: false,
   });
   useSettingsStore.setState({ setupBlock: null });
@@ -32,7 +30,6 @@ describe('useSettingsStore', () => {
 
   describe('setSetupBlock', () => {
     it('clears strict on all focus blocks when invoked', () => {
-      // Seed with strict blocks (no setupBlock yet, so strict is preserved)
       useFocusBlockStore
         .getState()
         .addFocusBlock('id-1', focusBlockInput({ strict: true }));
@@ -54,7 +51,6 @@ describe('useSettingsStore', () => {
     });
 
     it('is allowed even when blocks are mid-strict', () => {
-      // The user must be able to enable lock-in regardless of strict state.
       useFocusBlockStore
         .getState()
         .addFocusBlock('id-1', focusBlockInput({ strict: true }));
@@ -70,7 +66,6 @@ describe('useSettingsStore', () => {
         .getState()
         .addFocusBlock('id-1', focusBlockInput({ strict: true }));
       useSettingsStore.getState().setSetupBlock(SUNDAY_SETUP_BLOCK);
-      // strict has been cleared above
       useSettingsStore.getState().clearSetupBlock();
       expect(useFocusBlockStore.getState().focusBlocks[0].strict).toBe(false);
     });

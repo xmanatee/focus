@@ -21,7 +21,7 @@ import {
   materializeFocusBlock,
   materializeSetupBlock,
 } from './schedulerPlan';
-import type { DayOfWeek, FocusBlock } from './types';
+import type { DayOfWeek, RuntimeFocusBlock } from './types';
 import { webDomainsForInstant } from './webDomainsForInstant';
 
 function configuredActions(actions: readonly FocusAction[]): Action[] {
@@ -89,7 +89,10 @@ function executeActionNow(action: FocusAction): void {
   }
 }
 
-function applyCurrentState(blocks: readonly FocusBlock[], at: Date): void {
+function applyCurrentState(
+  blocks: readonly RuntimeFocusBlock[],
+  at: Date,
+): void {
   const day = DAY_BY_DATE_INDEX[at.getDay()];
   const minute = at.getHours() * 60 + at.getMinutes();
   for (const action of reconcileActionsForInstant(blocks, day, minute)) {
@@ -106,7 +109,7 @@ function applyCurrentState(blocks: readonly FocusBlock[], at: Date): void {
 }
 
 export async function reconcileFocusBlocks(
-  blocks: readonly FocusBlock[],
+  blocks: readonly RuntimeFocusBlock[],
   setupBlock: {
     days: readonly DayOfWeek[];
     startTime: string;

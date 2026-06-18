@@ -1,5 +1,5 @@
 import { isOvernightRange, minutesOf } from '../../shared/days';
-import type { DayOfWeek, FocusBlock } from './types';
+import type { DayOfWeek, FocusBlock, RuntimeFocusBlock } from './types';
 
 function previousDay(day: DayOfWeek): DayOfWeek {
   const dayOrder: readonly DayOfWeek[] = [
@@ -42,7 +42,7 @@ function isInsideScheduleAtWeeklyInstant(
 }
 
 export function isActiveAtWeeklyInstant(
-  block: FocusBlock,
+  block: RuntimeFocusBlock,
   day: DayOfWeek,
   minute: number,
 ): boolean {

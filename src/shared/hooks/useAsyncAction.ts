@@ -5,7 +5,7 @@ export interface AsyncAction {
   readonly isPending: boolean;
   readonly run: (
     action: () => Promise<void>,
-    fallbackMessage: string,
+    failureMessage: string,
   ) => Promise<boolean>;
 }
 
@@ -14,14 +14,14 @@ export function useAsyncAction(): AsyncAction {
   const [isPending, setIsPending] = useState(false);
 
   const run = useCallback(
-    async (action: () => Promise<void>, fallbackMessage: string) => {
+    async (action: () => Promise<void>, failureMessage: string) => {
       setError(null);
       setIsPending(true);
       try {
         await action();
         return true;
       } catch (caught) {
-        setError(caught instanceof Error ? caught.message : fallbackMessage);
+        setError(caught instanceof Error ? caught.message : failureMessage);
         return false;
       } finally {
         setIsPending(false);

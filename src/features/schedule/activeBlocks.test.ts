@@ -4,9 +4,12 @@ import {
   resetDeviceActivityMock,
 } from '../../test-helpers/mockDeviceActivity';
 import { getActiveBlockStatuses } from './activeBlocks';
-import type { FocusBlock } from './types';
+import type { RuntimeFocusBlock } from './types';
 
-function block(id: string, overrides: Partial<FocusBlock> = {}): FocusBlock {
+function block(
+  id: string,
+  overrides: Partial<RuntimeFocusBlock> = {},
+): RuntimeFocusBlock {
   return {
     id,
     name: id,
@@ -14,8 +17,6 @@ function block(id: string, overrides: Partial<FocusBlock> = {}): FocusBlock {
     endTime: '17:00',
     days: ['mon'],
     isEnabled: true,
-    enabledDeviceIds: ['device-a'],
-    scope: { kind: 'allDevices' },
     rule: { kind: 'blockDuringSchedule' },
     selection: {
       activitySelection: {
