@@ -8,7 +8,7 @@ metadata changes should be reviewed in Git and pushed with EAS Metadata.
 
 Current target metadata:
 
-- Version: `1.0.3`
+- Version: `1.0.4`
 - Title: `Focus Blocks: App Blocker`
 - Subtitle: `Screen time app limits`
 - Locales: `en-GB`, `en-US`, `ru`
@@ -133,6 +133,14 @@ angles for future App Store custom product pages:
   Jun 12, 2026. Apple public search ranked Focus Blocks `25` for `focus blocks`
   in the US store, but not in the top 50 for `app blocker`,
   `screen time limit`, `block youtube`, or `study focus`.
+- Jun 18, 2026: Public App Store lookup showed version `1.0.3` live, released
+  Jun 16, 2026. Apple public search ranked Focus Blocks `29` for
+  `focus blocks`, but not in the top 50 for `app blocker`,
+  `screen time limit`, `block youtube`, `study focus`, `block apps`, or
+  `focus app`. Google public results surfaced the homepage, privacy page, and
+  `block-youtube-iphone`; support and `iphone-app-blocker` still did not
+  surface in public checks. Bing public RSS still did not surface the domain
+  despite sitemap and IndexNow setup.
 
 ## Release Notes
 

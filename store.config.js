@@ -42,7 +42,7 @@ const englishInfo = {
   promoText:
     'Block distracting apps, set Screen Time limits, and keep app selections private on each device. No account, ads, or analytics.',
   releaseNotes:
-    'Adds daily app budgets, schedule plus budget rules, and clearer per-device setup for synced blocks.',
+    'Improves Lock-in reliability, local block activation, and setup clarity for each device.',
   supportUrl,
   title: 'Focus Blocks: App Blocker',
   subtitle: 'Screen time app limits',
@@ -67,7 +67,7 @@ const russianInfo = {
   promoText:
     'Блокируйте отвлекающие приложения по расписанию, задавайте дневные лимиты и храните выбор Screen Time локально на каждом устройстве.',
   releaseNotes:
-    'Добавлены дневные лимиты, правила расписание плюс бюджет и более понятная настройка синхронизированных блоков на новом устройстве.',
+    'Улучшена надежность Lock-in, локальная активация блоков и понятность настройки на каждом устройстве.',
   supportUrl,
   title: 'Focus Blocks: блок приложений',
   subtitle: 'Фокус без отвлечений',
@@ -78,7 +78,7 @@ const russianInfo = {
 module.exports = () => ({
   configVersion: 0,
   apple: {
-    version: '1.0.3',
+    version: '1.0.4',
     copyright: '© 2026 nemi.love',
     release: {
       automaticRelease: true,
