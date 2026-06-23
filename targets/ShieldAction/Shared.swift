@@ -218,11 +218,13 @@ func executeGenericAction(
       )
       logger.error("setWebContentFilterPolicy action is missing policy payload")
     }
+  } else if type == "clearWebContentFilterPolicy" {
+    clearWebContentFilterPolicy(triggeredBy: triggeredBy)
   } else if type == "addWebContentFilterDomains" {
     if let domains = action["domains"] as? [String] {
       do {
         try addWebContentFilterDomains(
-          domains: domains,
+          rawDomains: domains,
           triggeredBy: triggeredBy
         )
       } catch {
@@ -241,10 +243,8 @@ func executeGenericAction(
         error: WebContentFilterPolicyError.invalidStringArray(fieldName: "domains"),
         action: action
       )
-      logger.error("addWebContentFilterDomains action is missing domains")
+      logger.error("addWebContentFilterDomains action is missing domains payload")
     }
-  } else if type == "clearWebContentFilterPolicy" {
-    clearWebContentFilterPolicy(triggeredBy: triggeredBy)
   } else if type == "disableBlockAllMode" {
     disableBlockAllMode(triggeredBy: triggeredBy)
   } else if type == "openApp" {
@@ -847,6 +847,46 @@ func setWebContentFilterPolicy(
   )
 }
 
+func webContentFilterDomainsFromLastUpdateMetadata() -> [String] {
+  guard
+    let metadata = userDefaults?.dictionary(forKey: WEB_CONTENT_FILTER_POLICY_LAST_UPDATE_KEY),
+    let domains = metadata["domains"] as? [String]
+  else {
+    return []
+  }
+
+  return domains
+}
+
+@available(iOS 15.0, *)
+func addWebContentFilterDomains(
+  rawDomains: [String],
+  triggeredBy: String
+) throws {
+  if rawDomains.isEmpty {
+    throw WebContentFilterPolicyError.missingRequiredDomains(fieldName: "domains")
+  }
+
+  let domains = try parseWebDomains(
+    rawDomains: webContentFilterDomainsFromLastUpdateMetadata() + rawDomains,
+    fieldName: "domains"
+  )
+
+  store.webContent.blockedByFilter = .specific(domains)
+  clearWebContentFilterPolicyErrorMetadata()
+
+  userDefaults?.set(
+    [
+      "triggeredBy": triggeredBy,
+      "updatedAt": Date.now.ISO8601Format(),
+      "type": "specific",
+      "domains": sortedDomainStrings(domains: domains),
+      "exceptDomains": []
+    ],
+    forKey: WEB_CONTENT_FILTER_POLICY_LAST_UPDATE_KEY
+  )
+}
+
 @available(iOS 15.0, *)
 func clearWebContentFilterPolicy(
   triggeredBy: String
@@ -863,37 +903,6 @@ func clearWebContentFilterPolicy(
       "exceptDomains": []
     ],
     forKey: WEB_CONTENT_FILTER_POLICY_LAST_UPDATE_KEY
-  )
-}
-
-func webContentFilterDomainsFromLastUpdateMetadata() -> [String] {
-  guard
-    let metadata = userDefaults?.dictionary(forKey: WEB_CONTENT_FILTER_POLICY_LAST_UPDATE_KEY),
-    let type = metadata["type"] as? String,
-    type == "specific",
-    let domains = metadata["domains"] as? [String]
-  else {
-    return []
-  }
-
-  return domains
-}
-
-@available(iOS 15.0, *)
-func addWebContentFilterDomains(
-  domains: [String],
-  triggeredBy: String
-) throws {
-  if domains.isEmpty {
-    return
-  }
-
-  try setWebContentFilterPolicy(
-    policyInput: [
-      "type": "specific",
-      "domains": webContentFilterDomainsFromLastUpdateMetadata() + domains
-    ],
-    triggeredBy: triggeredBy
   )
 }
 
