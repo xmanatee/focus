@@ -19,6 +19,14 @@ function reset(): void {
   useSettingsStore.setState({ setupBlock: null });
 }
 
+function focusBlockStorageKey(): string {
+  const name = useFocusBlockStore.persist.getOptions().name;
+  if (name === undefined) {
+    throw new Error('Focus block storage key is missing.');
+  }
+  return name;
+}
+
 describe('useFocusBlockStore', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -187,6 +195,55 @@ describe('useFocusBlockStore', () => {
       store.clearAllStrict();
       const after = useFocusBlockStore.getState().focusBlocks;
       expect(after.every((b) => b.strict === false)).toBe(true);
+    });
+  });
+
+  describe('persisted state', () => {
+    function persistedBlock() {
+      return {
+        ...focusBlockInput(),
+        id: 'stored-block',
+        name: 'Stored block',
+      };
+    }
+
+    it('hydrates current explicit focus block data', async () => {
+      storageMap.set(
+        focusBlockStorageKey(),
+        JSON.stringify({
+          state: { focusBlocks: [persistedBlock()] },
+          version: 2,
+        }),
+      );
+
+      await useFocusBlockStore.persist.rehydrate();
+
+      expect(useFocusBlockStore.persist.hasHydrated()).toBe(true);
+      expect(useFocusBlockStore.getState().focusBlocks).toEqual([
+        persistedBlock(),
+      ]);
+    });
+
+    it('rejects persisted blocks without an explicit rule', async () => {
+      const consoleError = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+      const { rule: _rule, ...withoutRule } = persistedBlock();
+      storageMap.set(
+        focusBlockStorageKey(),
+        JSON.stringify({
+          state: { focusBlocks: [withoutRule] },
+          version: 2,
+        }),
+      );
+
+      try {
+        await useFocusBlockStore.persist.rehydrate();
+        expect(useFocusBlockStore.persist.hasHydrated()).toBe(false);
+        expect(useFocusBlockStore.getState().focusBlocks).toEqual([]);
+      } finally {
+        consoleError.mockRestore();
+      }
     });
   });
 });

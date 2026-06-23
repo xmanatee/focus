@@ -23,6 +23,8 @@ export function StepHeader({
           Step {step} of {total}
         </Typography>
         <Pressable
+          accessibilityLabel="Close"
+          accessibilityRole="button"
           onPress={() => {
             void haptic.select();
             onClose();

@@ -29,6 +29,8 @@ export function NotifyRow({
         </Typography>
       </View>
       <Switch
+        accessibilityLabel={title}
+        accessibilityState={{ disabled }}
         value={value}
         onValueChange={onChange}
         disabled={disabled}

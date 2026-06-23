@@ -40,6 +40,7 @@ export function BlockFormCard({
           Block Name
         </Typography>
         <TextInput
+          accessibilityLabel="Block name"
           value={name}
           onChangeText={onNameChange}
           placeholder="e.g. Morning Deep Work"

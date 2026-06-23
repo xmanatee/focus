@@ -91,11 +91,19 @@ function summaryFor(level: SetupVerificationLevel): string {
   return 'Screen Time access and local app selections look ready.';
 }
 
+function missingSelectionDetail(count: number): string {
+  if (count === 0) return 'Selections are present';
+  return `${count} enabled ${
+    count === 1 ? 'block needs' : 'blocks need'
+  } apps picked here`;
+}
+
 export function evaluateSetupVerification(
   input: DiagnosticsInput,
 ): SetupVerification {
   const missingDeviceSelectionCount = input.focusBlocks.filter(
     (block) =>
+      input.enabledBlockIds.includes(block.id) &&
       !focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
   ).length;
   const runnable = input.focusBlocks.map((block) =>
@@ -135,10 +143,7 @@ export function evaluateSetupVerification(
     {
       id: 'deviceSelections',
       title: 'Local app selections',
-      detail:
-        missingDeviceSelectionCount === 0
-          ? 'Selections are present'
-          : `${missingDeviceSelectionCount} block needs apps picked here`,
+      detail: missingSelectionDetail(missingDeviceSelectionCount),
       status: missingDeviceSelectionCount === 0 ? 'pass' : 'fail',
     },
     {

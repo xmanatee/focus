@@ -39,20 +39,27 @@ const cloudBackedStorage: StateStorage = {
 export const persistedStorage = createJSONStorage(() => cloudBackedStorage);
 export const localStorage = createJSONStorage(() => AsyncStorage);
 
-export function attachCloudSync(onRemoteChange: () => void): () => void {
+export function attachCloudSync(
+  onRemoteChange: () => void,
+  onError: (error: unknown) => void,
+): () => void {
   if (!cloudIsUsable()) {
     return () => {};
   }
   const subscription = Cloud.addChangeListener(async (event) => {
-    for (const key of event.changedKeys) {
-      const value = Cloud.getString(key);
-      if (value !== null) {
-        await AsyncStorage.setItem(key, value);
-      } else {
-        await AsyncStorage.removeItem(key);
+    try {
+      for (const key of event.changedKeys) {
+        const value = Cloud.getString(key);
+        if (value !== null) {
+          await AsyncStorage.setItem(key, value);
+        } else {
+          await AsyncStorage.removeItem(key);
+        }
       }
+      onRemoteChange();
+    } catch (error) {
+      onError(error);
     }
-    onRemoteChange();
   });
   return () => subscription.remove();
 }

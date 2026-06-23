@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
@@ -11,6 +11,7 @@ import { ReviewPromptCard } from '../src/features/reviews/ReviewPromptCard';
 import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSessionCard';
 import { FocusBlockListSection } from '../src/features/schedule/components/FocusBlockListSection';
 import { ProgressCard } from '../src/features/schedule/components/ProgressCard';
+import { SchedulerErrorCard } from '../src/features/schedule/components/SchedulerErrorCard';
 import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
 import { focusBlocksRunnableLocally } from '../src/features/schedule/localRuntime';
 import { buildFocusProgress } from '../src/features/schedule/progress';
@@ -38,9 +39,12 @@ export default function MainFeedScreen(): JSX.Element {
   const setBlockEnabled = useBlockActivationStore((s) => s.setBlockEnabled);
   const missingDeviceSelectionCount = useMemo(
     () =>
-      focusBlocks.filter((block) => focusBlockNeedsLocalSelection(block))
-        .length,
-    [focusBlocks],
+      focusBlocks.filter(
+        (block) =>
+          enabledBlockIds.includes(block.id) &&
+          focusBlockNeedsLocalSelection(block),
+      ).length,
+    [enabledBlockIds, focusBlocks],
   );
   const runnableBlocks = useMemo(
     () => focusBlocksRunnableLocally(focusBlocks, enabledBlockIds),
@@ -62,6 +66,7 @@ export default function MainFeedScreen(): JSX.Element {
   const showProtectionCard = posture.score !== 'full';
   const setupVerification = useSetupVerification();
   const handleSetupAction = useSetupActionHandler();
+  const [schedulerError, setSchedulerError] = useState<string | null>(null);
 
   const quickStartPhase = resolveQuickStartPhase({
     authorizationStatus,
@@ -70,8 +75,29 @@ export default function MainFeedScreen(): JSX.Element {
   });
 
   useEffect(() => {
-    if (!hasPermissions) return;
-    void reconcileFocusBlocks(runnableBlocks, setupBlockForThisDevice);
+    if (!hasPermissions) {
+      setSchedulerError(null);
+      return;
+    }
+
+    let isCurrent = true;
+    async function reconcile(): Promise<void> {
+      try {
+        await reconcileFocusBlocks(runnableBlocks, setupBlockForThisDevice);
+        if (isCurrent) setSchedulerError(null);
+      } catch (caught) {
+        if (isCurrent) {
+          setSchedulerError(
+            caught instanceof Error ? caught.message : String(caught),
+          );
+        }
+      }
+    }
+
+    void reconcile();
+    return () => {
+      isCurrent = false;
+    };
   }, [runnableBlocks, setupBlockForThisDevice, hasPermissions]);
 
   const handleGrant = async (): Promise<void> => {
@@ -140,6 +166,10 @@ export default function MainFeedScreen(): JSX.Element {
           ) : null}
 
           <ReviewPromptCard verification={setupVerification} />
+
+          {schedulerError !== null ? (
+            <SchedulerErrorCard message={schedulerError} />
+          ) : null}
 
           <ProgressCard progress={progress} />
 

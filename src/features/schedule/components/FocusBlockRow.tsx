@@ -34,7 +34,11 @@ export function FocusBlockRow({
   return (
     <Card>
       <View className="flex-row justify-between items-start">
-        <Pressable onPress={onPress} className="flex-1 gap-2">
+        <Pressable
+          accessibilityRole="button"
+          onPress={onPress}
+          className="flex-1 gap-2"
+        >
           <View className="flex-row items-center gap-2">
             <Typography variant="h3" tone="ink">
               {block.name}
@@ -86,6 +90,7 @@ export function FocusBlockRow({
           </View>
         </Pressable>
         <Switch
+          accessibilityLabel={`Turn ${block.name} ${isEnabled ? 'off' : 'on'}`}
           value={isEnabled}
           onValueChange={onToggle}
           disabled={toggleDisabled}

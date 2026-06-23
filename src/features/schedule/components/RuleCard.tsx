@@ -103,6 +103,11 @@ export function RuleCard({
           {RULES.map((rule) => (
             <Pressable
               key={rule.kind}
+              accessibilityRole="radio"
+              accessibilityState={{
+                checked: value.kind === rule.kind,
+                disabled,
+              }}
               onPress={
                 disabled
                   ? undefined
@@ -134,6 +139,7 @@ export function RuleCard({
                 Daily Limit
               </Typography>
               <TextInput
+                accessibilityLabel="Daily budget minutes"
                 value={budgetText}
                 onChangeText={(text) => {
                   setBudgetText(text);

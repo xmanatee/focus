@@ -131,6 +131,22 @@ describe('getFocusBlockRuntimeStatus', () => {
     expect(status.kind).toBe('inactive');
   });
 
+  it('does not treat a budget threshold as active without the current interval start', () => {
+    eventRecords.push({
+      activityName: 'focusblocks.budget.block.mon',
+      callbackName: 'eventDidReachThreshold',
+      eventName: 'limit',
+      lastCalledAt: 200,
+    });
+
+    const status = getFocusBlockRuntimeStatus(
+      block({ rule: { kind: 'dailyBudget', minutes: 10 } }),
+      at('2026-04-27T10:00:00'),
+    );
+
+    expect(status.kind).toBe('inactive');
+  });
+
   it('reports schedule plus budget as locked until the next schedule start after the budget is used', () => {
     eventRecords.push(
       {

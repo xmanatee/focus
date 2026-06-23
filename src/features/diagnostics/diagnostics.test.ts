@@ -59,6 +59,27 @@ describe('evaluateSetupVerification', () => {
     );
   });
 
+  it('does not fail local selections for synced blocks that are off here', () => {
+    const result = evaluateSetupVerification({
+      authorizationStatus: 'authorized',
+      enabledBlockIds: [],
+      focusBlocks: [block('one')],
+      now: new Date('2026-06-05T10:00:00'),
+      populatedSelectionSlots: new Set(),
+      posture: FULL_POSTURE,
+      setupBlock: null,
+      setupBlockEnabledOnDevice: false,
+    });
+
+    expect(result.missingDeviceSelectionCount).toBe(0);
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'deviceSelections',
+        status: 'pass',
+      }),
+    );
+  });
+
   it('reports ready when permissions and device selections are complete', () => {
     const result = evaluateSetupVerification({
       authorizationStatus: 'authorized',

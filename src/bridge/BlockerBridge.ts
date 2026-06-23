@@ -2,6 +2,7 @@ import {
   AuthorizationStatus as NativeAuthorizationStatus,
   getAuthorizationStatus,
   onAuthorizationStatusChange,
+  pollAuthorizationStatus,
   requestAuthorization,
 } from 'react-native-device-activity';
 
@@ -27,12 +28,9 @@ function mapAuthorizationStatus(status: number): AuthorizationStatus {
 
 class ScreenTimeBlockerBridge implements IBlockerBridge {
   async requestAuthorization(): Promise<boolean> {
-    try {
-      await requestAuthorization('individual');
-      return this.readAuthorizationStatus() === 'authorized';
-    } catch {
-      return false;
-    }
+    await requestAuthorization('individual');
+    const status = await pollAuthorizationStatus();
+    return mapAuthorizationStatus(status) === 'authorized';
   }
 
   readAuthorizationStatus(): AuthorizationStatus {

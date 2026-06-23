@@ -42,6 +42,18 @@ function block(overrides: Partial<RuntimeFocusBlock>): RuntimeFocusBlock {
   };
 }
 
+const BUDGET_WEB_ACTIVITY = 'focusblocks.budget.budget-web.mon';
+
+function budgetWebBlock(
+  webDomains: readonly string[] = ['youtube.com'],
+): RuntimeFocusBlock {
+  return block({
+    id: 'budget-web',
+    rule: { kind: 'dailyBudget', minutes: 10 },
+    selection: savedSelection(webDomains),
+  });
+}
+
 function actionsFor(activityName: string, callbackName: string) {
   const config = configuredActions.find(
     (entry) =>
@@ -218,21 +230,14 @@ describe('reconcileFocusBlocks', () => {
     slotStore.set('block.budget-web', 'selection-budget-web');
 
     await reconcileFocusBlocks(
-      [
-        block({
-          id: 'budget-web',
-          rule: { kind: 'dailyBudget', minutes: 10 },
-          selection: savedSelection(['youtube.com', 'm.youtube.com']),
-        }),
-      ],
+      [budgetWebBlock(['youtube.com', 'm.youtube.com'])],
       null,
     );
 
     expect(
-      actionsFor(
-        'focusblocks.budget.budget-web.mon',
-        'eventDidReachThreshold',
-      ).map((action) => action.type),
+      actionsFor(BUDGET_WEB_ACTIVITY, 'eventDidReachThreshold').map(
+        (action) => action.type,
+      ),
     ).toEqual(['blockSelection', 'addWebContentFilterDomains']);
   });
 
@@ -240,12 +245,12 @@ describe('reconcileFocusBlocks', () => {
     slotStore.set('block.budget-web', 'selection-budget-web');
     eventRecords.push(
       {
-        activityName: 'focusblocks.budget.budget-web.mon',
+        activityName: BUDGET_WEB_ACTIVITY,
         callbackName: 'intervalDidStart',
         lastCalledAt: 100,
       },
       {
-        activityName: 'focusblocks.budget.budget-web.mon',
+        activityName: BUDGET_WEB_ACTIVITY,
         callbackName: 'eventDidReachThreshold',
         eventName: 'limit',
         lastCalledAt: 200,
@@ -253,13 +258,7 @@ describe('reconcileFocusBlocks', () => {
     );
 
     await reconcileFocusBlocks(
-      [
-        block({
-          id: 'budget-web',
-          rule: { kind: 'dailyBudget', minutes: 10 },
-          selection: savedSelection(['youtube.com']),
-        }),
-      ],
+      [budgetWebBlock()],
       null,
       new Date('2026-04-27T10:00:00'),
     );
@@ -274,5 +273,26 @@ describe('reconcileFocusBlocks', () => {
       payload: { type: 'specific', domains: ['youtube.com'] },
       triggeredBy: 'focusblocks current-state reconcile',
     });
+  });
+
+  it('does not reapply budget website blocking from a threshold without an interval start', async () => {
+    slotStore.set('block.budget-web', 'selection-budget-web');
+    eventRecords.push({
+      activityName: BUDGET_WEB_ACTIVITY,
+      callbackName: 'eventDidReachThreshold',
+      eventName: 'limit',
+      lastCalledAt: 200,
+    });
+
+    await reconcileFocusBlocks(
+      [budgetWebBlock()],
+      null,
+      new Date('2026-04-27T10:00:00'),
+    );
+
+    expect(manualActions.map((action) => action.type)).toEqual([
+      'resetBlocks',
+      'clearWebContentFilterPolicy',
+    ]);
   });
 });

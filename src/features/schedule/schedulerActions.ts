@@ -128,7 +128,7 @@ export function budgetEventReachedAfterIntervalStart(
     (event) => event.callbackName === 'intervalDidStart',
   );
   if (threshold === undefined) return false;
-  if (intervalStart === undefined) return true;
+  if (intervalStart === undefined) return false;
   return threshold.lastCalledAt > intervalStart.lastCalledAt;
 }
 

@@ -1,4 +1,8 @@
-import { validateDays, validateTimeRange } from '../../shared/days';
+import {
+  rangeDurationMinutes,
+  validateDays,
+  validateTimeRange,
+} from '../../shared/days';
 import {
   hasSavedActivitySelection,
   selectionHasBlockedTargets,
@@ -8,6 +12,11 @@ import type { FocusBlockInput } from './types';
 
 const MAX_NAME_LENGTH = 50;
 export const MAX_WEB_DOMAINS = 50;
+const MIN_DEVICE_ACTIVITY_INTERVAL_MINUTES = 15;
+
+function ruleUsesScheduleWindow(input: FocusBlockInput): boolean {
+  return input.rule.kind !== 'dailyBudget';
+}
 
 export function validateFocusBlockInput(input: FocusBlockInput): void {
   const name = input.name.trim();
@@ -19,6 +28,13 @@ export function validateFocusBlockInput(input: FocusBlockInput): void {
   }
   validateDays(input.days);
   validateTimeRange(input.startTime, input.endTime);
+  if (
+    ruleUsesScheduleWindow(input) &&
+    rangeDurationMinutes(input.startTime, input.endTime) <
+      MIN_DEVICE_ACTIVITY_INTERVAL_MINUTES
+  ) {
+    throw new Error('Scheduled blocks must be at least 15 minutes.');
+  }
   if (input.selection.webDomains.length > MAX_WEB_DOMAINS) {
     throw new Error('iOS can filter up to 50 websites per block.');
   }

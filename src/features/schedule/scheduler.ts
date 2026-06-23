@@ -24,8 +24,17 @@ import {
 import type { DayOfWeek, RuntimeFocusBlock } from './types';
 import { webDomainsForInstant } from './webDomainsForInstant';
 
+const MAX_DEVICE_ACTIVITY_MONITORS = 20;
+
 function configuredActions(actions: readonly FocusAction[]): Action[] {
   return [...actions] as Action[];
+}
+
+function assertDeviceActivityMonitorLimit(planCount: number): void {
+  if (planCount <= MAX_DEVICE_ACTIVITY_MONITORS) return;
+  throw new Error(
+    `iOS can monitor up to ${MAX_DEVICE_ACTIVITY_MONITORS} Focus Block schedules at once. Disable some blocks or reduce selected days.`,
+  );
 }
 
 async function applyPlan(plan: MonitorPlan): Promise<void> {
@@ -135,6 +144,8 @@ export async function reconcileFocusBlocks(
       desired.set(plan.activityName, plan);
     }
   }
+
+  assertDeviceActivityMonitorLimit(desired.size);
 
   const current = getActivities().filter(isFocusBlocksActivityName);
   const toStop = current.filter((name) => !desired.has(name));

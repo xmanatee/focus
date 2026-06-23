@@ -81,6 +81,15 @@ export function useFocusBlockSave({
 
   const requestDelete = (): void => {
     if (!editId) return;
+    const deleteCurrentBlock = async (): Promise<void> => {
+      const success = await run(async () => {
+        void haptic.abandon();
+        deleteFocusBlock(editId);
+        markSelectionSaved();
+      }, 'Could not delete block.');
+      if (success) dismiss();
+    };
+
     Alert.alert(
       'Delete Focus Block?',
       'This will permanently remove this focus block.',
@@ -90,13 +99,7 @@ export function useFocusBlockSave({
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            void run(async () => {
-              void haptic.abandon();
-              deleteFocusBlock(editId);
-              markSelectionSaved();
-            }, 'Could not delete block.').then((success) => {
-              if (success) dismiss();
-            });
+            void deleteCurrentBlock();
           },
         },
       ],

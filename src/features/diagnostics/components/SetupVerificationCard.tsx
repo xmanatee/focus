@@ -92,8 +92,9 @@ export function SetupVerificationCard({
               </View>
               {check.status !== 'pass' && onAction ? (
                 <Pressable
+                  accessibilityRole="button"
                   onPress={() => onAction(action)}
-                  className="rounded-full bg-surface px-3 py-1"
+                  className="min-h-11 items-center justify-center rounded-full bg-surface px-4"
                 >
                   <Typography variant="caption" tone="signal">
                     {actionLabel(action)}

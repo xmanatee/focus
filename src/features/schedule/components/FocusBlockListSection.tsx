@@ -37,7 +37,7 @@ export function FocusBlockListSection({
           onPress={onAdd}
           accessibilityLabel="Add focus block"
           accessibilityRole="button"
-          className="h-10 w-10 items-center justify-center rounded-full bg-signal"
+          className="h-11 w-11 items-center justify-center rounded-full bg-signal"
         >
           <Icon name="plus" size={20} tone="surface" />
         </Pressable>

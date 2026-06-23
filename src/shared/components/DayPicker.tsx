@@ -30,7 +30,7 @@ export function DayPicker({
             accessibilityLabel={day.accessibilityLabel}
             accessibilityRole="button"
             accessibilityState={{ disabled, selected: active }}
-            className={`h-10 w-10 items-center justify-center rounded-full ${
+            className={`h-11 w-11 items-center justify-center rounded-full ${
               active ? 'bg-signal' : 'bg-surface-sunken'
             } ${disabled ? 'opacity-50' : ''}`}
           >

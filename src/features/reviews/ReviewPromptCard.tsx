@@ -30,14 +30,22 @@ export function ReviewPromptCard({
   const [promptState, setPromptState] = useState<ReviewPromptState | null>(
     null,
   );
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
-    void AsyncStorage.getItem(REVIEW_PROMPT_STATE_KEY).then((value) => {
-      if (isMounted) {
+    async function loadPromptState(): Promise<void> {
+      try {
+        const value = await AsyncStorage.getItem(REVIEW_PROMPT_STATE_KEY);
+        if (!isMounted) return;
         setPromptState(parseReviewPromptState(value));
+      } catch (caught) {
+        if (!isMounted) return;
+        setError(formatError(caught));
+        setPromptState(parseReviewPromptState(null));
       }
-    });
+    }
+    void loadPromptState();
     return () => {
       isMounted = false;
     };
@@ -50,16 +58,30 @@ export function ReviewPromptCard({
 
   if (!shouldShow) return null;
 
-  const saveState = (next: ReviewPromptState): void => {
+  const saveState = async (next: ReviewPromptState): Promise<void> => {
     setPromptState(next);
-    void AsyncStorage.setItem(
-      REVIEW_PROMPT_STATE_KEY,
-      serializeReviewPromptState(next),
-    );
+    try {
+      await AsyncStorage.setItem(
+        REVIEW_PROMPT_STATE_KEY,
+        serializeReviewPromptState(next),
+      );
+      setError(null);
+    } catch (caught) {
+      setError(formatError(caught));
+    }
   };
 
   const dismiss = (): void => {
-    saveState(snoozeReviewPrompt(nowMs));
+    void saveState(snoozeReviewPrompt(nowMs));
+  };
+
+  const rate = async (): Promise<void> => {
+    await saveState(markReviewPromptReviewed(nowMs));
+    try {
+      await Linking.openURL(APP_STORE_REVIEW_URL);
+    } catch (caught) {
+      setError(formatError(caught));
+    }
   };
 
   return (
@@ -79,13 +101,19 @@ export function ReviewPromptCard({
         <Button
           title="Rate on App Store"
           variant="commit"
-          onPress={() => {
-            saveState(markReviewPromptReviewed(nowMs));
-            void Linking.openURL(APP_STORE_REVIEW_URL);
-          }}
+          onPress={() => void rate()}
         />
         <Button title="Not now" variant="ghost" onPress={dismiss} />
       </View>
+      {error !== null ? (
+        <Typography variant="caption" tone="danger">
+          {error}
+        </Typography>
+      ) : null}
     </Card>
   );
+}
+
+function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

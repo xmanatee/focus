@@ -5,7 +5,7 @@ import {
 } from '../../shared/days';
 import type { DayOfWeek } from '../schedule/types';
 
-const MIN_SETUP_MINUTES_PER_WEEK = 15;
+const MIN_SETUP_WINDOW_MINUTES = 15;
 
 interface SetupBlockInput {
   readonly days: readonly DayOfWeek[];
@@ -18,9 +18,9 @@ export function validateSetupBlock(input: SetupBlockInput): void {
   validateTimeRange(input.startTime, input.endTime);
 
   const dailyMinutes = rangeDurationMinutes(input.startTime, input.endTime);
-  if (dailyMinutes * input.days.length < MIN_SETUP_MINUTES_PER_WEEK) {
+  if (dailyMinutes < MIN_SETUP_WINDOW_MINUTES) {
     throw new Error(
-      `Setup block must allow at least ${MIN_SETUP_MINUTES_PER_WEEK} minutes per week.`,
+      `Setup block must allow at least ${MIN_SETUP_WINDOW_MINUTES} minutes.`,
     );
   }
 }

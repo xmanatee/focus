@@ -75,6 +75,7 @@ export function BlockingCard({
         {!disabled && (
           <View className="flex-row gap-2">
             <TextInput
+              accessibilityLabel="Website domain"
               placeholder="example.com"
               placeholderTextColor={colors.inkFaint}
               value={newDomain}
@@ -87,6 +88,9 @@ export function BlockingCard({
               style={{ color: colors.ink }}
             />
             <Pressable
+              accessibilityLabel="Add website"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: hasReachedWebsiteLimit }}
               onPress={onAddDomain}
               disabled={hasReachedWebsiteLimit}
               className={`bg-signal w-12 h-12 items-center justify-center rounded-xl ${
@@ -115,7 +119,12 @@ export function BlockingCard({
                   {domain}
                 </Typography>
                 {!disabled && (
-                  <Pressable onPress={() => onRemoveDomain(domain)}>
+                  <Pressable
+                    accessibilityLabel={`Remove ${domain}`}
+                    accessibilityRole="button"
+                    hitSlop={12}
+                    onPress={() => onRemoveDomain(domain)}
+                  >
                     <Icon name="xmark.circle.fill" size={18} tone="faint" />
                   </Pressable>
                 )}

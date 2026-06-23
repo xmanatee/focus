@@ -22,6 +22,8 @@ export function Checklist({ items, onToggle }: ChecklistProps): JSX.Element {
         return (
           <Pressable
             key={item.id}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isSet }}
             onPress={() => {
               void haptic.select();
               onToggle(item.id);

@@ -63,10 +63,23 @@ describe('validateFocusBlockInput', () => {
     ).toThrow(/differ/i);
   });
 
-  it('accepts one-minute range', () => {
+  it('rejects scheduled windows shorter than iOS can monitor', () => {
     expect(() =>
       validateFocusBlockInput(
-        baseInput({ startTime: '22:00', endTime: '22:01' }),
+        baseInput({ startTime: '22:00', endTime: '22:14' }),
+      ),
+    ).toThrow(/15 minutes/i);
+  });
+
+  it('allows short time fields for daily budgets because they use all-day monitors', () => {
+    expect(() =>
+      validateFocusBlockInput(
+        baseInput({
+          rule: { kind: 'dailyBudget', minutes: 30 },
+          selection: nativeSelection,
+          startTime: '22:00',
+          endTime: '22:14',
+        }),
       ),
     ).not.toThrow();
   });

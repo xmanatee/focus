@@ -35,6 +35,8 @@ export function Card({
   if (onPress) {
     return (
       <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
         onPress={() => {
           void haptic.select();
           onPress();

@@ -18,6 +18,8 @@ export function Chip({
 }: ChipProps): JSX.Element {
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ disabled, selected: active }}
       onPress={onPress}
       onLongPress={onLongPress}
       disabled={disabled}

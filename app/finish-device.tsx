@@ -3,6 +3,7 @@ import { ScrollView, View } from 'react-native';
 import { summarizeActivitySelection } from '../src/features/blocker/types';
 import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
 import type { FocusBlock } from '../src/features/schedule/types';
+import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { Button } from '../src/shared/components/Button';
 import { Card } from '../src/shared/components/Card';
@@ -58,7 +59,12 @@ export default function FinishDeviceScreen(): JSX.Element {
   const router = useRouter();
   const dismiss = useDismiss();
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
-  const missingBlocks = focusBlocks.filter(focusBlockNeedsLocalSelection);
+  const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
+  const missingBlocks = focusBlocks.filter(
+    (block) =>
+      enabledBlockIds.includes(block.id) &&
+      focusBlockNeedsLocalSelection(block),
+  );
 
   const editBlock = (block: FocusBlock): void => {
     router.push({

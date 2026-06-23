@@ -74,6 +74,7 @@ function Cell({
         {label}
       </Typography>
       <DateTimePicker
+        accessibilityLabel={label}
         value={value}
         mode="time"
         display="compact"

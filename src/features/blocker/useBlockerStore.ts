@@ -23,12 +23,13 @@ export const useBlockerStore = create<BlockerState>()((set) => ({
 
   requestPermissions: async () => {
     set({ busyState: 'authorizing' });
-    const granted = await BlockerBridge.requestAuthorization();
-    set({
-      authorizationStatus: granted ? 'authorized' : 'denied',
-      busyState: 'idle',
-    });
-    return granted;
+    try {
+      const granted = await BlockerBridge.requestAuthorization();
+      set({ authorizationStatus: granted ? 'authorized' : 'denied' });
+      return granted;
+    } finally {
+      set({ busyState: 'idle' });
+    }
   },
 }));
 
