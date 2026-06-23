@@ -8,7 +8,7 @@ metadata changes should be reviewed in Git and pushed with EAS Metadata.
 
 Current target metadata:
 
-- Version: `1.0.4`
+- Version: `1.0.5`
 - Title: `Focus Blocks: App Blocker`
 - Subtitle: `Screen time app limits`
 - Locales: `en-GB`, `en-US`, `ru`
@@ -141,6 +141,21 @@ angles for future App Store custom product pages:
   `block-youtube-iphone`; support and `iphone-app-blocker` still did not
   surface in public checks. Bing public RSS still did not surface the domain
   despite sitemap and IndexNow setup.
+- Jun 23, 2026: Public App Store lookup showed version `1.0.4` live, released
+  Jun 19, 2026, with zero ratings. Apple public search ranked Focus Blocks `24`
+  for `focus blocks`, but not in the top 50 for `app blocker`,
+  `screen time limit`, `block youtube`, `study focus`, `block apps`, or
+  `website blocker`. Public Google checks surfaced the homepage, privacy page,
+  and `block-youtube-iphone`; support and the other use-case pages still need
+  Search Console follow-up. The site, robots.txt, sitemap.xml, IndexNow key
+  file, and all use-case pages returned HTTP 200. Updated sitemap `lastmod`
+  values to Jun 23, 2026 so search engines see the current crawl freshness.
+- Jun 23, 2026: After accepting the updated Apple Developer Program License
+  Agreement, App Store Connect API access recovered from the earlier 403
+  agreement error. App Store metadata push then failed twice with Apple's
+  server-side `Internal Server Error`, so the fallback release path is to build
+  and submit the new binary with metadata push disabled, then retry metadata
+  sync after Apple's API recovers.
 
 ## Release Notes
 
