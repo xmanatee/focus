@@ -21,14 +21,12 @@
       }
     },
     "production": {
-      "autoIncrement": true,
       "env": {
         "SHARP_IGNORE_GLOBAL_LIBVIPS": "true"
       },
       "ios": {
         "image": "macos-sequoia-15.6-xcode-26.2",
-        "resourceClass": "m-medium",
-        "autoIncrement": "buildNumber"
+        "resourceClass": "m-medium"
       }
     }
   },
