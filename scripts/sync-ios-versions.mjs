@@ -11,6 +11,8 @@ const DEVICE_MONITOR_PATHS = [
 const SHARED_SWIFT_PATHS = [
   'node_modules/react-native-device-activity/ios/Shared.swift',
   'targets/ActivityMonitorExtension/Shared.swift',
+  'targets/ShieldAction/Shared.swift',
+  'targets/ShieldConfiguration/Shared.swift',
 ];
 
 function readPlistValue(key) {
@@ -86,12 +88,7 @@ function patchDeviceMonitor(input) {
   );
 }
 
-function patchSharedSwift(input) {
-  if (input.includes('func onlyIfTriggeredAfterConditionPasses')) {
-    return input;
-  }
-
-  const helper = `func onlyIfTriggeredAfterConditionPasses(action: [String: Any]) -> Bool {
+const ONLY_IF_TRIGGERED_AFTER_HELPER = `func onlyIfTriggeredAfterConditionPasses(action: [String: Any]) -> Bool {
   guard let condition = action["onlyIfTriggeredAfter"] as? [String: Any] else {
     return true
   }
@@ -128,12 +125,112 @@ function patchSharedSwift(input) {
 
 `;
 
-  return replaceRequired(
-    input,
-    'func shouldExecuteAction(\n',
-    `${helper}func shouldExecuteAction(\n`,
-    'Shared.swift onlyIfTriggeredAfter helper',
-  );
+const ADD_WEB_CONTENT_FILTER_DOMAINS_ACTION = `  } else if type == "addWebContentFilterDomains" {
+    if let domains = action["domains"] as? [String] {
+      do {
+        try addWebContentFilterDomains(
+          rawDomains: domains,
+          triggeredBy: triggeredBy
+        )
+      } catch {
+        setWebContentFilterPolicyErrorMetadata(
+          triggeredBy: triggeredBy,
+          error: error,
+          action: action
+        )
+        logger.error(
+          "Failed to add web content filter domains in action pipeline: \\(error.localizedDescription, privacy: .public)"
+        )
+      }
+    } else {
+      setWebContentFilterPolicyErrorMetadata(
+        triggeredBy: triggeredBy,
+        error: WebContentFilterPolicyError.invalidStringArray(fieldName: "domains"),
+        action: action
+      )
+      logger.error("addWebContentFilterDomains action is missing domains payload")
+    }
+`;
+
+const ADD_WEB_CONTENT_FILTER_DOMAINS_HELPER = `func webContentFilterDomainsFromLastUpdateMetadata() -> [String] {
+  guard
+    let metadata = userDefaults?.dictionary(forKey: WEB_CONTENT_FILTER_POLICY_LAST_UPDATE_KEY),
+    let domains = metadata["domains"] as? [String]
+  else {
+    return []
+  }
+
+  return domains
+}
+
+@available(iOS 15.0, *)
+func addWebContentFilterDomains(
+  rawDomains: [String],
+  triggeredBy: String
+) throws {
+  if rawDomains.isEmpty {
+    throw WebContentFilterPolicyError.missingRequiredDomains(fieldName: "domains")
+  }
+
+  let domains = try parseWebDomains(
+    rawDomains: webContentFilterDomainsFromLastUpdateMetadata() + rawDomains,
+    fieldName: "domains"
+  )
+
+  store.webContent.blockedByFilter = .specific(domains)
+  clearWebContentFilterPolicyErrorMetadata()
+
+  userDefaults?.set(
+    [
+      "triggeredBy": triggeredBy,
+      "updatedAt": Date.now.ISO8601Format(),
+      "type": "specific",
+      "domains": sortedDomainStrings(domains: domains),
+      "exceptDomains": []
+    ],
+    forKey: WEB_CONTENT_FILTER_POLICY_LAST_UPDATE_KEY
+  )
+}
+
+`;
+
+function patchWebContentFilterDomainAction(input) {
+  let output = input;
+
+  if (!output.includes('type == "addWebContentFilterDomains"')) {
+    output = replaceRequired(
+      output,
+      '  } else if type == "clearWebContentFilterPolicy" {\n    clearWebContentFilterPolicy(triggeredBy: triggeredBy)\n',
+      `  } else if type == "clearWebContentFilterPolicy" {\n    clearWebContentFilterPolicy(triggeredBy: triggeredBy)\n${ADD_WEB_CONTENT_FILTER_DOMAINS_ACTION}`,
+      'Shared.swift addWebContentFilterDomains action',
+    );
+  }
+
+  if (!output.includes('func addWebContentFilterDomains')) {
+    output = replaceRequired(
+      output,
+      '@available(iOS 15.0, *)\nfunc clearWebContentFilterPolicy(\n',
+      `${ADD_WEB_CONTENT_FILTER_DOMAINS_HELPER}@available(iOS 15.0, *)\nfunc clearWebContentFilterPolicy(\n`,
+      'Shared.swift addWebContentFilterDomains helper',
+    );
+  }
+
+  return output;
+}
+
+function patchSharedSwift(input) {
+  let output = input;
+
+  if (!output.includes('func onlyIfTriggeredAfterConditionPasses')) {
+    output = replaceRequired(
+      output,
+      'func shouldExecuteAction(\n',
+      `${ONLY_IF_TRIGGERED_AFTER_HELPER}func shouldExecuteAction(\n`,
+      'Shared.swift onlyIfTriggeredAfter helper',
+    );
+  }
+
+  return patchWebContentFilterDomainAction(output);
 }
 
 const appConfig = JSON.parse(fs.readFileSync(APP_CONFIG_PATH, 'utf8'));
