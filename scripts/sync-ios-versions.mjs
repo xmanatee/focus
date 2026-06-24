@@ -221,6 +221,16 @@ function patchWebContentFilterDomainAction(input) {
 function patchSharedSwift(input) {
   let output = input;
 
+  output = output.replace(/ {4}\/\/ [tT]odo: replace with general string\n/g, '');
+  if (!output.includes('logger.log("encode error')) {
+    output = replaceRequired(
+      output,
+      '  } catch {\n    return ""\n  }\n}\n\n@available(iOS 15.0, *)\nfunc enableBlockAllMode',
+      '  } catch {\n    logger.log("encode error \\\\(error.localizedDescription, privacy: .public)")\n    return ""\n  }\n}\n\n@available(iOS 15.0, *)\nfunc enableBlockAllMode',
+      'Shared.swift FamilyActivitySelection encode error logging',
+    );
+  }
+
   if (!output.includes('func onlyIfTriggeredAfterConditionPasses')) {
     output = replaceRequired(
       output,

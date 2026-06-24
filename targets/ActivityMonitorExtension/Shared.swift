@@ -248,7 +248,6 @@ func executeGenericAction(
   } else if type == "disableBlockAllMode" {
     disableBlockAllMode(triggeredBy: triggeredBy)
   } else if type == "openApp" {
-    // todo: replace with general string
     openUrl(urlString: "device-activity://")
 
     sleep(ms: 1000)
@@ -1152,6 +1151,7 @@ func serializeFamilyActivitySelection(selection: FamilyActivitySelection) -> Str
 
     return jsonString
   } catch {
+    logger.log("encode error \(error.localizedDescription, privacy: .public)")
     return ""
   }
 }
