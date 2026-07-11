@@ -1,4 +1,5 @@
 import { View } from 'react-native';
+import { BlockerBridge } from '../../bridge/BlockerBridge';
 import { Button } from '../../shared/components/Button';
 import { Card } from '../../shared/components/Card';
 import { Icon } from '../../shared/components/Icon';
@@ -11,28 +12,32 @@ interface QuickStartCopy {
   readonly action: string;
 }
 
-const COPY: Record<QuickStartPhase, QuickStartCopy> = {
-  grantAccess: {
-    title: 'Start with Screen Time access',
-    body: 'Focus Blocks needs iOS Screen Time permission before it can shield apps system-wide.',
-    action: 'Give access',
-  },
-  openSettings: {
-    title: 'Allow access in Settings',
-    body: "Screen Time access was denied. iOS won't show the prompt again, so Focus Blocks needs to be allowed from Settings.",
-    action: 'Open Settings',
-  },
-  createFirstBlock: {
-    title: 'Create your first block',
-    body: 'Pick a template, choose the apps that pull you in, and save one rule you can trust today.',
-    action: 'Start with template',
-  },
-  finishDevice: {
-    title: 'Finish this device',
-    body: 'Your rules synced, but iOS app selections must be confirmed once on this iPhone or iPad.',
-    action: 'Open blocks to finish',
-  },
-};
+function copyForPhase(phase: QuickStartPhase): QuickStartCopy {
+  const capabilities = BlockerBridge.capabilities;
+  const copy: Record<QuickStartPhase, QuickStartCopy> = {
+    grantAccess: {
+      title: `Start with ${capabilities.authorizationAccessName}`,
+      body: capabilities.authorizationRequestBody,
+      action: 'Give access',
+    },
+    openSettings: {
+      title: 'Allow access in Settings',
+      body: capabilities.deniedAuthorizationDetail,
+      action: 'Open Settings',
+    },
+    createFirstBlock: {
+      title: 'Create your first block',
+      body: 'Pick a template, choose the apps that pull you in, and save one rule you can trust today.',
+      action: 'Start with template',
+    },
+    finishDevice: {
+      title: 'Finish this device',
+      body: capabilities.finishDeviceBody,
+      action: 'Open blocks to finish',
+    },
+  };
+  return copy[phase];
+}
 
 interface QuickStartCardProps {
   readonly phase: QuickStartPhase;
@@ -45,7 +50,7 @@ export function QuickStartCard({
   phase,
   isPrimaryLoading = false,
 }: QuickStartCardProps): JSX.Element {
-  const copy = COPY[phase];
+  const copy = copyForPhase(phase);
 
   return (
     <Card tone="signal">

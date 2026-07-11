@@ -22,10 +22,10 @@ function iconFor(status: SetupVerificationStatus): {
 
 function actionLabel(action: SetupVerificationAction): string {
   switch (action) {
-    case 'requestScreenTime':
+    case 'requestBlockingAccess':
       return 'Fix access';
     case 'finishDeviceSetup':
-      return 'Pick apps';
+      return 'Finish setup';
     case 'openProtection':
       return 'Set up';
     case 'addBlock':

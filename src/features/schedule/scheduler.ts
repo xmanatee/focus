@@ -1,15 +1,8 @@
 import {
-  type Action,
-  blockSelection,
-  cleanUpAfterActivity,
-  clearWebContentFilterPolicy,
-  configureActions,
-  getActivities,
-  resetBlocks,
-  setWebContentFilterPolicy,
-  startMonitoring,
-  stopMonitoring,
-} from 'react-native-device-activity';
+  BlockerBridge,
+  type DeviceActivityAction,
+} from '../../bridge/BlockerBridge';
+import { focusBlockUnsupportedReason } from './runtimeSupport';
 import {
   type FocusAction,
   type MonitorPlan,
@@ -26,8 +19,10 @@ import { webDomainsForInstant } from './webDomainsForInstant';
 
 const MAX_DEVICE_ACTIVITY_MONITORS = 20;
 
-function configuredActions(actions: readonly FocusAction[]): Action[] {
-  return [...actions] as Action[];
+function configuredActions(
+  actions: readonly FocusAction[],
+): DeviceActivityAction[] {
+  return [...actions] as DeviceActivityAction[];
 }
 
 function assertDeviceActivityMonitorLimit(planCount: number): void {
@@ -38,18 +33,19 @@ function assertDeviceActivityMonitorLimit(planCount: number): void {
 }
 
 async function applyPlan(plan: MonitorPlan): Promise<void> {
-  configureActions({
+  const native = BlockerBridge.deviceActivity;
+  native.configureActions({
     activityName: plan.activityName,
     callbackName: 'intervalDidStart',
     actions: configuredActions(plan.startActions),
   });
-  configureActions({
+  native.configureActions({
     activityName: plan.activityName,
     callbackName: 'intervalDidEnd',
     actions: configuredActions(plan.endActions),
   });
   for (const eventAction of plan.eventActions) {
-    configureActions({
+    native.configureActions({
       activityName: plan.activityName,
       callbackName: 'eventDidReachThreshold',
       eventName: eventAction.eventName,
@@ -57,14 +53,14 @@ async function applyPlan(plan: MonitorPlan): Promise<void> {
     });
   }
   for (const eventAction of plan.eventWarningActions) {
-    configureActions({
+    native.configureActions({
       activityName: plan.activityName,
       callbackName: 'eventWillReachThresholdWarning',
       eventName: eventAction.eventName,
       actions: configuredActions(eventAction.actions),
     });
   }
-  await startMonitoring(plan.activityName, plan.schedule, plan.events);
+  await native.startMonitoring(plan.activityName, plan.schedule, plan.events);
 }
 
 const DAY_BY_DATE_INDEX: readonly DayOfWeek[] = [
@@ -86,12 +82,18 @@ function shouldExecuteNow(action: FocusAction): boolean {
 function executeActionNow(action: FocusAction): void {
   if (!shouldExecuteNow(action)) return;
   if (action.type === 'resetBlocks') {
-    resetBlocks('focusblocks current-state reconcile');
+    BlockerBridge.deviceActivity.resetBlocks(
+      'focusblocks current-state reconcile',
+    );
     return;
   }
   if (action.type === 'blockSelection') {
-    blockSelection(
-      { activitySelectionId: action.familyActivitySelectionId },
+    const selectionId = action.familyActivitySelectionId;
+    if (typeof selectionId !== 'string') {
+      throw new Error('Block selection action is missing its selection id.');
+    }
+    BlockerBridge.deviceActivity.blockSelection(
+      { activitySelectionId: selectionId },
       'focusblocks current-state reconcile',
     );
     return;
@@ -108,12 +110,24 @@ function applyCurrentState(
     executeActionNow(action);
   }
   const webDomains = webDomainsForInstant(blocks, day, minute);
-  clearWebContentFilterPolicy('focusblocks current-state reconcile');
+  BlockerBridge.deviceActivity.clearWebContentFilterPolicy(
+    'focusblocks current-state reconcile',
+  );
   if (webDomains.length > 0) {
-    setWebContentFilterPolicy(
+    BlockerBridge.deviceActivity.setWebContentFilterPolicy(
       { type: 'specific', domains: [...webDomains] },
       'focusblocks current-state reconcile',
     );
+  }
+}
+
+function assertAndroidRuntimeSupport(
+  blocks: readonly RuntimeFocusBlock[],
+): void {
+  for (const block of blocks) {
+    if (!block.isEnabled) continue;
+    const unsupportedReason = focusBlockUnsupportedReason(block);
+    if (unsupportedReason !== null) throw new Error(unsupportedReason);
   }
 }
 
@@ -127,6 +141,12 @@ export async function reconcileFocusBlocks(
   } | null,
   at: Date = new Date(),
 ): Promise<void> {
+  if (BlockerBridge.capabilities.runtimeKind === 'androidAccessibility') {
+    assertAndroidRuntimeSupport(blocks);
+    await BlockerBridge.reconcileRuntimeBlocks(blocks, at);
+    return;
+  }
+
   const desired = new Map<string, MonitorPlan>();
   for (const block of blocks) {
     for (const plan of materializeFocusBlock(block, blocks)) {
@@ -147,11 +167,12 @@ export async function reconcileFocusBlocks(
 
   assertDeviceActivityMonitorLimit(desired.size);
 
-  const current = getActivities().filter(isFocusBlocksActivityName);
+  const native = BlockerBridge.deviceActivity;
+  const current = native.getActivities().filter(isFocusBlocksActivityName);
   const toStop = current.filter((name) => !desired.has(name));
   if (toStop.length > 0) {
-    stopMonitoring(toStop);
-    for (const name of toStop) cleanUpAfterActivity(name);
+    native.stopMonitoring(toStop);
+    for (const name of toStop) native.cleanUpAfterActivity(name);
   }
 
   for (const plan of desired.values()) await applyPlan(plan);

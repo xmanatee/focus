@@ -1,8 +1,4 @@
-import {
-  type Action,
-  type DeviceActivityEvent,
-  getEvents,
-} from 'react-native-device-activity';
+import { BlockerBridge } from '../../bridge/BlockerBridge';
 import {
   iosWeekday,
   isOvernightRange,
@@ -46,7 +42,19 @@ type WebDomainAction = {
   readonly domains: readonly string[];
 };
 
-export type FocusAction = (Action | WebDomainAction) & {
+type NativeAction = {
+  readonly type: string;
+  readonly [key: string]: unknown;
+};
+
+export interface DeviceActivityEvent {
+  readonly eventName: string;
+  readonly familyActivitySelection: string;
+  readonly threshold: { readonly hour?: number; readonly minute: number };
+  readonly includesPastActivity: boolean;
+}
+
+export type FocusAction = (NativeAction | WebDomainAction) & {
   readonly onlyIfTriggeredAfter?: TriggeredAfterCondition;
 };
 
@@ -118,7 +126,7 @@ function budgetCondition(
 export function budgetEventReachedAfterIntervalStart(
   activityName: string,
 ): boolean {
-  const events = getEvents(activityName);
+  const events = BlockerBridge.getActivityEvents(activityName);
   const threshold = events.find(
     (event) =>
       event.callbackName === 'eventDidReachThreshold' &&

@@ -50,6 +50,7 @@ export const useBlockActivationStore = create<BlockActivationState>()(
     {
       name: BLOCK_ACTIVATION_STORAGE_KEY,
       storage: localStorage,
+      skipHydration: true,
     },
   ),
 );

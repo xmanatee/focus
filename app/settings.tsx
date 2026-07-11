@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
+import { BlockerBridge } from '../src/bridge/BlockerBridge';
 import { DiagnosticsCard } from '../src/features/diagnostics/components/DiagnosticsCard';
 import { protectionCopy } from '../src/features/protection/copy';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
@@ -75,6 +76,35 @@ export default function SettingsScreen(): JSX.Element {
 
   const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
   const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
+
+  if (!BlockerBridge.capabilities.supportsTamperProtection) {
+    return (
+      <Screen padded={false} edges={['bottom']} edgeEffect="soft">
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingBottom: 60,
+            paddingTop: 32,
+            gap: 20,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="gap-3">
+            <Typography variant="display-md" tone="ink">
+              Lock-in is not available here.
+            </Typography>
+            <Typography variant="body" tone="muted">
+              {BlockerBridge.capabilities.authorizationAccessName} keeps block
+              enforcement local to this device. You can still create, edit, and
+              enable schedule-based app blocks.
+            </Typography>
+          </View>
+          <DiagnosticsCard />
+        </ScrollView>
+      </Screen>
+    );
+  }
 
   const toggleDay = (day: DayOfWeek): void => {
     setSelectedDays((current) =>
@@ -153,7 +183,7 @@ export default function SettingsScreen(): JSX.Element {
   const confirmDisableOnDevice = (): void => {
     Alert.alert(
       'Turn off on this device?',
-      'This iPhone or iPad will stop using the setup window for edit protection. Other devices keep their current lock-in state.',
+      'This device will stop using the setup window for edit protection. Other devices keep their current lock-in state.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -203,8 +233,8 @@ export default function SettingsScreen(): JSX.Element {
             Configure Lock-in.
           </Typography>
           <Typography variant="body" tone="muted">
-            The setup window syncs through iCloud, but each iPhone or iPad
-            decides for itself when to enforce it.
+            The setup window syncs through iCloud, but each device decides for
+            itself when to enforce it.
           </Typography>
         </View>
 

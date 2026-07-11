@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
 import { ScrollView, View } from 'react-native';
+import { BlockerBridge } from '../src/bridge/BlockerBridge';
 import { summarizeActivitySelection } from '../src/features/blocker/types';
 import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
+import { focusBlockUnsupportedReason } from '../src/features/schedule/runtimeSupport';
 import type { FocusBlock } from '../src/features/schedule/types';
 import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
@@ -16,12 +18,15 @@ import { useDismiss } from '../src/shared/hooks/useDismiss';
 function DeviceBlockRow({
   block,
   needsSelection,
+  unsupportedReason,
   onPress,
 }: {
   readonly block: FocusBlock;
   readonly needsSelection: boolean;
+  readonly unsupportedReason: string | null;
   readonly onPress: () => void;
 }): JSX.Element {
+  const needsAction = needsSelection || unsupportedReason !== null;
   return (
     <Card onPress={onPress}>
       <View className="flex-row items-start justify-between gap-3">
@@ -36,21 +41,27 @@ function DeviceBlockRow({
         <View className="flex-row items-center gap-2">
           <Icon
             name={
-              needsSelection
+              needsAction
                 ? 'exclamationmark.triangle.fill'
                 : 'checkmark.seal.fill'
             }
             size={16}
-            tone={needsSelection ? 'signal' : 'muted'}
+            tone={needsAction ? 'signal' : 'muted'}
           />
-          <Typography
-            variant="caption"
-            tone={needsSelection ? 'signal' : 'muted'}
-          >
-            {needsSelection ? 'Needs apps here' : 'Ready'}
+          <Typography variant="caption" tone={needsAction ? 'signal' : 'muted'}>
+            {needsSelection
+              ? 'Needs apps here'
+              : unsupportedReason !== null
+                ? 'Unsupported here'
+                : 'Ready'}
           </Typography>
         </View>
       </View>
+      {unsupportedReason !== null ? (
+        <Typography variant="caption" tone="signal">
+          {unsupportedReason}
+        </Typography>
+      ) : null}
     </Card>
   );
 }
@@ -60,10 +71,11 @@ export default function FinishDeviceScreen(): JSX.Element {
   const dismiss = useDismiss();
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
-  const missingBlocks = focusBlocks.filter(
+  const unfinishedBlocks = focusBlocks.filter(
     (block) =>
       enabledBlockIds.includes(block.id) &&
-      focusBlockNeedsLocalSelection(block),
+      (focusBlockNeedsLocalSelection(block) ||
+        focusBlockUnsupportedReason(block) !== null),
   );
 
   const editBlock = (block: FocusBlock): void => {
@@ -90,13 +102,11 @@ export default function FinishDeviceScreen(): JSX.Element {
             Finish this device.
           </Typography>
           <Typography variant="body" tone="muted">
-            Rules sync with iCloud, but iOS keeps app selections private to each
-            iPhone and iPad. Pick apps once on this device before those app
-            blocks can apply here.
+            {BlockerBridge.capabilities.finishDeviceBody}
           </Typography>
         </View>
 
-        {missingBlocks.length === 0 ? (
+        {unfinishedBlocks.length === 0 ? (
           <Card>
             <View className="flex-row items-center gap-3">
               <Icon name="checkmark.seal.fill" size={22} tone="signal" />
@@ -105,20 +115,21 @@ export default function FinishDeviceScreen(): JSX.Element {
                   This device is ready
                 </Typography>
                 <Typography variant="body" tone="muted">
-                  Every synced block has the local selection data it needs
-                  before you turn it on here.
+                  Every enabled synced block has local app selection data and
+                  uses features this device can enforce.
                 </Typography>
               </View>
             </View>
             <Button title="Done" variant="commit" onPress={dismiss} />
           </Card>
         ) : (
-          <Section title="Needs App Selection">
-            {missingBlocks.map((block) => (
+          <Section title="Needs Attention">
+            {unfinishedBlocks.map((block) => (
               <DeviceBlockRow
                 key={block.id}
                 block={block}
-                needsSelection
+                needsSelection={focusBlockNeedsLocalSelection(block)}
+                unsupportedReason={focusBlockUnsupportedReason(block)}
                 onPress={() => editBlock(block)}
               />
             ))}

@@ -97,8 +97,9 @@ describe('evaluateSetupVerification', () => {
   });
 
   it('maps failed setup checks to concrete repair actions', () => {
-    expect(setupActionForCheck('screenTime')).toBe('requestScreenTime');
+    expect(setupActionForCheck('blockingAccess')).toBe('requestBlockingAccess');
     expect(setupActionForCheck('deviceSelections')).toBe('finishDeviceSetup');
+    expect(setupActionForCheck('runtimeSupport')).toBe('finishDeviceSetup');
     expect(setupActionForCheck('protection')).toBe('openProtection');
     expect(setupActionForCheck('blocks')).toBe('addBlock');
     expect(setupActionForCheck('activeNow')).toBe('openDiagnostics');

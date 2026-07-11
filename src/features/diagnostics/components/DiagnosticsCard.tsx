@@ -46,8 +46,8 @@ export function DiagnosticsCard(): JSX.Element {
           </Typography>
           <Typography variant="body" tone="muted">
             Create a privacy-safe support report with setup status, rule counts,
-            and extension state. It does not include app names, website names,
-            or your block names.
+            and native blocking state. It does not include app names, website
+            names, or your block names.
           </Typography>
         </View>
       </View>

@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView } from 'react-native';
+import { BlockerBridge } from '../src/bridge/BlockerBridge';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
 import { useSetupVerification } from '../src/features/diagnostics/useSetupVerification';
@@ -12,7 +13,6 @@ import { ActiveSessionCard } from '../src/features/schedule/components/ActiveSes
 import { FocusBlockListSection } from '../src/features/schedule/components/FocusBlockListSection';
 import { ProgressCard } from '../src/features/schedule/components/ProgressCard';
 import { SchedulerErrorCard } from '../src/features/schedule/components/SchedulerErrorCard';
-import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
 import { focusBlocksRunnableLocally } from '../src/features/schedule/localRuntime';
 import { buildFocusProgress } from '../src/features/schedule/progress';
 import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
@@ -37,15 +37,6 @@ export default function MainFeedScreen(): JSX.Element {
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
   const setBlockEnabled = useBlockActivationStore((s) => s.setBlockEnabled);
-  const missingDeviceSelectionCount = useMemo(
-    () =>
-      focusBlocks.filter(
-        (block) =>
-          enabledBlockIds.includes(block.id) &&
-          focusBlockNeedsLocalSelection(block),
-      ).length,
-    [enabledBlockIds, focusBlocks],
-  );
   const runnableBlocks = useMemo(
     () => focusBlocksRunnableLocally(focusBlocks, enabledBlockIds),
     [enabledBlockIds, focusBlocks],
@@ -57,13 +48,21 @@ export default function MainFeedScreen(): JSX.Element {
     state: adminState,
     now: adminNow,
   } = useAdminState();
-  const isAdminLocked = adminState.kind === 'locked';
+  const supportsTamperProtection =
+    BlockerBridge.capabilities.supportsTamperProtection;
+  const isAdminLocked =
+    supportsTamperProtection && adminState.kind === 'locked';
   const setupBlock = useSettingsStore((s) => s.setupBlock);
   const setupBlockForThisDevice =
-    setupBlock !== null && isSetupBlockEnabledOnDevice ? setupBlock : null;
+    supportsTamperProtection &&
+    setupBlock !== null &&
+    isSetupBlockEnabledOnDevice
+      ? setupBlock
+      : null;
 
   const posture = useProtectionPosture();
-  const showProtectionCard = posture.score !== 'full';
+  const showProtectionCard =
+    supportsTamperProtection && posture.score !== 'full';
   const setupVerification = useSetupVerification();
   const handleSetupAction = useSetupActionHandler();
   const [schedulerError, setSchedulerError] = useState<string | null>(null);
@@ -71,7 +70,9 @@ export default function MainFeedScreen(): JSX.Element {
   const quickStartPhase = resolveQuickStartPhase({
     authorizationStatus,
     blockCount: focusBlocks.length,
-    missingDeviceSelectionCount,
+    missingDeviceSelectionCount: setupVerification.missingDeviceSelectionCount,
+    unsupportedEnabledBlockCount:
+      setupVerification.unsupportedEnabledBlockCount,
   });
 
   useEffect(() => {
@@ -117,7 +118,7 @@ export default function MainFeedScreen(): JSX.Element {
     }
     void haptic.select();
     if (quickStartPhase === 'openSettings') {
-      handleSetupAction('requestScreenTime');
+      handleSetupAction('requestBlockingAccess');
       return;
     }
     if (quickStartPhase === 'createFirstBlock') {
@@ -180,12 +181,14 @@ export default function MainFeedScreen(): JSX.Element {
             />
           )}
 
-          <LockInSettingsCard
-            now={adminNow}
-            state={adminState}
-            setupBlock={setupBlock}
-            onPress={() => router.push('/settings')}
-          />
+          {supportsTamperProtection && (
+            <LockInSettingsCard
+              now={adminNow}
+              state={adminState}
+              setupBlock={setupBlock}
+              onPress={() => router.push('/settings')}
+            />
+          )}
         </Section>
 
         <FocusBlockListSection

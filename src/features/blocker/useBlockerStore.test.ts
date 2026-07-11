@@ -36,10 +36,10 @@ describe('useBlockerStore', () => {
     });
   });
 
-  it('refreshes Screen Time authorization from native state', () => {
+  it('refreshes Screen Time authorization from native state', async () => {
     nativeAuthorization.status = 1;
 
-    useBlockerStore.getState().refreshAuthorizationStatus();
+    await useBlockerStore.getState().refreshAuthorizationStatus();
 
     expect(useBlockerStore.getState().authorizationStatus).toBe('authorized');
   });

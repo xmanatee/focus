@@ -23,6 +23,7 @@ interface EventRecord {
 }
 
 const deviceActivityState = vi.hoisted(() => ({
+  authorizationStatus: 0,
   slotStore: new Map<string, string>(),
   configuredActions: [] as ConfiguredAction[],
   monitoringCalls: [] as MonitoringCall[],
@@ -53,9 +54,20 @@ export function resetDeviceActivityMock(): void {
   activities.clear();
   stoppedActivities.length = 0;
   cleanedActivities.length = 0;
+  deviceActivityState.authorizationStatus = 0;
 }
 
 vi.mock('react-native-device-activity', () => ({
+  AuthorizationStatus: {
+    approved: 1,
+    denied: 2,
+  },
+  getAuthorizationStatus: () => deviceActivityState.authorizationStatus,
+  onAuthorizationStatusChange: () => ({ remove: vi.fn() }),
+  pollAuthorizationStatus: async () => deviceActivityState.authorizationStatus,
+  requestAuthorization: async () => {
+    deviceActivityState.authorizationStatus = 1;
+  },
   configureActions: (config: ConfiguredAction) => {
     deviceActivityState.configuredActions.push(config);
   },

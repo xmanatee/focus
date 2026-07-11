@@ -50,6 +50,7 @@ export const useTamperSetupStore = create<TamperSetupState>()(
     {
       name: 'focusblocks.protection.tamper-setup.v2',
       storage: persistedStorage,
+      skipHydration: true,
     },
   ),
 );

@@ -1,6 +1,7 @@
 import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
+import { BlockerBridge } from '../../bridge/BlockerBridge';
 import { useBlockerStore } from '../blocker/useBlockerStore';
 import type { SetupVerificationAction } from './diagnostics';
 
@@ -14,8 +15,12 @@ export function useSetupActionHandler(): (
   return useCallback(
     (action: SetupVerificationAction) => {
       switch (action) {
-        case 'requestScreenTime':
-          if (authorizationStatus === 'denied') {
+        case 'requestBlockingAccess':
+          if (
+            authorizationStatus === 'denied' &&
+            BlockerBridge.capabilities.deniedAuthorizationAction ===
+              'appSettings'
+          ) {
             void Linking.openSettings();
           } else {
             void requestPermissions();

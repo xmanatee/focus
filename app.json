@@ -13,6 +13,11 @@
       "appleTeamId": "569HBLNQPC",
       "buildNumber": "15",
       "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["focusblocks", "device-activity"]
+          }
+        ],
         "NSFamilyControlsUsageDescription": "Focus Blocks uses Screen Time to block the apps you choose during the schedules you create.",
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -24,7 +29,7 @@
         "backgroundColor": "#1A1510"
       }
     },
-    "scheme": ["focusblocks", "device-activity"],
+    "scheme": "focusblocks",
     "plugins": [
       "expo-router",
       [
@@ -39,7 +44,8 @@
         "react-native-device-activity",
         {
           "appleTeamId": "569HBLNQPC",
-          "appGroup": "group.love.nemi.focus"
+          "appGroup": "group.love.nemi.focus",
+          "copyToTargetFolder": false
         }
       ],
       "@react-native-community/datetimepicker",
@@ -50,6 +56,8 @@
     },
     "android": {
       "package": "love.nemi.focus",
+      "versionCode": 15,
+      "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F8F2E8"

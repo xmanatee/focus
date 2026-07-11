@@ -8,6 +8,7 @@ describe('resolveQuickStartPhase', () => {
         authorizationStatus: 'notDetermined',
         blockCount: 0,
         missingDeviceSelectionCount: 0,
+        unsupportedEnabledBlockCount: 0,
       }),
     ).toBe('grantAccess');
   });
@@ -18,6 +19,7 @@ describe('resolveQuickStartPhase', () => {
         authorizationStatus: 'denied',
         blockCount: 0,
         missingDeviceSelectionCount: 0,
+        unsupportedEnabledBlockCount: 0,
       }),
     ).toBe('openSettings');
   });
@@ -28,6 +30,7 @@ describe('resolveQuickStartPhase', () => {
         authorizationStatus: 'authorized',
         blockCount: 0,
         missingDeviceSelectionCount: 0,
+        unsupportedEnabledBlockCount: 0,
       }),
     ).toBe('createFirstBlock');
   });
@@ -38,6 +41,18 @@ describe('resolveQuickStartPhase', () => {
         authorizationStatus: 'authorized',
         blockCount: 2,
         missingDeviceSelectionCount: 1,
+        unsupportedEnabledBlockCount: 0,
+      }),
+    ).toBe('finishDevice');
+  });
+
+  it('routes unsupported enabled synced blocks through device setup', () => {
+    expect(
+      resolveQuickStartPhase({
+        authorizationStatus: 'authorized',
+        blockCount: 2,
+        missingDeviceSelectionCount: 0,
+        unsupportedEnabledBlockCount: 1,
       }),
     ).toBe('finishDevice');
   });
@@ -48,6 +63,7 @@ describe('resolveQuickStartPhase', () => {
         authorizationStatus: 'authorized',
         blockCount: 1,
         missingDeviceSelectionCount: 0,
+        unsupportedEnabledBlockCount: 0,
       }),
     ).toBeNull();
   });

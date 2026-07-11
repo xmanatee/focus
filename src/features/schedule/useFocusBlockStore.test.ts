@@ -207,6 +207,13 @@ describe('useFocusBlockStore', () => {
       };
     }
 
+    it('hydrates when no focus blocks have been stored yet', async () => {
+      await useFocusBlockStore.persist.rehydrate();
+
+      expect(useFocusBlockStore.persist.hasHydrated()).toBe(true);
+      expect(useFocusBlockStore.getState().focusBlocks).toEqual([]);
+    });
+
     it('hydrates current explicit focus block data', async () => {
       storageMap.set(
         focusBlockStorageKey(),

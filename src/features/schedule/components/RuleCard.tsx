@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, TextInput, View } from 'react-native';
+import { BlockerBridge } from '../../../bridge/BlockerBridge';
 import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Section } from '../../../shared/components/Section';
@@ -74,6 +75,13 @@ function withMinutes(value: FocusBlockRule, minutes: number): FocusBlockRule {
   return value;
 }
 
+function ruleIsSupported(kind: FocusBlockRule['kind']): boolean {
+  if (kind === 'dailyBudget' || kind === 'allowDuringScheduleWithBudget') {
+    return BlockerBridge.capabilities.supportsDailyBudgets;
+  }
+  return true;
+}
+
 export function RuleCard({
   value,
   onChange,
@@ -81,11 +89,16 @@ export function RuleCard({
 }: RuleCardProps): JSX.Element {
   const colors = useThemeColors();
   const showsBudget =
-    value.kind === 'dailyBudget' ||
-    value.kind === 'allowDuringScheduleWithBudget';
+    BlockerBridge.capabilities.supportsDailyBudgets &&
+    (value.kind === 'dailyBudget' ||
+      value.kind === 'allowDuringScheduleWithBudget');
   const budgetMinutes = minutesFor(value);
   const [budgetText, setBudgetText] = useState(String(budgetMinutes));
   const [budgetError, setBudgetError] = useState<string | null>(null);
+  const showsUnsupportedBudget =
+    !BlockerBridge.capabilities.supportsDailyBudgets &&
+    (value.kind === 'dailyBudget' ||
+      value.kind === 'allowDuringScheduleWithBudget');
 
   useEffect(() => {
     if (!showsBudget) {
@@ -100,7 +113,7 @@ export function RuleCard({
     <Section title="Rule">
       <Card>
         <View className="gap-4">
-          {RULES.map((rule) => (
+          {RULES.filter((rule) => ruleIsSupported(rule.kind)).map((rule) => (
             <Pressable
               key={rule.kind}
               accessibilityRole="radio"
@@ -132,6 +145,14 @@ export function RuleCard({
               </View>
             </Pressable>
           ))}
+
+          {showsUnsupportedBudget && (
+            <Typography variant="caption" tone="danger">
+              Daily budgets are not available with{' '}
+              {BlockerBridge.capabilities.authorizationAccessName}. Choose a
+              schedule-based rule before saving this block here.
+            </Typography>
+          )}
 
           {showsBudget && (
             <View className="gap-2">

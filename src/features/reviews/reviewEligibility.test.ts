@@ -11,6 +11,7 @@ const readyVerification = {
   checks: [],
   level: 'ready',
   missingDeviceSelectionCount: 0,
+  unsupportedEnabledBlockCount: 0,
   summary: 'Ready',
   title: 'Ready',
 } as const;

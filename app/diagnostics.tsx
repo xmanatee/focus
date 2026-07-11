@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { BlockerBridge } from '../src/bridge/BlockerBridge';
 import { DiagnosticsCard } from '../src/features/diagnostics/components/DiagnosticsCard';
 import { SetupVerificationCard } from '../src/features/diagnostics/components/SetupVerificationCard';
 import { evaluateSetupVerification } from '../src/features/diagnostics/diagnostics';
@@ -8,6 +9,7 @@ import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActio
 import { focusBlockSelectionReadyInSlots } from '../src/features/schedule/localActivitySelection';
 import { focusBlockRunnableLocally } from '../src/features/schedule/localRuntime';
 import { getFocusBlockRuntimeStatus } from '../src/features/schedule/runtimeStatus';
+import { focusBlockUnsupportedReason } from '../src/features/schedule/runtimeSupport';
 import type {
   FocusBlock,
   RuntimeFocusBlock,
@@ -43,8 +45,10 @@ function statusLabel(
   block: RuntimeFocusBlock,
   now: Date,
   selectionReady: boolean,
+  unsupportedReason: string | null,
 ): string {
   if (!selectionReady) return 'Needs app selection on this device';
+  if (unsupportedReason !== null) return unsupportedReason;
   const status = getFocusBlockRuntimeStatus(block, now);
   if (!block.isEnabled) return 'Off on this device';
   if (status.kind !== 'active') return 'Not active now';
@@ -55,12 +59,14 @@ function statusLabel(
 
 function RuleDiagnosticRow({
   block,
-  selectionReady,
   now,
+  selectionReady,
+  unsupportedReason,
 }: {
   readonly block: RuntimeFocusBlock;
-  readonly selectionReady: boolean;
   readonly now: Date;
+  readonly selectionReady: boolean;
+  readonly unsupportedReason: string | null;
 }): JSX.Element {
   return (
     <Card>
@@ -73,15 +79,21 @@ function RuleDiagnosticRow({
             {ruleLabel(block)}
           </Typography>
           <Typography variant="caption" tone="muted">
-            {statusLabel(block, now, selectionReady)}
+            {statusLabel(block, now, selectionReady, unsupportedReason)}
           </Typography>
         </View>
         <View className="items-end gap-1">
           <Typography
             variant="caption"
-            tone={selectionReady ? 'muted' : 'signal'}
+            tone={
+              selectionReady && unsupportedReason === null ? 'muted' : 'signal'
+            }
           >
-            {selectionReady ? 'Selection ready' : 'Needs apps here'}
+            {selectionReady
+              ? unsupportedReason === null
+                ? 'Ready here'
+                : 'Unsupported here'
+              : 'Needs apps here'}
           </Typography>
           <Typography
             variant="caption"
@@ -129,7 +141,11 @@ export default function DiagnosticsScreen(): JSX.Element {
           </Typography>
           <Typography variant="body" tone="muted">
             Check the exact setup conditions that decide whether Focus Blocks
-            can shield apps and websites on this device.
+            can shield{' '}
+            {BlockerBridge.capabilities.supportsWebsiteBlocking
+              ? 'apps and websites'
+              : 'apps'}{' '}
+            on this device.
           </Typography>
         </View>
 
@@ -146,9 +162,10 @@ export default function DiagnosticsScreen(): JSX.Element {
                 Why something may not block
               </Typography>
               <Typography variant="body" tone="muted">
-                Screen Time access must be authorized, the block must be turned
-                on here, the current time must match the rule, and synced app
-                selections must be picked locally on this iPhone or iPad.
+                {BlockerBridge.capabilities.authorizationAccessName} must be
+                authorized, the block must be turned on here, the current time
+                must match the rule, the rule must be supported here, and app
+                selections must be picked locally on this device.
               </Typography>
             </View>
           </View>
@@ -172,9 +189,12 @@ export default function DiagnosticsScreen(): JSX.Element {
                 block,
                 snapshot.populatedSelectionSlots,
               );
+              const unsupportedReason = focusBlockUnsupportedReason(block);
               const runtimeBlock = focusBlockRunnableLocally(
                 block,
-                snapshot.enabledBlockIds.includes(block.id) && selectionReady,
+                snapshot.enabledBlockIds.includes(block.id) &&
+                  selectionReady &&
+                  unsupportedReason === null,
               );
               return (
                 <RuleDiagnosticRow
@@ -182,6 +202,7 @@ export default function DiagnosticsScreen(): JSX.Element {
                   block={runtimeBlock}
                   now={now}
                   selectionReady={selectionReady}
+                  unsupportedReason={unsupportedReason}
                 />
               );
             })

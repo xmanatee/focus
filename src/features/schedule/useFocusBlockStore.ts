@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { BlockerBridge } from '../../bridge/BlockerBridge';
 import { persistedStorage } from '../../shared/storage';
 import { clearSlot } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
@@ -10,7 +11,10 @@ import { focusBlockRunnableLocally } from './localRuntime';
 import { getFocusBlockRuntimeStatus } from './runtimeStatus';
 import type { FocusBlock, FocusBlockInput, FocusBlockRule } from './types';
 import { useBlockActivationStore } from './useBlockActivationStore';
-import { validateFocusBlockInput } from './validation';
+import {
+  validateFocusBlockInput,
+  validateFocusBlockStructure,
+} from './validation';
 
 interface FocusBlockState {
   readonly focusBlocks: readonly FocusBlock[];
@@ -32,6 +36,9 @@ function assertEditable(block: FocusBlock): void {
   if (!blockOnThisDevice.isEnabled) {
     return;
   }
+  if (!BlockerBridge.capabilities.supportsTamperProtection) {
+    return;
+  }
   assertAdminUnlocked(
     useSettingsStore.getState().setupBlock,
     useSetupBlockDeviceStore.getState().isEnabledOnDevice,
@@ -41,7 +48,9 @@ function assertEditable(block: FocusBlock): void {
 
 function normalizeInput(input: FocusBlockInput): FocusBlockInput {
   const setupBlock = useSettingsStore.getState().setupBlock;
-  return setupBlock === null ? input : { ...input, strict: false };
+  const shouldClearStrict =
+    BlockerBridge.capabilities.supportsTamperProtection && setupBlock !== null;
+  return shouldClearStrict ? { ...input, strict: false } : input;
 }
 
 interface PersistedFocusBlock {
@@ -94,7 +103,7 @@ function parsePersistedBlock(value: unknown): FocusBlock {
     notifyOnEnd: block.notifyOnEnd,
     strict: block.strict,
   };
-  validateFocusBlockInput(parsed);
+  validateFocusBlockStructure(parsed);
   return parsed;
 }
 
@@ -102,6 +111,10 @@ function mergePersistedState(
   state: unknown,
   current: FocusBlockState,
 ): FocusBlockState {
+  if (state === undefined) return current;
+  if (!isRecord(state)) {
+    throw new Error('Stored focus block state is invalid.');
+  }
   const persisted = state as {
     readonly focusBlocks?: readonly unknown[];
   };
@@ -167,6 +180,7 @@ export const useFocusBlockStore = create<FocusBlockState>()(
     {
       name: 'focusblocks.focus-blocks',
       storage: persistedStorage,
+      skipHydration: true,
       version: 2,
       merge: mergePersistedState,
     },

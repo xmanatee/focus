@@ -8,6 +8,7 @@ import {
   selectionHasBlockedTargets,
 } from '../blocker/types';
 import { MAX_DAILY_BUDGET_MINUTES, MIN_DAILY_BUDGET_MINUTES } from './budget';
+import { focusBlockUnsupportedReason } from './runtimeSupport';
 import type { FocusBlockInput } from './types';
 
 const MAX_NAME_LENGTH = 50;
@@ -18,7 +19,7 @@ function ruleUsesScheduleWindow(input: FocusBlockInput): boolean {
   return input.rule.kind !== 'dailyBudget';
 }
 
-export function validateFocusBlockInput(input: FocusBlockInput): void {
+export function validateFocusBlockStructure(input: FocusBlockInput): void {
   const name = input.name.trim();
   if (name.length === 0) {
     throw new Error('Block name is required.');
@@ -36,7 +37,7 @@ export function validateFocusBlockInput(input: FocusBlockInput): void {
     throw new Error('Scheduled blocks must be at least 15 minutes.');
   }
   if (input.selection.webDomains.length > MAX_WEB_DOMAINS) {
-    throw new Error('iOS can filter up to 50 websites per block.');
+    throw new Error('Focus Blocks can filter up to 50 websites per block.');
   }
   const usesDailyBudget =
     input.rule.kind === 'dailyBudget' ||
@@ -58,4 +59,10 @@ export function validateFocusBlockInput(input: FocusBlockInput): void {
   if (input.strict && !selectionHasBlockedTargets(input.selection)) {
     throw new Error('A strict block must block at least one app or site.');
   }
+}
+
+export function validateFocusBlockInput(input: FocusBlockInput): void {
+  validateFocusBlockStructure(input);
+  const unsupportedReason = focusBlockUnsupportedReason(input);
+  if (unsupportedReason !== null) throw new Error(unsupportedReason);
 }

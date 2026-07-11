@@ -1,8 +1,10 @@
 import type { AuthorizationStatus } from '../../bridge/BlockerBridge';
+import { BlockerBridge } from '../../bridge/BlockerBridge';
 import type { ProtectionPosture } from '../protection/types';
 import { focusBlockSelectionReadyInSlots } from '../schedule/localActivitySelection';
 import { focusBlockRunnableLocally } from '../schedule/localRuntime';
 import { getFocusBlockRuntimeStatus } from '../schedule/runtimeStatus';
+import { focusBlockUnsupportedReason } from '../schedule/runtimeSupport';
 import type { FocusBlock } from '../schedule/types';
 import { type SetupBlock, resolveAdminState } from '../settings/adminState';
 
@@ -13,13 +15,14 @@ export type SetupVerificationAction =
   | 'finishDeviceSetup'
   | 'openDiagnostics'
   | 'openProtection'
-  | 'requestScreenTime';
+  | 'requestBlockingAccess';
 
 export interface SetupVerificationCheck {
   readonly id:
-    | 'screenTime'
+    | 'blockingAccess'
     | 'blocks'
     | 'deviceSelections'
+    | 'runtimeSupport'
     | 'protection'
     | 'activeNow';
   readonly title: string;
@@ -31,13 +34,15 @@ export function setupActionForCheck(
   id: SetupVerificationCheck['id'],
 ): SetupVerificationAction {
   switch (id) {
-    case 'screenTime':
-      return 'requestScreenTime';
+    case 'blockingAccess':
+      return 'requestBlockingAccess';
     case 'activeNow':
       return 'openDiagnostics';
     case 'blocks':
       return 'addBlock';
     case 'deviceSelections':
+      return 'finishDeviceSetup';
+    case 'runtimeSupport':
       return 'finishDeviceSetup';
     case 'protection':
       return 'openProtection';
@@ -63,6 +68,7 @@ export interface SetupVerification {
   readonly checks: readonly SetupVerificationCheck[];
   readonly level: SetupVerificationLevel;
   readonly missingDeviceSelectionCount: number;
+  readonly unsupportedEnabledBlockCount: number;
   readonly summary: string;
   readonly title: string;
 }
@@ -88,7 +94,7 @@ function summaryFor(level: SetupVerificationLevel): string {
   if (level === 'attention') {
     return 'Core blocking can work, but one setup item would make it stronger.';
   }
-  return 'Screen Time access and local app selections look ready.';
+  return `${BlockerBridge.capabilities.authorizationAccessName} and local app selections look ready.`;
 }
 
 function missingSelectionDetail(count: number): string {
@@ -106,11 +112,17 @@ export function evaluateSetupVerification(
       input.enabledBlockIds.includes(block.id) &&
       !focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
   ).length;
+  const unsupportedEnabledBlockCount = input.focusBlocks.filter(
+    (block) =>
+      input.enabledBlockIds.includes(block.id) &&
+      focusBlockUnsupportedReason(block) !== null,
+  ).length;
   const runnable = input.focusBlocks.map((block) =>
     focusBlockRunnableLocally(
       block,
       input.enabledBlockIds.includes(block.id) &&
-        focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
+        focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots) &&
+        focusBlockUnsupportedReason(block) === null,
       focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
     ),
   );
@@ -121,13 +133,13 @@ export function evaluateSetupVerification(
 
   const checks: SetupVerificationCheck[] = [
     {
-      id: 'screenTime',
-      title: 'Screen Time access',
+      id: 'blockingAccess',
+      title: BlockerBridge.capabilities.authorizationAccessName,
       detail:
         input.authorizationStatus === 'authorized'
           ? 'Authorized'
           : input.authorizationStatus === 'denied'
-            ? 'Denied in iOS Settings'
+            ? BlockerBridge.capabilities.deniedAuthorizationDetail
             : 'Permission has not been granted yet',
       status: input.authorizationStatus === 'authorized' ? 'pass' : 'fail',
     },
@@ -147,13 +159,29 @@ export function evaluateSetupVerification(
       status: missingDeviceSelectionCount === 0 ? 'pass' : 'fail',
     },
     {
+      id: 'runtimeSupport',
+      title: 'Supported rules',
+      detail:
+        unsupportedEnabledBlockCount === 0
+          ? 'Enabled blocks match this device'
+          : `${unsupportedEnabledBlockCount} enabled ${
+              unsupportedEnabledBlockCount === 1 ? 'block uses' : 'blocks use'
+            } unavailable options here`,
+      status: unsupportedEnabledBlockCount === 0 ? 'pass' : 'fail',
+    },
+    {
       id: 'protection',
       title: 'Lock-in defenses',
-      detail:
+      detail: BlockerBridge.capabilities.supportsTamperProtection
+        ? input.posture.score === 'full'
+          ? 'Deletion and access defenses confirmed'
+          : 'Optional defenses are not fully confirmed'
+        : 'Not used by this blocking method',
+      status:
+        !BlockerBridge.capabilities.supportsTamperProtection ||
         input.posture.score === 'full'
-          ? 'Deletion and Screen Time defenses confirmed'
-          : 'Optional defenses are not fully confirmed',
-      status: input.posture.score === 'full' ? 'pass' : 'warn',
+          ? 'pass'
+          : 'warn',
     },
     {
       id: 'activeNow',
@@ -173,6 +201,7 @@ export function evaluateSetupVerification(
     checks,
     level,
     missingDeviceSelectionCount,
+    unsupportedEnabledBlockCount,
     summary: summaryFor(level),
     title: titleFor(level),
   };
@@ -200,12 +229,13 @@ export function buildDiagnosticsReport(input: DiagnosticsInput): string {
     'Focus Blocks Diagnostics',
     `Generated: ${generatedAt.toISOString()}`,
     `Version: ${input.appVersion ?? 'unknown'}`,
-    `Screen Time: ${input.authorizationStatus}`,
+    `${BlockerBridge.capabilities.authorizationAccessName}: ${input.authorizationStatus}`,
     `Protection: ${input.posture.score}`,
     `Lock-in: ${diagnosticsLockInState(input)}`,
     `Blocks: ${input.focusBlocks.length}`,
     `Synced blocks: ${verification.blockCount}`,
     `Missing device selections: ${verification.missingDeviceSelectionCount}`,
+    `Unsupported enabled blocks: ${verification.unsupportedEnabledBlockCount}`,
     '',
     'Setup checks:',
     ...verification.checks.map(
@@ -221,9 +251,12 @@ export function buildDiagnosticsReport(input: DiagnosticsInput): string {
       block,
       input.populatedSelectionSlots,
     );
+    const unsupportedReason = focusBlockUnsupportedReason(block);
     const runnableBlock = focusBlockRunnableLocally(
       block,
-      input.enabledBlockIds.includes(block.id) && selectionReady,
+      input.enabledBlockIds.includes(block.id) &&
+        selectionReady &&
+        unsupportedReason === null,
       selectionReady,
     );
     const runtime = getFocusBlockRuntimeStatus(runnableBlock, input.now);
@@ -241,6 +274,7 @@ export function buildDiagnosticsReport(input: DiagnosticsInput): string {
         }`,
         `webDomains=${block.selection.webDomains.length}`,
         `deviceSelection=${selectionReady}`,
+        `unsupported=${unsupportedReason ?? 'none'}`,
         `runtime=${runtime.kind}`,
       ].join(' '),
     );

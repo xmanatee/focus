@@ -26,11 +26,10 @@
     <array>
       <dict>
         <key>CFBundleURLSchemes</key>
-        <array>
-          <string>focusblocks</string>
-          <string>device-activity</string>
-          <string>love.nemi.focus</string>
-        </array>
+          <array>
+            <string>focusblocks</string>
+            <string>device-activity</string>
+          </array>
       </dict>
     </array>
     <key>CFBundleVersion</key>

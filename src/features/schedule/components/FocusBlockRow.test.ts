@@ -53,6 +53,7 @@ describe('FocusBlockRow', () => {
         isEnabled: true,
         isActive: false,
         needsDeviceSelection: false,
+        unsupportedReason: null,
         toggleDisabled: false,
         onPress: vi.fn(),
         onToggle: vi.fn(),
@@ -85,6 +86,7 @@ describe('FocusBlockRow', () => {
         isEnabled: true,
         isActive: false,
         needsDeviceSelection: true,
+        unsupportedReason: null,
         toggleDisabled: false,
         onPress: vi.fn(),
         onToggle: vi.fn(),
@@ -95,5 +97,27 @@ describe('FocusBlockRow', () => {
     expect(text).toContain('Pick apps here');
     expect(text).toContain('1 site');
     expect(text).toContain('36 apps, 1 category, 4 domains');
+  });
+
+  it('marks blocks that cannot run on this device runtime', () => {
+    const block = {
+      id: 'unsupported',
+      ...focusBlockInput(),
+    };
+
+    const tree = TestRenderer.create(
+      React.createElement(FocusBlockRow, {
+        block,
+        isEnabled: true,
+        isActive: false,
+        needsDeviceSelection: false,
+        unsupportedReason: 'Website blocking is not available here.',
+        toggleDisabled: false,
+        onPress: vi.fn(),
+        onToggle: vi.fn(),
+      }),
+    );
+
+    expect(collectText(tree.root)).toContain('Unsupported here');
   });
 });

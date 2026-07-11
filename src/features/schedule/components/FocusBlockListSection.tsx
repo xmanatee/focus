@@ -7,6 +7,7 @@ import { Typography } from '../../../shared/components/Typography';
 import { focusBlockNeedsLocalSelection } from '../localActivitySelection';
 import { focusBlockRunnableLocally } from '../localRuntime';
 import { getFocusBlockRuntimeStatus } from '../runtimeStatus';
+import { focusBlockUnsupportedReason } from '../runtimeSupport';
 import type { FocusBlock } from '../types';
 import { FocusBlockRow } from './FocusBlockRow';
 
@@ -62,6 +63,7 @@ export function FocusBlockListSection({
           const status = getFocusBlockRuntimeStatus(runnableBlock, now);
           const isActive = status.kind === 'active';
           const needsDeviceSelection = focusBlockNeedsLocalSelection(block);
+          const unsupportedReason = focusBlockUnsupportedReason(block);
           return (
             <FocusBlockRow
               key={block.id}
@@ -69,10 +71,12 @@ export function FocusBlockListSection({
               isEnabled={isEnabled}
               isActive={isActive}
               needsDeviceSelection={needsDeviceSelection}
+              unsupportedReason={unsupportedReason}
               toggleDisabled={
                 isActive ||
                 (isAdminLocked && runnableBlock.isEnabled) ||
-                (!isEnabled && needsDeviceSelection)
+                (!isEnabled &&
+                  (needsDeviceSelection || unsupportedReason !== null))
               }
               onPress={() => onEdit(block.id)}
               onToggle={(next) => onToggle(block.id, next)}

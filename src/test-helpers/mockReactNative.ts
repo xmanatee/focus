@@ -11,6 +11,26 @@ vi.mock('react-native', () => ({
   Alert: {
     alert: vi.fn(),
   },
+  AppState: {
+    addEventListener: () => ({ remove: vi.fn() }),
+  },
+  FlatList: ({ data, renderItem, ListEmptyComponent, ...props }: MockProps) => {
+    const render = renderItem as
+      | ((args: {
+          item: unknown;
+          index: number;
+          separators: object;
+        }) => React.ReactNode)
+      | undefined;
+    const children =
+      Array.isArray(data) && data.length > 0 && render
+        ? data.map((item, index) => render({ item, index, separators: {} }))
+        : (ListEmptyComponent as React.ReactNode);
+    return React.createElement('FlatList', props, children);
+  },
+  Modal: ({ children, ...props }: MockProps) =>
+    React.createElement('Modal', props, children),
+  NativeModules: {},
   Platform: {
     OS: 'ios',
   },

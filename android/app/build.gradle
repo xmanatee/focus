@@ -91,8 +91,8 @@ android {
         applicationId 'love.nemi.focus'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 15
+        versionName "1.0.5"
     }
     signingConfigs {
         debug {
@@ -173,4 +173,8 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+}
+
+if (file("./eas-build.gradle").exists()) {
+    apply from: "./eas-build.gradle"
 }

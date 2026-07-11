@@ -63,7 +63,7 @@ describe('validateFocusBlockInput', () => {
     ).toThrow(/differ/i);
   });
 
-  it('rejects scheduled windows shorter than iOS can monitor', () => {
+  it('rejects scheduled windows shorter than the blocker can monitor', () => {
     expect(() =>
       validateFocusBlockInput(
         baseInput({ startTime: '22:00', endTime: '22:14' }),
@@ -146,7 +146,7 @@ describe('validateFocusBlockInput', () => {
     ).not.toThrow();
   });
 
-  it('rejects more website domains than iOS can reliably filter', () => {
+  it('rejects more website domains than Focus Blocks can filter', () => {
     const webDomains = Array.from(
       { length: 51 },
       (_, index) => `site-${index}.example.com`,

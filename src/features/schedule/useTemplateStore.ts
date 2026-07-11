@@ -27,6 +27,7 @@ export const useTemplateStore = create<TemplateState>()(
     {
       name: 'focusblocks.templates',
       storage: persistedStorage,
+      skipHydration: true,
     },
   ),
 );

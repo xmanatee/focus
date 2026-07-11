@@ -1,11 +1,8 @@
-import {
-  getFamilyActivitySelectionId,
-  setFamilyActivitySelectionId,
-} from 'react-native-device-activity';
+import { BlockerBridge } from '../../bridge/BlockerBridge';
 import type { SelectionSlotId } from './types';
 
 export function getSlotValue(slotId: SelectionSlotId): string | undefined {
-  return getFamilyActivitySelectionId(slotId);
+  return BlockerBridge.getSelectionSlotValue(slotId);
 }
 
 export function isSlotPopulated(slotId: SelectionSlotId): boolean {
@@ -16,10 +13,7 @@ export function writeSlot(
   slotId: SelectionSlotId,
   value: string | undefined,
 ): void {
-  setFamilyActivitySelectionId({
-    id: slotId,
-    familyActivitySelection: value ?? '',
-  });
+  BlockerBridge.setSelectionSlotValue(slotId, value);
 }
 
 export function copySlot(from: SelectionSlotId, to: SelectionSlotId): void {

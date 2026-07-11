@@ -10,7 +10,7 @@
     "lint:fix": "biome check --apply .",
     "format": "biome format . --write",
     "typecheck": "tsc --noEmit",
-    "knip": "knip",
+    "check-unused": "knip",
     "check-lines": "node scripts/check-line-limit.mjs",
     "check-antipatterns": "node scripts/check-antipatterns.mjs",
     "check-deps": "npm ls",
@@ -20,6 +20,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@expo/vector-icons": "~14.0.4",
     "@nauverse/expo-cloud-settings": "^1.3.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.2.0",

@@ -26,6 +26,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: SETTINGS_STORAGE_KEY,
       storage: persistedStorage,
+      skipHydration: true,
     },
   ),
 );

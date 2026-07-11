@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView } from 'react-native';
-import { DeviceActivitySelectionSheetViewPersisted } from 'react-native-device-activity';
+import { BlockerBridge } from '../src/bridge/BlockerBridge';
+import { ActivitySelectionPicker } from '../src/features/blocker/components/ActivitySelectionPicker';
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
 import { EMPTY_BLOCK_SELECTION } from '../src/features/blocker/types';
@@ -47,6 +48,10 @@ export default function AddFocusBlockScreen(): JSX.Element {
     useState<PresetKind | null>(null);
 
   const { state: adminState, now } = useAdminState();
+  const effectiveAdminState = BlockerBridge.capabilities
+    .supportsTamperProtection
+    ? adminState
+    : { kind: 'unlocked' as const, reason: 'always' as const };
   const setupBlock = useSettingsStore((s) => s.setupBlock);
   const tamperReady = useProtectionPosture().score === 'full';
   const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
@@ -59,7 +64,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
         );
 
   const policy = resolveEditPolicy(
-    adminState,
+    effectiveAdminState,
     isEditing ? existingOnThisDevice : null,
     now,
   );
@@ -79,6 +84,8 @@ export default function AddFocusBlockScreen(): JSX.Element {
     selection.activitySelection,
   );
   const usesScheduleWindow = form.rule.kind !== 'dailyBudget';
+  const supportsScheduleNotifications =
+    BlockerBridge.capabilities.supportsScheduleNotifications;
 
   const { error, isPending, run, save, requestDelete } = useFocusBlockSave({
     editId,
@@ -93,8 +100,14 @@ export default function AddFocusBlockScreen(): JSX.Element {
         activitySelection: selection.activitySelection,
         webDomains: form.webDomains,
       },
-      notifyOnStart: usesScheduleWindow && form.notifyOnStart,
-      notifyOnEnd: usesScheduleWindow && form.notifyOnEnd,
+      notifyOnStart:
+        usesScheduleWindow && supportsScheduleNotifications
+          ? form.notifyOnStart
+          : false,
+      notifyOnEnd:
+        usesScheduleWindow && supportsScheduleNotifications
+          ? form.notifyOnEnd
+          : false,
       strict: form.strict,
     }),
     markSelectionSaved: selection.markSaved,
@@ -208,14 +221,15 @@ export default function AddFocusBlockScreen(): JSX.Element {
           disabled={readOnly}
         />
 
-        {setupBlock === null && (
-          <StrictModeCard
-            value={form.strict}
-            onChange={handleStrictChange}
-            tamperReady={tamperReady}
-            disabled={readOnly}
-          />
-        )}
+        {setupBlock === null &&
+          BlockerBridge.capabilities.supportsTamperProtection && (
+            <StrictModeCard
+              value={form.strict}
+              onChange={handleStrictChange}
+              tamperReady={tamperReady}
+              disabled={readOnly}
+            />
+          )}
 
         {templatePromptKind !== null ? (
           <Typography variant="caption" tone="muted">
@@ -224,7 +238,7 @@ export default function AddFocusBlockScreen(): JSX.Element {
           </Typography>
         ) : null}
 
-        {usesScheduleWindow && (
+        {usesScheduleWindow && supportsScheduleNotifications && (
           <NotificationsCard
             notifyOnStart={form.notifyOnStart}
             notifyOnEnd={form.notifyOnEnd}
@@ -257,12 +271,10 @@ export default function AddFocusBlockScreen(): JSX.Element {
       </ScrollView>
 
       {pickerSession && (
-        <DeviceActivitySelectionSheetViewPersisted
+        <ActivitySelectionPicker
           familyActivitySelectionId={pickerSession.slotId}
           includeEntireCategory={pickerSession.includeEntireCategory}
-          onSelectionChange={(event) =>
-            pickerSession.onSelectionChange(event.nativeEvent)
-          }
+          onSelectionChange={pickerSession.onSelectionChange}
           onDismissRequest={selection.closePicker}
         />
       )}

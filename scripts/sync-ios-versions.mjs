@@ -1,9 +1,14 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 
 const APP_CONFIG_PATH = 'app.json';
 const PROJECT_PATH = 'ios/FocusBlocks.xcodeproj/project.pbxproj';
 const MAIN_PLIST_PATH = 'ios/FocusBlocks/Info.plist';
+const EXTENSION_PLIST_PATHS = [
+  'targets/ActivityMonitorExtension/Info.plist',
+  'targets/ShieldAction/Info.plist',
+  'targets/ShieldConfiguration/Info.plist',
+];
 const DEVICE_MONITOR_PATHS = [
   'node_modules/react-native-device-activity/targets/ActivityMonitorExtension/DeviceActivityMonitorExtension.swift',
   'targets/ActivityMonitorExtension/DeviceActivityMonitorExtension.swift',
@@ -15,18 +20,38 @@ const SHARED_SWIFT_PATHS = [
   'targets/ShieldConfiguration/Shared.swift',
 ];
 
-function readPlistValue(key) {
-  return execFileSync('plutil', ['-extract', key, 'raw', MAIN_PLIST_PATH], {
-    encoding: 'utf8',
-  }).trim();
+function readPlistValue(path, key) {
+  const value = readPlistValueIfPresent(path, key);
+  if (value === null) {
+    throw new Error(`${path} is missing ${key}.`);
+  }
+  return value;
 }
 
-function setPlistString(key, value) {
-  if (readPlistValue(key) === value) {
+function readPlistValueIfPresent(path, key) {
+  const result = spawnSync('plutil', ['-extract', key, 'raw', path], {
+    encoding: 'utf8',
+  });
+  return result.status === 0 ? result.stdout.trim() : null;
+}
+
+function setPlistString(path, key, value) {
+  if (readPlistValue(path, key) === value) {
     return;
   }
 
-  execFileSync('plutil', ['-replace', key, '-string', value, MAIN_PLIST_PATH]);
+  execFileSync('plutil', ['-replace', key, '-string', value, path]);
+}
+
+function ensurePlistString(path, key, value) {
+  if (!fs.existsSync(path)) {
+    return;
+  }
+  if (readPlistValueIfPresent(path, key) === value) {
+    return;
+  }
+
+  execFileSync('plutil', ['-replace', key, '-string', value, path]);
 }
 
 function patchFile(path, patch) {
@@ -221,12 +246,19 @@ function patchWebContentFilterDomainAction(input) {
 function patchSharedSwift(input) {
   let output = input;
 
-  output = output.replace(/ {4}\/\/ [tT]odo: replace with general string\n/g, '');
+  output = output.replace(
+    / {4}\/\/ [tT]odo: replace with general string\n/g,
+    '',
+  );
+  output = output.replaceAll(
+    'logger.log("encode error \\\\(error.localizedDescription, privacy: .public)")',
+    'logger.log("encode error \\(error.localizedDescription, privacy: .public)")',
+  );
   if (!output.includes('logger.log("encode error')) {
     output = replaceRequired(
       output,
       '  } catch {\n    return ""\n  }\n}\n\n@available(iOS 15.0, *)\nfunc enableBlockAllMode',
-      '  } catch {\n    logger.log("encode error \\\\(error.localizedDescription, privacy: .public)")\n    return ""\n  }\n}\n\n@available(iOS 15.0, *)\nfunc enableBlockAllMode',
+      '  } catch {\n    logger.log("encode error \\(error.localizedDescription, privacy: .public)")\n    return ""\n  }\n}\n\n@available(iOS 15.0, *)\nfunc enableBlockAllMode',
       'Shared.swift FamilyActivitySelection encode error logging',
     );
   }
@@ -267,8 +299,13 @@ if (syncedProject !== project) {
   fs.writeFileSync(PROJECT_PATH, syncedProject);
 }
 
-setPlistString('CFBundleShortVersionString', version);
-setPlistString('CFBundleVersion', buildNumber);
+setPlistString(MAIN_PLIST_PATH, 'CFBundleShortVersionString', version);
+setPlistString(MAIN_PLIST_PATH, 'CFBundleVersion', buildNumber);
+
+for (const path of EXTENSION_PLIST_PATHS) {
+  ensurePlistString(path, 'CFBundleShortVersionString', version);
+  ensurePlistString(path, 'CFBundleVersion', buildNumber);
+}
 
 for (const path of DEVICE_MONITOR_PATHS) patchFile(path, patchDeviceMonitor);
 for (const path of SHARED_SWIFT_PATHS) patchFile(path, patchSharedSwift);

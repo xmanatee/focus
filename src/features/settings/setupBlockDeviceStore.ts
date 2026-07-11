@@ -35,6 +35,7 @@ export const useSetupBlockDeviceStore = create<SetupBlockDeviceState>()(
     {
       name: SETUP_BLOCK_DEVICE_STORAGE_KEY,
       storage: localStorage,
+      skipHydration: true,
     },
   ),
 );

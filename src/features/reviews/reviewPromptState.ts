@@ -50,7 +50,8 @@ export function shouldShowReviewPrompt(
     verification.level === 'ready' &&
     verification.blockCount > 0 &&
     verification.activeBlockCount === 0 &&
-    verification.missingDeviceSelectionCount === 0
+    verification.missingDeviceSelectionCount === 0 &&
+    verification.unsupportedEnabledBlockCount === 0
   );
 }
 

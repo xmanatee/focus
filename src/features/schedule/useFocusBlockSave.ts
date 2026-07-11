@@ -1,4 +1,5 @@
 import { Alert } from 'react-native';
+import { BlockerBridge } from '../../bridge/BlockerBridge';
 import { haptic } from '../../shared/design/haptics';
 import {
   type AsyncAction,
@@ -58,14 +59,20 @@ export function useFocusBlockSave({
         throw new Error('Pick apps on this device before saving this block.');
       }
       validateFocusBlockInput(input);
-      if (input.notifyOnStart || input.notifyOnEnd) {
+      if (
+        BlockerBridge.capabilities.supportsScheduleNotifications &&
+        (input.notifyOnStart || input.notifyOnEnd)
+      ) {
         const granted = await requestNotificationPermissions();
         if (!granted) {
           throw new Error(
             'Notifications permission is required for this block. Enable it in Settings or turn off the notification toggles.',
           );
         }
-      } else if (inputUsesBudgetWarning(input)) {
+      } else if (
+        BlockerBridge.capabilities.supportsScheduleNotifications &&
+        inputUsesBudgetWarning(input)
+      ) {
         await requestNotificationPermissions();
       }
       void haptic.commit();
