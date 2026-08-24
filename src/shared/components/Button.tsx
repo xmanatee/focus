@@ -38,7 +38,7 @@ export function Button({
   variant,
   isLoading = false,
   disabled = false,
-}: ButtonProps): JSX.Element {
+}: ButtonProps): React.JSX.Element {
   const colors = useThemeColors();
   const scale = useSharedValue(1);
   const isDisabled = disabled || isLoading;
@@ -59,6 +59,7 @@ export function Button({
 
   return (
     <PressableAnimated
+      accessibilityLabel={title}
       accessibilityRole="button"
       accessibilityState={{ busy: isLoading, disabled: isDisabled }}
       onPress={onPress}

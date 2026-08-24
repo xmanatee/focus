@@ -23,6 +23,7 @@ import { useBlockActivationStore } from '../src/features/schedule/useBlockActiva
 import { useFocusBlockForm } from '../src/features/schedule/useFocusBlockForm';
 import { useFocusBlockSave } from '../src/features/schedule/useFocusBlockSave';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
+import { useSetupBlockDeviceStore } from '../src/features/settings/setupBlockDeviceStore';
 import { useAdminState } from '../src/features/settings/useAdminState';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { InfoBanner } from '../src/shared/components/InfoBanner';
@@ -32,15 +33,16 @@ import { haptic } from '../src/shared/design/haptics';
 import { useDismiss } from '../src/shared/hooks/useDismiss';
 import { newId } from '../src/shared/storage';
 
-export default function AddFocusBlockScreen(): JSX.Element {
+export default function AddFocusBlockScreen(): React.JSX.Element {
   const router = useRouter();
   const params = useLocalSearchParams<{ id?: string }>();
   const editId = params.id ?? null;
   const isEditing = editId !== null;
 
-  const existing = useFocusBlockStore((s) =>
-    editId ? s.focusBlocks.find((item) => item.id === editId) ?? null : null,
-  );
+  const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
+  const existing = editId
+    ? focusBlocks.find((item) => item.id === editId) ?? null
+    : null;
 
   const [blockId] = useState<string>(() => editId ?? newId());
   const [newDomain, setNewDomain] = useState('');
@@ -53,6 +55,9 @@ export default function AddFocusBlockScreen(): JSX.Element {
     ? adminState
     : { kind: 'unlocked' as const, reason: 'always' as const };
   const setupBlock = useSettingsStore((s) => s.setupBlock);
+  const isSetupBlockEnabledOnDevice = useSetupBlockDeviceStore(
+    (s) => s.isEnabledOnDevice,
+  );
   const tamperReady = useProtectionPosture().score === 'full';
   const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
   const existingOnThisDevice =
@@ -111,6 +116,11 @@ export default function AddFocusBlockScreen(): JSX.Element {
       strict: form.strict,
     }),
     markSelectionSaved: selection.markSaved,
+    setupBlockForThisDevice:
+      BlockerBridge.capabilities.supportsTamperProtection &&
+      isSetupBlockEnabledOnDevice
+        ? setupBlock
+        : null,
     dismiss,
   });
 

@@ -1,79 +1,44 @@
 # Project Improvements
 
-These are the next high-leverage improvements for the Focus Blocks product and
-launch effort.
+Only active, unimplemented work belongs in this document. Completed work should
+be removed rather than retained as project history.
 
-## 1. Make New-Device Setup Self-Healing
+## Product Feedback
 
-Add an in-app check that detects when synced block rules exist but this device
-has not selected local Screen Time apps yet. Show a direct setup flow instead of
-letting the user believe old selections are already active on the new device.
+Review support messages and store reviews before each release. Group reports by
+setup confusion, missed blocking, scheduling expectations, budgeting behavior,
+and feature requests. Use repeated reports to choose the next product change.
 
-## 2. Add A Shield Verification Screen
+## Diagnostics Export
 
-After authorization or rule changes, show a simple status screen that confirms
-whether schedules, budgets, Lock-in, and extension communication are active.
-This makes silent Screen Time failures much easier to catch.
+Add an explicit, user-initiated support export if troubleshooting requires more
+than the in-app diagnostics screen. Exclude selected app names and personal
+content by default. Let the user review exactly what will be shared.
 
-## 3. Improve App Store Search Coverage
+## Localization
 
-Keep `store.config.js` as the source of truth for metadata, then review search
-terms monthly. Prioritize phrases like app blocker, screen time limit, block
-YouTube, study focus, and digital detox.
+Keep English and Russian complete across the app, stores, screenshots, privacy
+copy, and support material. Add a language only when all of those surfaces can
+be reviewed by a fluent speaker.
 
-## 4. Monitor Landing Page Search Discovery
+## Intentional Breaks
 
-Use Google Search Console and Bing Webmaster Tools to track search queries that
-lead people to `focus.nemi.love`. Use those terms to tune the App Store subtitle,
-keywords, and landing copy.
+Expose scheduled breaks only after native DeviceActivity reconfiguration is
+verified across app termination, device restart, daylight-saving changes, and
+overlapping schedules. A JavaScript-only pause cannot reliably change callbacks
+that iOS scheduled in advance.
 
-## 5. Add A Review Prompt At The Right Moment
+## Android Release Readiness
 
-Prompt for ratings only after a user has successfully completed several focus
-blocks or budget days. Never prompt during setup, failure recovery, or when an
-app is blocked.
+Complete Play Console accessibility-tool review, data-safety declarations,
+closed testing, and physical-device checks before production rollout. The
+device matrix should cover current Android, one older supported API level,
+battery-restricted operation, restart recovery, permission removal, and
+accessibility-service interruption.
 
-## 6. Build Custom Product Pages
+## Store Experiments
 
-When there is enough traffic, create App Store custom product pages for study,
-work, social media, YouTube limits, and digital detox. Match each page to its
-own screenshots and landing-page section.
-
-The landing side now has matching focused pages for YouTube blocking, iPhone
-app blocking, screen time limits, study focus, and digital detox. Use those
-pages as the copy source when creating custom product pages in App Store
-Connect.
-
-## 7. Add A Support Feedback Loop
-
-Use support emails and App Store reviews to maintain a small issue log: setup
-confusion, blocked-app misses, scheduling misunderstandings, and feature
-requests. Review it before every release.
-
-## 8. Expand Localizations Carefully
-
-Keep English and Russian polished first. Add more languages only when the App
-Store page, screenshots, support text, and core in-app copy can all be reviewed
-properly.
-
-## 9. Create A Privacy-Safe Diagnostics Path
-
-Keep the no-analytics default, but add an explicit user-initiated diagnostics
-export for support cases. It should include app state summaries, extension
-status, and rule configuration without app names or personal content unless the
-user deliberately includes them.
-
-## 10. Strengthen The nemi.love Brand Surface
-
-Use `focus.nemi.love`, support email, privacy pages, App Store copy, and release
-notes consistently. If the brand grows, convert the Apple Developer account to
-an organization so the seller name can align with the brand instead of the
-individual account name.
-
-## 11. Design Breaks Only With Native Reconfiguration
-
-Intentional breaks are strategically useful, but should not ship as a purely
-JavaScript pause. DeviceActivity callbacks are configured ahead of time, so a
-break needs a native-side reconfiguration path or equivalent Screen Time action
-strategy before the app exposes it. A half-working break would make blocking
-feel unreliable.
+Create custom product pages or listing experiments only after acquisition data
+is large enough to measure. Prioritize study, work, social-media limits, video
+limits, and digital-detox intents, with screenshots and landing copy matched to
+each intent.

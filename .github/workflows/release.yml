@@ -1,4 +1,4 @@
-name: Release iOS
+name: Release
 
 # Required GitHub Actions secrets:
 #   EXPO_TOKEN              — Expo robot-user token, project-scoped
@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       submit:
-        description: "Submit to TestFlight after build"
+        description: "Submit completed builds to the stores"
         type: boolean
         default: true
       push_metadata:
@@ -24,11 +24,11 @@ on:
         default: true
 
 concurrency:
-  group: release-ios
+  group: release
   cancel-in-progress: false
 
 jobs:
-  release:
+  ios:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -43,7 +43,7 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -63,8 +63,33 @@ jobs:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: npm exec --yes --package eas-cli -- eas build --platform ios --profile production --non-interactive --wait
 
-      - name: Submit to TestFlight
+      - name: Submit iOS build to App Store Connect
         if: ${{ github.event.inputs.submit != 'false' }}
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: npm exec --yes --package eas-cli -- eas submit --platform ios --latest --non-interactive --wait
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Android production
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npm exec --yes --package eas-cli -- eas build --platform android --profile production --non-interactive --wait
+
+      - name: Submit to Google Play internal testing
+        if: ${{ github.event.inputs.submit != 'false' }}
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npm exec --yes --package eas-cli -- eas submit --platform android --profile production --latest --non-interactive --wait

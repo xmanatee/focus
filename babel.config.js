@@ -4,7 +4,7 @@ const cssInteropBabelPlugin =
 module.exports = (api) => {
   api.cache(true);
   return {
-    presets: ['babel-preset-expo'],
+    presets: [require.resolve('babel-preset-expo')],
     plugins: [
       cssInteropBabelPlugin,
       [
@@ -14,7 +14,7 @@ module.exports = (api) => {
           importSource: 'react-native-css-interop',
         },
       ],
-      'react-native-reanimated/plugin',
+      'react-native-worklets/plugin',
     ],
   };
 };

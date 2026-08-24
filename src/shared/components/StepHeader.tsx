@@ -15,7 +15,7 @@ export function StepHeader({
   total,
   title,
   onClose,
-}: StepHeaderProps): JSX.Element {
+}: StepHeaderProps): React.JSX.Element {
   return (
     <View className="gap-3">
       <View className="flex-row justify-between items-center">
@@ -30,7 +30,7 @@ export function StepHeader({
             onClose();
           }}
           hitSlop={12}
-          className="h-10 w-10 items-center justify-center rounded-full bg-surface-sunken"
+          className="h-11 w-11 items-center justify-center rounded-full bg-surface-sunken"
         >
           <Icon name="xmark" size={16} tone="muted" />
         </Pressable>

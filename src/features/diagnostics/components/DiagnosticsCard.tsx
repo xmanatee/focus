@@ -5,14 +5,19 @@ import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
 import { haptic } from '../../../shared/design/haptics';
+import { errorMessage } from '../../../shared/errors';
 import { buildDiagnosticsReport } from '../diagnostics';
 import { useDiagnosticsSnapshot } from '../useDiagnosticsSnapshot';
 
 function appVersion(): string {
-  return Constants.expoConfig?.version ?? 'unknown';
+  const version = Constants.expoConfig?.version;
+  if (version === undefined) {
+    throw new Error('Embedded app version is missing.');
+  }
+  return version;
 }
 
-export function DiagnosticsCard(): JSX.Element {
+export function DiagnosticsCard(): React.JSX.Element {
   const snapshot = useDiagnosticsSnapshot();
 
   const shareReport = async (): Promise<void> => {
@@ -28,11 +33,8 @@ export function DiagnosticsCard(): JSX.Element {
         message: report,
         title: 'Focus Blocks Diagnostics',
       });
-    } catch {
-      Alert.alert(
-        'Could not share diagnostics',
-        'Please try again. The report is generated only on this device.',
-      );
+    } catch (error) {
+      Alert.alert('Could not share diagnostics', errorMessage(error));
     }
   };
 

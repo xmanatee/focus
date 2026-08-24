@@ -1,7 +1,6 @@
-import type { SymbolViewProps } from 'expo-symbols';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
-import { Icon } from './Icon';
+import { Icon, type SymbolName } from './Icon';
 import { Typography } from './Typography';
 
 type InfoBannerVariant = 'info' | 'warn';
@@ -17,7 +16,7 @@ const containerByVariant: Record<InfoBannerVariant, string> = {
   warn: 'bg-signal/10 border border-signal/20',
 };
 
-const iconByVariant: Record<InfoBannerVariant, SymbolViewProps['name']> = {
+const iconByVariant: Record<InfoBannerVariant, SymbolName> = {
   info: 'info.circle',
   warn: 'exclamationmark.triangle.fill',
 };
@@ -31,7 +30,7 @@ export function InfoBanner({
   variant,
   title,
   children,
-}: InfoBannerProps): JSX.Element {
+}: InfoBannerProps): React.JSX.Element {
   return (
     <View
       className={`rounded-2xl p-card gap-2 flex-row items-start ${containerByVariant[variant]}`}

@@ -1,0 +1,89 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
+import { View } from 'react-native';
+import { useIsDark, useThemeColors } from '../design/theme';
+import { Typography } from './Typography';
+
+interface TimeRangePickerProps {
+  readonly start: Date;
+  readonly end: Date;
+  readonly onStartChange: (next: Date) => void;
+  readonly onEndChange: (next: Date) => void;
+  readonly disabled?: boolean;
+}
+
+export function TimeRangePicker({
+  start,
+  end,
+  onStartChange,
+  onEndChange,
+  disabled = false,
+}: TimeRangePickerProps): React.JSX.Element {
+  const colors = useThemeColors();
+  const isDark = useIsDark();
+
+  return (
+    <View className="flex-row items-end justify-between">
+      <Cell
+        label="Starts"
+        align="start"
+        value={start}
+        onChange={onStartChange}
+        isDark={isDark}
+        inkColor={colors.ink}
+        disabled={disabled}
+      />
+      <Cell
+        label="Ends"
+        align="end"
+        value={end}
+        onChange={onEndChange}
+        isDark={isDark}
+        inkColor={colors.ink}
+        disabled={disabled}
+      />
+    </View>
+  );
+}
+
+function Cell({
+  label,
+  align,
+  value,
+  onChange,
+  isDark,
+  inkColor,
+  disabled,
+}: {
+  label: string;
+  align: 'start' | 'end';
+  value: Date;
+  onChange: (next: Date) => void;
+  isDark: boolean;
+  inkColor: string;
+  disabled: boolean;
+}): React.JSX.Element {
+  const handle = (_: DateTimePickerEvent, next: Date | undefined): void => {
+    if (next) onChange(next);
+  };
+  const isStart = align === 'start';
+
+  return (
+    <View className={`gap-2 ${isStart ? 'items-start' : 'items-end'}`}>
+      <Typography variant="label" tone="faint">
+        {label}
+      </Typography>
+      <DateTimePicker
+        accessibilityLabel={label}
+        value={value}
+        mode="time"
+        display="compact"
+        themeVariant={isDark ? 'dark' : 'light'}
+        onChange={handle}
+        disabled={disabled}
+        textColor={inkColor}
+      />
+    </View>
+  );
+}

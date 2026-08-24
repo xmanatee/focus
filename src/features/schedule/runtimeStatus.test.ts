@@ -81,6 +81,21 @@ describe('getFocusBlockRuntimeStatus', () => {
     expect(status.kind).toBe('inactive');
   });
 
+  it('keeps a weekly allow-only block active until next weeks window', () => {
+    const status = getFocusBlockRuntimeStatus(
+      block({
+        days: ['mon'],
+        rule: { kind: 'allowDuringSchedule' },
+      }),
+      at('2026-04-27T18:00:00'),
+    );
+
+    expect(status.kind).toBe('active');
+    if (status.kind === 'active') {
+      expect(status.endsAt).toEqual(at('2026-05-04T09:00:00'));
+    }
+  });
+
   it('reports daily budgets as active only after the threshold fired in the current interval', () => {
     eventRecords.push(
       {

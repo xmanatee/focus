@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Support - Focus Blocks</title>
-<meta name="description" content="Support for Focus Blocks, including Screen Time permissions, daily budgets, per-device app selections, iCloud sync, and troubleshooting.">
+<meta name="description" content="Focus Blocks support for iOS Screen Time, Android Accessibility blocking, schedules, daily budgets, local app selections, and troubleshooting.">
 <meta name="theme-color" content="#F8F2E8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1A1510" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://focus.nemi.love/support/">
 <link rel="icon" href="/assets/focus-blocks-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Support - Focus Blocks">
-<meta property="og:description" content="Help with Focus Blocks setup, Screen Time permissions, daily budgets, iCloud sync, and troubleshooting.">
+<meta property="og:description" content="Help with iOS Screen Time, Android Accessibility blocking, schedules, app selections, and troubleshooting.">
 <meta property="og:url" content="https://focus.nemi.love/support/">
 <meta property="og:image" content="https://focus.nemi.love/assets/focus-blocks-home.webp">
 <link rel="stylesheet" href="/styles.css">
@@ -20,7 +20,7 @@
   "@context": "https://schema.org",
   "@type": "TechArticle",
   "headline": "Support - Focus Blocks",
-  "description": "Help with Focus Blocks setup, Screen Time permissions, daily budgets, iCloud sync, and troubleshooting.",
+  "description": "Help with iOS Screen Time, Android Accessibility blocking, schedules, app selections, and troubleshooting.",
   "url": "https://focus.nemi.love/support/",
   "mainEntityOfPage": "https://focus.nemi.love/support/",
   "publisher": {
@@ -53,13 +53,22 @@
 
     <div class="doc-card">
       <strong>Fastest useful bug report</strong>
-      <p>Tell us what you were trying to do, what happened instead, your iOS version, and whether the block uses a schedule, a daily budget, or both.</p>
+      <p>Tell us what you were trying to do, what happened instead, your device model and OS version, and which block rule you configured. Do not include app names unless you want to.</p>
     </div>
 
     <h2>Common questions</h2>
 
     <h3>Why does Focus Blocks need Screen Time permission?</h3>
     <p>Focus Blocks uses Apple's Screen Time frameworks to shield the apps, sites, and categories you choose. iOS requires this permission before any app can apply those shields.</p>
+
+    <h3>Why does Focus Blocks need Android Accessibility access?</h3>
+    <p>Android does not provide the same Screen Time framework as iOS. Focus Blocks uses window-change events to identify the foreground app, compare it locally with your enabled schedules, and return you to the Focus Blocks blocked screen when necessary. It cannot retrieve window content and does not read text, capture keystrokes, take screenshots, perform gestures, or share Accessibility data.</p>
+
+    <h3>How do I turn Android blocking on or off?</h3>
+    <p>In Focus Blocks, choose the blocking-access setup action and review the disclosure before opening Android Settings. Enable or disable <strong>Focus Blocks app blocking</strong> under <strong>Settings -> Accessibility</strong>. The exact menu name varies by device manufacturer.</p>
+
+    <h3>Why is an Android block not applying?</h3>
+    <p>Confirm that Accessibility access is still enabled, the block is enabled on this device, at least one installed app is selected, and the current time is inside the configured blocking period. Android currently supports scheduled app blocking; daily budgets, app categories, websites, iCloud sync, notifications, and Lock-in are not available there.</p>
 
     <h3>Why did my synced block not block apps on a new iPhone?</h3>
     <p>Rules can sync through your iCloud account, but Screen Time app selections are private tokens that belong to one device. Open any block marked "Pick apps here" on the new device and confirm the apps there.</p>
@@ -78,6 +87,9 @@
 
     <h3>Which iOS versions are supported?</h3>
     <p>Focus Blocks requires iOS 18 or later.</p>
+
+    <h3>Which Android versions are supported?</h3>
+    <p>Focus Blocks requires Android 7.0 or later.</p>
 
     <h2>Still stuck?</h2>
     <p>Email <a href="mailto:support@nemi.love">support@nemi.love</a>. We read everything and reply as soon as we can.</p>

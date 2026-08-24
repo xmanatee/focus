@@ -1,6 +1,7 @@
-import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import React, { act } from 'react';
+import type { Root, TestInstance } from 'test-renderer';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { findAll, findOne, renderTestRoot } from '../../test-helpers/reactTest';
 import type { SetupVerification } from '../diagnostics/diagnostics';
 import { ReviewPromptCard } from './ReviewPromptCard';
 
@@ -12,16 +13,19 @@ const asyncStorage = vi.hoisted(() => ({
   getItem: vi.fn(),
   setItem: vi.fn(),
 }));
+const storeReview = vi.hoisted(() => ({
+  storeUrl: vi.fn(),
+}));
+const linking = vi.hoisted(() => ({
+  openURL: vi.fn(),
+}));
 
 vi.mock('@react-native-async-storage/async-storage', () => ({
   default: asyncStorage,
 }));
 
-vi.mock('expo-linking', () => ({
-  default: {
-    openURL: vi.fn(async () => undefined),
-  },
-}));
+vi.mock('expo-store-review', () => storeReview);
+vi.mock('expo-linking', () => linking);
 
 vi.mock('../../shared/components/Button', () => ({
   Button: (props: Record<string, unknown>) =>
@@ -55,22 +59,17 @@ const readyVerification: SetupVerification = {
 
 async function renderCard(
   verification: SetupVerification,
-): Promise<TestRenderer.ReactTestRenderer> {
-  let tree: TestRenderer.ReactTestRenderer | null = null;
-
+  completedScheduledWindowCount = 3,
+): Promise<Root> {
+  const tree = await renderTestRoot(
+    React.createElement(ReviewPromptCard, {
+      completedScheduledWindowCount,
+      verification,
+    }),
+  );
   await act(async () => {
-    tree = TestRenderer.create(
-      React.createElement(ReviewPromptCard, {
-        verification,
-      }),
-    );
     await Promise.resolve();
   });
-
-  if (tree === null) {
-    throw new Error('ReviewPromptCard did not render.');
-  }
-
   return tree;
 }
 
@@ -80,6 +79,10 @@ describe('ReviewPromptCard', () => {
     vi.setSystemTime(new Date('2026-06-15T10:00:00Z'));
     asyncStorage.getItem.mockReset();
     asyncStorage.setItem.mockReset();
+    storeReview.storeUrl.mockReset();
+    linking.openURL.mockReset();
+    storeReview.storeUrl.mockReturnValue('https://apps.apple.com/app/id123');
+    linking.openURL.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -95,9 +98,7 @@ describe('ReviewPromptCard', () => {
     );
 
     const tree = await renderCard(readyVerification);
-    expect(
-      tree.root.findAll((node) => node.props.testType === 'button'),
-    ).toHaveLength(0);
+    expect(findAll(tree, isButton)).toHaveLength(0);
   });
 
   it('stores a structured snooze state when the user taps Not now', async () => {
@@ -105,15 +106,10 @@ describe('ReviewPromptCard', () => {
 
     const tree = await renderCard(readyVerification);
 
-    const notNowButton = tree.root
-      .findAll((node) => node.props.testType === 'button')
-      .find(
-        (node: TestRenderer.ReactTestInstance) =>
-          node.props.title === 'Not now',
-      );
+    const notNowButton = button(tree, 'Not now');
 
     await act(async () => {
-      notNowButton?.props.onPress();
+      notNowButton.props.onPress();
       await Promise.resolve();
     });
 
@@ -122,4 +118,39 @@ describe('ReviewPromptCard', () => {
       '"kind":"snoozed"',
     );
   });
+
+  it('opens the public store page after proven value', async () => {
+    asyncStorage.getItem.mockResolvedValue(null);
+    const tree = await renderCard(readyVerification);
+
+    await act(async () => {
+      button(tree, 'Review Focus Blocks').props.onPress();
+      await Promise.resolve();
+    });
+
+    expect(linking.openURL).toHaveBeenCalledWith(
+      'https://apps.apple.com/app/id123',
+    );
+    expect(asyncStorage.setItem.mock.calls[0]?.[1]).toContain(
+      '"kind":"reviewed"',
+    );
+  });
+
+  it('stays hidden before three completed windows', async () => {
+    asyncStorage.getItem.mockResolvedValue(null);
+    const tree = await renderCard(readyVerification, 2);
+    expect(findAll(tree, isButton)).toHaveLength(0);
+  });
 });
+
+function isButton(node: TestInstance): boolean {
+  return node.props.testType === 'button';
+}
+
+function button(tree: Root, title: string): TestInstance {
+  return findOne(
+    tree,
+    (node) => isButton(node) && node.props.title === title,
+    `"${title}" button`,
+  );
+}

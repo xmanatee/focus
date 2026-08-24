@@ -49,7 +49,7 @@ export function SetupBlockEditorCard({
   selectedDays,
   startDate,
   state,
-}: SetupBlockEditorCardProps): JSX.Element {
+}: SetupBlockEditorCardProps): React.JSX.Element {
   const isUnlocked = state.kind === 'unlocked';
   const statusLabel =
     existing === null

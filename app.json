@@ -4,12 +4,12 @@
     "slug": "focus-blocks",
     "version": "1.0.5",
     "icon": "./assets/icon.png",
-    "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "love.nemi.focus",
+      "appStoreUrl": "https://apps.apple.com/app/id6763754394",
       "appleTeamId": "569HBLNQPC",
       "buildNumber": "15",
       "infoPlist": {
@@ -19,19 +19,29 @@
           }
         ],
         "NSFamilyControlsUsageDescription": "Focus Blocks uses Screen Time to block the apps you choose during the schedules you create.",
-        "ITSAppUsesNonExemptEncryption": false
-      }
-    },
-    "splash": {
-      "backgroundColor": "#F8F2E8",
-      "resizeMode": "contain",
-      "dark": {
-        "backgroundColor": "#1A1510"
+        "ITSAppUsesNonExemptEncryption": false,
+        "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown"
+        ]
       }
     },
     "scheme": "focusblocks",
     "plugins": [
       "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F8F2E8",
+          "image": "./assets/icon.png",
+          "imageWidth": 100,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#1A1510",
+            "image": "./assets/icon.png"
+          }
+        }
+      ],
       [
         "expo-build-properties",
         {
@@ -49,13 +59,15 @@
         }
       ],
       "@react-native-community/datetimepicker",
-      "./plugins/with-focusblocks-icloud"
+      "./plugins/with-focusblocks-icloud",
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "android": {
       "package": "love.nemi.focus",
+      "playStoreUrl": "https://play.google.com/store/apps/details?id=love.nemi.focus",
       "versionCode": 15,
       "allowBackup": false,
       "adaptiveIcon": {

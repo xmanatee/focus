@@ -1,11 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Linking from 'expo-linking';
+import * as StoreReview from 'expo-store-review';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Button } from '../../shared/components/Button';
 import { Card } from '../../shared/components/Card';
 import { Icon } from '../../shared/components/Icon';
 import { Typography } from '../../shared/components/Typography';
+import { errorMessage } from '../../shared/errors';
 import type { SetupVerification } from '../diagnostics/diagnostics';
 import {
   type ReviewPromptState,
@@ -17,16 +19,16 @@ import {
 } from './reviewPromptState';
 
 const REVIEW_PROMPT_STATE_KEY = 'focusblocks.reviewPrompt.state';
-const APP_STORE_REVIEW_URL =
-  'itms-apps://itunes.apple.com/app/id6763754394?action=write-review';
 
 interface ReviewPromptCardProps {
+  readonly completedScheduledWindowCount: number;
   readonly verification: SetupVerification;
 }
 
 export function ReviewPromptCard({
+  completedScheduledWindowCount,
   verification,
-}: ReviewPromptCardProps): JSX.Element | null {
+}: ReviewPromptCardProps): React.JSX.Element | null {
   const [promptState, setPromptState] = useState<ReviewPromptState | null>(
     null,
   );
@@ -41,7 +43,7 @@ export function ReviewPromptCard({
         setPromptState(parseReviewPromptState(value));
       } catch (caught) {
         if (!isMounted) return;
-        setError(formatError(caught));
+        setError(errorMessage(caught));
         setPromptState(parseReviewPromptState(null));
       }
     }
@@ -54,20 +56,25 @@ export function ReviewPromptCard({
   if (promptState === null) return null;
 
   const nowMs = Date.now();
-  const shouldShow = shouldShowReviewPrompt(verification, promptState, nowMs);
+  const shouldShow = shouldShowReviewPrompt(
+    verification,
+    completedScheduledWindowCount,
+    promptState,
+    nowMs,
+  );
 
   if (!shouldShow) return null;
 
   const saveState = async (next: ReviewPromptState): Promise<void> => {
-    setPromptState(next);
     try {
       await AsyncStorage.setItem(
         REVIEW_PROMPT_STATE_KEY,
         serializeReviewPromptState(next),
       );
+      setPromptState(next);
       setError(null);
     } catch (caught) {
-      setError(formatError(caught));
+      setError(errorMessage(caught));
     }
   };
 
@@ -76,11 +83,15 @@ export function ReviewPromptCard({
   };
 
   const rate = async (): Promise<void> => {
-    await saveState(markReviewPromptReviewed(nowMs));
     try {
-      await Linking.openURL(APP_STORE_REVIEW_URL);
+      const storeUrl = StoreReview.storeUrl();
+      if (storeUrl === null) {
+        throw new Error('The App Store page is not available.');
+      }
+      await Linking.openURL(storeUrl);
+      await saveState(markReviewPromptReviewed(nowMs));
     } catch (caught) {
-      setError(formatError(caught));
+      setError(errorMessage(caught));
     }
   };
 
@@ -93,13 +104,13 @@ export function ReviewPromptCard({
             Is Focus Blocks helping?
           </Typography>
           <Typography variant="body" tone="muted">
-            A short App Store review makes the app easier for people to find.
+            A short review makes Focus Blocks easier for people to find.
           </Typography>
         </View>
       </View>
       <View className="gap-2">
         <Button
-          title="Rate on App Store"
+          title="Review Focus Blocks"
           variant="commit"
           onPress={() => void rate()}
         />
@@ -112,8 +123,4 @@ export function ReviewPromptCard({
       ) : null}
     </Card>
   );
-}
-
-function formatError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }

@@ -1,7 +1,10 @@
 import React from 'react';
-import TestRenderer from 'react-test-renderer';
 import { describe, expect, it, vi } from 'vitest';
-import { collectText } from '../../test-helpers/reactTest';
+import {
+  collectText,
+  findAll,
+  renderTestRoot,
+} from '../../test-helpers/reactTest';
 import { DayPicker } from './DayPicker';
 
 type MockProps = Record<string, unknown> & {
@@ -20,15 +23,15 @@ vi.mock('./Typography', () => ({
 }));
 
 describe('DayPicker', () => {
-  it('renders distinct short labels and explicit accessibility names', () => {
-    const tree = TestRenderer.create(
+  it('renders distinct short labels and explicit accessibility names', async () => {
+    const tree = await renderTestRoot(
       React.createElement(DayPicker, {
         selected: [],
         onToggle: vi.fn(),
       }),
     );
 
-    expect(collectText(tree.root)).toEqual([
+    expect(collectText(tree.container)).toEqual([
       'Mo',
       'Tu',
       'We',
@@ -38,7 +41,8 @@ describe('DayPicker', () => {
       'Su',
     ]);
 
-    const buttons = tree.root.findAll(
+    const buttons = findAll(
+      tree,
       (node) => node.props.accessibilityRole === 'button',
     );
 

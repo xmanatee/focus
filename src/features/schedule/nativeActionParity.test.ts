@@ -25,6 +25,9 @@ describe('native action parity', () => {
       for (const helper of REQUIRED_CUSTOM_HELPERS) {
         expect(source).toContain(helper);
       }
+      expect(source).not.toContain(
+        ') ?? Date.distantPast.timeIntervalSince1970 * 1000\n\n  return triggeredAt > afterTriggeredAt',
+      );
     }
   });
 });

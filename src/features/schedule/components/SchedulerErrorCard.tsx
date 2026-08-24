@@ -9,7 +9,7 @@ interface SchedulerErrorCardProps {
 
 export function SchedulerErrorCard({
   message,
-}: SchedulerErrorCardProps): JSX.Element {
+}: SchedulerErrorCardProps): React.JSX.Element {
   return (
     <Card>
       <View className="flex-row items-start gap-3">

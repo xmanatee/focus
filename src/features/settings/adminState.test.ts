@@ -84,6 +84,24 @@ describe('resolveAdminState', () => {
       at('2026-04-27T17:00:00'),
     );
     expect(state.kind).toBe('locked');
+    if (state.kind === 'locked') {
+      expect(state.nextUnlock?.at).toEqual(new Date('2026-04-28T09:00:00'));
+    }
+  });
+
+  it('finds next weeks setup window after a single selected day ends', () => {
+    const state = resolveAdminState(
+      {
+        ...monFri9to17,
+        days: ['mon'],
+      },
+      true,
+      at('2026-04-27T17:00:00'),
+    );
+    expect(state.kind).toBe('locked');
+    if (state.kind === 'locked') {
+      expect(state.nextUnlock?.at).toEqual(new Date('2026-05-04T09:00:00'));
+    }
   });
 
   it('computes the next unlock for a Sunday setup checked on Monday morning', () => {

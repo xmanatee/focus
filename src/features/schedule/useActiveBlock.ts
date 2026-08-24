@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useCurrentMinute } from '../../shared/hooks/useCurrentMinute';
 import {
   type ActiveFocusBlockStatus,
   getActiveBlockStatuses,
@@ -11,17 +12,10 @@ interface ActiveBlockView {
   readonly now: Date;
 }
 
-const TICK_MS = 15_000;
-
 export function useActiveBlock(
   focusBlocks: readonly RuntimeFocusBlock[],
 ): ActiveBlockView {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), TICK_MS);
-    return () => clearInterval(interval);
-  }, []);
+  const now = useCurrentMinute();
 
   return useMemo<ActiveBlockView>(() => {
     const activeBlocks = getActiveBlockStatuses(focusBlocks, now);

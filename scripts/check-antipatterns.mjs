@@ -80,6 +80,13 @@ const rules = [
     message: 'Empty catch block silently swallows errors.',
   },
   {
+    id: 'no-persist-migration',
+    pattern: /\bmigrate\s*:/,
+    message:
+      'Persisted stores use current strict schemas and new keys for intentional resets. ' +
+      'Do not retain migration or compatibility paths.',
+  },
+  {
     id: 'no-keyboard-avoiding-view',
     pattern: /\bKeyboardAvoidingView\b/,
     message:

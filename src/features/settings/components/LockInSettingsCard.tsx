@@ -17,7 +17,7 @@ export function LockInSettingsCard({
   onPress,
   state,
   setupBlock,
-}: LockInSettingsCardProps): JSX.Element {
+}: LockInSettingsCardProps): React.JSX.Element {
   const { title, subtitle } = describeLockInCard(state, setupBlock, now);
   const isLocked = state.kind === 'locked';
 

@@ -1,9 +1,9 @@
-import * as Linking from 'expo-linking';
 import type { ReactNode } from 'react';
 import { Button } from '../../../../shared/components/Button';
 import { Checklist } from '../../../../shared/components/Checklist';
 import { Typography } from '../../../../shared/components/Typography';
 import { haptic } from '../../../../shared/design/haptics';
+import { openAppSettings } from '../../../../shared/openAppSettings';
 import { protectionCopy } from '../../copy';
 import type { DefenseId } from '../../types';
 import { useTamperSetupStore } from '../../useTamperSetupStore';
@@ -23,7 +23,7 @@ export function DefenseSetupStep({
   children,
   onNext,
   onClose,
-}: DefenseSetupStepProps): JSX.Element {
+}: DefenseSetupStepProps): React.JSX.Element {
   const copy = protectionCopy[defense];
   const ack = useTamperSetupStore((s) => s.setup.acks[defense]);
   const toggle = useTamperSetupStore((s) => s.toggle);
@@ -40,7 +40,7 @@ export function DefenseSetupStep({
         variant="commit"
         onPress={() => {
           void haptic.commit();
-          void Linking.openSettings();
+          openAppSettings();
         }}
       />
 

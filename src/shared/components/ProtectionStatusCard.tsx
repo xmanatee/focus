@@ -20,7 +20,7 @@ const subtitleByScore: Record<ProtectionPosture['score'], string> = {
 export function ProtectionStatusCard({
   posture,
   onPress,
-}: ProtectionStatusCardProps): JSX.Element {
+}: ProtectionStatusCardProps): React.JSX.Element {
   return (
     <Card onPress={onPress}>
       <View className="flex-row items-center justify-between">

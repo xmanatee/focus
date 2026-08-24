@@ -2,6 +2,11 @@ import {
   BlockerBridge,
   type DeviceActivityAction,
 } from '../../bridge/BlockerBridge';
+import { assertRuntimeMonitorCapacity } from './runtimeCapacity';
+import {
+  loadRuntimePlanSignatures,
+  saveRuntimePlanSignatures,
+} from './runtimePlanCache';
 import { focusBlockUnsupportedReason } from './runtimeSupport';
 import {
   type FocusAction,
@@ -17,19 +22,10 @@ import {
 import type { DayOfWeek, RuntimeFocusBlock } from './types';
 import { webDomainsForInstant } from './webDomainsForInstant';
 
-const MAX_DEVICE_ACTIVITY_MONITORS = 20;
-
 function configuredActions(
   actions: readonly FocusAction[],
 ): DeviceActivityAction[] {
   return [...actions] as DeviceActivityAction[];
-}
-
-function assertDeviceActivityMonitorLimit(planCount: number): void {
-  if (planCount <= MAX_DEVICE_ACTIVITY_MONITORS) return;
-  throw new Error(
-    `iOS can monitor up to ${MAX_DEVICE_ACTIVITY_MONITORS} Focus Block schedules at once. Disable some blocks or reduce selected days.`,
-  );
 }
 
 async function applyPlan(plan: MonitorPlan): Promise<void> {
@@ -61,6 +57,40 @@ async function applyPlan(plan: MonitorPlan): Promise<void> {
     });
   }
   await native.startMonitoring(plan.activityName, plan.schedule, plan.events);
+}
+
+async function reconcileMonitoringPlans(
+  desired: ReadonlyMap<string, MonitorPlan>,
+): Promise<void> {
+  const native = BlockerBridge.deviceActivity;
+  const current = new Set(
+    native.getActivities().filter(isFocusBlocksActivityName),
+  );
+  const storedSignatures = await loadRuntimePlanSignatures();
+  const desiredSignatures = Object.fromEntries(
+    [...desired].map(([name, plan]) => [name, JSON.stringify(plan)]),
+  );
+  const changed = new Set(
+    [...desired].flatMap(([name]) =>
+      current.has(name) && storedSignatures[name] !== desiredSignatures[name]
+        ? [name]
+        : [],
+    ),
+  );
+  const toStop = [...current].filter(
+    (name) => !desired.has(name) || changed.has(name),
+  );
+
+  if (toStop.length > 0) {
+    native.stopMonitoring(toStop);
+    for (const name of toStop) native.cleanUpAfterActivity(name);
+  }
+
+  for (const [name, plan] of desired) {
+    if (current.has(name) && !changed.has(name)) continue;
+    await applyPlan(plan);
+  }
+  await saveRuntimePlanSignatures(desiredSignatures);
 }
 
 const DAY_BY_DATE_INDEX: readonly DayOfWeek[] = [
@@ -131,7 +161,7 @@ function assertAndroidRuntimeSupport(
   }
 }
 
-export async function reconcileFocusBlocks(
+async function performReconciliation(
   blocks: readonly RuntimeFocusBlock[],
   setupBlock: {
     days: readonly DayOfWeek[];
@@ -143,7 +173,7 @@ export async function reconcileFocusBlocks(
 ): Promise<void> {
   if (BlockerBridge.capabilities.runtimeKind === 'androidAccessibility') {
     assertAndroidRuntimeSupport(blocks);
-    await BlockerBridge.reconcileRuntimeBlocks(blocks, at);
+    await BlockerBridge.reconcileRuntimeBlocks(blocks);
     return;
   }
 
@@ -165,16 +195,26 @@ export async function reconcileFocusBlocks(
     }
   }
 
-  assertDeviceActivityMonitorLimit(desired.size);
+  assertRuntimeMonitorCapacity(blocks, setupBlock);
 
-  const native = BlockerBridge.deviceActivity;
-  const current = native.getActivities().filter(isFocusBlocksActivityName);
-  const toStop = current.filter((name) => !desired.has(name));
-  if (toStop.length > 0) {
-    native.stopMonitoring(toStop);
-    for (const name of toStop) native.cleanUpAfterActivity(name);
-  }
-
-  for (const plan of desired.values()) await applyPlan(plan);
+  await reconcileMonitoringPlans(desired);
   applyCurrentState(blocks, at);
+}
+
+let pendingReconciliation = Promise.resolve();
+
+export function reconcileFocusBlocks(
+  blocks: readonly RuntimeFocusBlock[],
+  setupBlock: {
+    days: readonly DayOfWeek[];
+    startTime: string;
+    endTime: string;
+    notifyOnStart: boolean;
+  } | null,
+  at: Date = new Date(),
+): Promise<void> {
+  const reconcile = () => performReconciliation(blocks, setupBlock, at);
+  const current = pendingReconciliation.then(reconcile, reconcile);
+  pendingReconciliation = current;
+  return current;
 }

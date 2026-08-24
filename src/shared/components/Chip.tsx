@@ -15,7 +15,7 @@ export function Chip({
   onLongPress,
   active = false,
   disabled = false,
-}: ChipProps): JSX.Element {
+}: ChipProps): React.JSX.Element {
   return (
     <Pressable
       accessibilityRole="button"

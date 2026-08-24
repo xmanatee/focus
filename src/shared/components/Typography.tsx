@@ -58,7 +58,7 @@ export function Typography({
   align = 'left',
   className = '',
   accessibilityRole,
-}: TypographyProps): JSX.Element {
+}: TypographyProps): React.JSX.Element {
   return (
     <Text
       accessibilityRole={accessibilityRole}

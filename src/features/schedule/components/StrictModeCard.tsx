@@ -16,7 +16,7 @@ export function StrictModeCard({
   onChange,
   tamperReady,
   disabled = false,
-}: StrictModeCardProps): JSX.Element {
+}: StrictModeCardProps): React.JSX.Element {
   return (
     <Section title={protectionCopy.strictMode.title}>
       <Card>

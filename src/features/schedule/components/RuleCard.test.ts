@@ -1,6 +1,6 @@
-import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import React, { act } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { findOne, renderTestRoot } from '../../../test-helpers/reactTest';
 import { RuleCard } from './RuleCard';
 
 type MockProps = Record<string, unknown> & {
@@ -40,21 +40,28 @@ vi.mock('../../../shared/design/theme', () => ({
 }));
 
 describe('RuleCard', () => {
-  it('does not commit invalid budget minutes and explains the valid range inline', () => {
+  it('commits an invalid marker so the form cannot save stale budget minutes', async () => {
     const onChange = vi.fn();
-    const tree = TestRenderer.create(
+    const tree = await renderTestRoot(
       React.createElement(RuleCard, {
         value: { kind: 'dailyBudget', minutes: 30 },
         onChange,
       }),
     );
 
-    const input = tree.root.find((node) => node.props.onChangeText);
+    const input = findOne(
+      tree,
+      (node) => typeof node.props.onChangeText === 'function',
+      'budget input',
+    );
 
     act(() => {
-      input.props.onChangeText('0');
+      input.props.onChangeText('');
     });
 
-    expect(onChange).not.toHaveBeenCalled();
+    expect(onChange).toHaveBeenCalledWith({
+      kind: 'dailyBudget',
+      minutes: Number.NaN,
+    });
   });
 });

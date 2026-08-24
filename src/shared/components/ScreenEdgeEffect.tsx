@@ -1,17 +1,22 @@
+import MaskedView from '@react-native-masked-view/masked-view';
 import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
+import type { RefObject } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsDark, useThemeColors } from '../design/theme';
 
 interface ScreenEdgeEffectProps {
+  readonly blurTarget: RefObject<View | null>;
   readonly showBottom: boolean;
   readonly showTop: boolean;
 }
 
 export function ScreenEdgeEffect({
+  blurTarget,
   showBottom,
   showTop,
-}: ScreenEdgeEffectProps): JSX.Element {
+}: ScreenEdgeEffectProps): React.JSX.Element {
   const colors = useThemeColors();
   const isDark = useIsDark();
   const insets = useSafeAreaInsets();
@@ -19,54 +24,88 @@ export function ScreenEdgeEffect({
   const overlayTint = isDark
     ? withAlpha(colors.surface, 0.72)
     : withAlpha(colors.surface, 0.58);
+  const transparentTint = withAlpha(colors.surface, 0);
   const tint = isDark ? 'dark' : 'light';
 
   return (
     <>
       {showTop ? (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.edge,
-            {
-              top: 0,
-              height: Math.max(insets.top + 18, 52),
-            },
-          ]}
-        >
-          <BlurView
-            intensity={32}
-            tint={tint}
-            style={StyleSheet.absoluteFill}
-          />
-          <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: overlayTint }]}
-          />
-        </View>
+        <EdgeMaterial
+          edge="top"
+          blurTarget={blurTarget}
+          height={Math.max(insets.top + 24, 58)}
+          overlayTint={overlayTint}
+          transparentTint={transparentTint}
+          tint={tint}
+        />
       ) : null}
 
       {showBottom ? (
-        <View
-          pointerEvents="none"
-          style={[
-            styles.edge,
-            {
-              bottom: 0,
-              height: Math.max(insets.bottom + 24, 44),
-            },
-          ]}
-        >
-          <BlurView
-            intensity={36}
-            tint={tint}
-            style={StyleSheet.absoluteFill}
-          />
-          <View
-            style={[StyleSheet.absoluteFill, { backgroundColor: overlayTint }]}
-          />
-        </View>
+        <EdgeMaterial
+          edge="bottom"
+          blurTarget={blurTarget}
+          height={Math.max(insets.bottom + 30, 52)}
+          overlayTint={overlayTint}
+          transparentTint={transparentTint}
+          tint={tint}
+        />
       ) : null}
     </>
+  );
+}
+
+function EdgeMaterial({
+  blurTarget,
+  edge,
+  height,
+  overlayTint,
+  transparentTint,
+  tint,
+}: {
+  readonly blurTarget: RefObject<View | null>;
+  readonly edge: 'bottom' | 'top';
+  readonly height: number;
+  readonly overlayTint: string;
+  readonly transparentTint: string;
+  readonly tint: 'dark' | 'light';
+}): React.JSX.Element {
+  const isTop = edge === 'top';
+  const maskColors = isTop
+    ? (['black', 'rgba(0,0,0,0.72)', 'transparent'] as const)
+    : (['transparent', 'rgba(0,0,0,0.72)', 'black'] as const);
+  const overlayColors = isTop
+    ? ([overlayTint, overlayTint, transparentTint] as const)
+    : ([transparentTint, overlayTint, overlayTint] as const);
+
+  return (
+    <View
+      pointerEvents="none"
+      style={[styles.edge, isTop ? { top: 0, height } : { bottom: 0, height }]}
+    >
+      <MaskedView
+        style={StyleSheet.absoluteFill}
+        maskElement={
+          <LinearGradient
+            colors={maskColors}
+            locations={[0, 0.55, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+        }
+      >
+        <BlurView
+          blurMethod="dimezisBlurViewSdk31Plus"
+          blurTarget={blurTarget}
+          intensity={36}
+          tint={tint}
+          style={styles.fill}
+        />
+      </MaskedView>
+      <LinearGradient
+        colors={overlayColors}
+        locations={[0, 0.55, 1]}
+        style={StyleSheet.absoluteFill}
+      />
+    </View>
   );
 }
 
@@ -93,5 +132,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'absolute',
     right: 0,
+  },
+  fill: {
+    flex: 1,
   },
 });

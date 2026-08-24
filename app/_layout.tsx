@@ -1,17 +1,21 @@
 import '../global.css';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { AppState, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
+import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
+import { focusBlockUnsupportedReason } from '../src/features/schedule/runtimeSupport';
 import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useTemplateStore } from '../src/features/schedule/useTemplateStore';
+import { reconcileHydratedLockInConfiguration } from '../src/features/settings/lockInConfiguration';
 import { useSetupBlockDeviceStore } from '../src/features/settings/setupBlockDeviceStore';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
-import { attachCloudSync } from '../src/shared/storage';
+import { errorMessage } from '../src/shared/errors';
+import { attachPersistedStorageSync } from '../src/shared/storage';
 
 interface PersistedStore {
   readonly persist: {
@@ -38,23 +42,18 @@ async function rehydrateAll(): Promise<void> {
   await rehydrateStore('Templates', useTemplateStore);
   await rehydrateStore('Protection setup', useTamperSetupStore);
   const focusBlocks = useFocusBlockStore.getState().focusBlocks;
-  useBlockActivationStore
-    .getState()
-    .syncBlockPresence(focusBlocks.map((block) => block.id));
-  const setupBlock = useSettingsStore.getState().setupBlock;
-  useSetupBlockDeviceStore
-    .getState()
-    .syncSetupBlockPresence(setupBlock !== null);
-  if (setupBlock !== null) {
-    useFocusBlockStore.getState().clearAllStrict();
-  }
+  const readyBlockIds = focusBlocks
+    .filter(
+      (block) =>
+        !focusBlockNeedsLocalSelection(block) &&
+        focusBlockUnsupportedReason(block) === null,
+    )
+    .map((block) => block.id);
+  useBlockActivationStore.getState().retainEnabledBlocks(readyBlockIds);
+  reconcileHydratedLockInConfiguration();
 }
 
-function formatError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
-export default function RootLayout(): JSX.Element {
+export default function RootLayout(): React.JSX.Element {
   const isDark = useIsDark();
   const colors = useThemeColors();
   const [isHydrated, setIsHydrated] = useState(false);
@@ -64,7 +63,7 @@ export default function RootLayout(): JSX.Element {
     let isCurrent = true;
     const handleStorageError = (error: unknown): void => {
       if (!isCurrent) return;
-      setStorageError(formatError(error));
+      setStorageError(errorMessage(error));
       setIsHydrated(true);
     };
     async function hydrate(markHydrated: boolean): Promise<void> {
@@ -79,24 +78,14 @@ export default function RootLayout(): JSX.Element {
     }
 
     void hydrate(true);
-    const detachCloudSync = attachCloudSync(
+    const detachStorageSync = attachPersistedStorageSync(
       () => void hydrate(false),
       handleStorageError,
     );
     return () => {
       isCurrent = false;
-      detachCloudSync();
+      detachStorageSync();
     };
-  }, []);
-
-  useEffect(() => {
-    const refreshAuthorizationStatus =
-      useBlockerStore.getState().refreshAuthorizationStatus;
-    refreshAuthorizationStatus();
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refreshAuthorizationStatus();
-    });
-    return () => subscription.remove();
   }, []);
 
   if (!isHydrated) {

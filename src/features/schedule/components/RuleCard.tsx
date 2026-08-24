@@ -86,7 +86,7 @@ export function RuleCard({
   value,
   onChange,
   disabled = false,
-}: RuleCardProps): JSX.Element {
+}: RuleCardProps): React.JSX.Element {
   const colors = useThemeColors();
   const showsBudget =
     BlockerBridge.capabilities.supportsDailyBudgets &&
@@ -105,6 +105,7 @@ export function RuleCard({
       setBudgetError(null);
       return;
     }
+    if (budgetMinutesError(budgetMinutes) !== null) return;
     setBudgetText(String(budgetMinutes));
     setBudgetError(null);
   }, [budgetMinutes, showsBudget]);
@@ -164,19 +165,9 @@ export function RuleCard({
                 value={budgetText}
                 onChangeText={(text) => {
                   setBudgetText(text);
-                  const parsed = Number.parseInt(text, 10);
-                  if (Number.isNaN(parsed)) {
-                    setBudgetError(
-                      'Daily budget must be between 1 minute and 23h 59m.',
-                    );
-                    return;
-                  }
+                  const parsed = /^\d+$/.test(text) ? Number(text) : Number.NaN;
                   const error = budgetMinutesError(parsed);
-                  if (error !== null) {
-                    setBudgetError(error);
-                    return;
-                  }
-                  setBudgetError(null);
+                  setBudgetError(error);
                   onChange(withMinutes(value, parsed));
                 }}
                 keyboardType="number-pad"

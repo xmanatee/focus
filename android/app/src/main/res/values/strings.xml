@@ -2,6 +2,7 @@
   <string name="app_name">Focus Blocks</string>
   <string name="focus_accessibility_service_label">Focus Blocks app blocking</string>
   <string name="focus_accessibility_service_description">Focus Blocks uses Accessibility only to detect foreground apps and return you to Focus Blocks when an enabled block applies. It does not read screen content, capture keystrokes, or share Accessibility data.</string>
-  <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
-  <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
+  <string name="blocked_title">Blocked</string>
+  <string name="blocked_message">&quot;%1$s&quot; is active right now.</string>
+  <string name="back_to_focus">Back to Focus Blocks</string>
 </resources>

@@ -14,7 +14,7 @@ function metricLabel(value: number, singular: string, plural: string): string {
 
 export function ProgressCard({
   progress,
-}: ProgressCardProps): JSX.Element | null {
+}: ProgressCardProps): React.JSX.Element | null {
   if (progress.enabledBlockCount === 0) return null;
 
   return (
@@ -66,7 +66,7 @@ function ProgressMetric({
 }: {
   readonly label: string;
   readonly value: string;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <View className="flex-row items-center justify-between rounded-xl bg-surface-sunken px-3 py-2">
       <Typography variant="caption" tone="muted">

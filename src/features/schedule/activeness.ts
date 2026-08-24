@@ -6,7 +6,7 @@ interface FocusBlockInternal {
   readonly startTime: string;
   readonly endTime: string;
   readonly isEnabled: boolean;
-  readonly rule?: FocusBlockRule;
+  readonly rule: FocusBlockRule;
 }
 
 const DAY_BY_INDEX: readonly DayOfWeek[] = [
@@ -28,7 +28,7 @@ export function isFocusBlockActiveAt(
   at: Date,
 ): boolean {
   if (!block.isEnabled) return false;
-  const rule = block.rule ?? { kind: 'blockDuringSchedule' };
+  const rule = block.rule;
   if (rule.kind === 'dailyBudget') return false;
 
   const isInsideSchedule = isInsideScheduleWindow(block, at);
@@ -72,7 +72,7 @@ export function nextStartAfter(
   const current = minuteOfDay(at);
   const todayIndex = at.getDay();
 
-  for (let offset = 0; offset < 7; offset++) {
+  for (let offset = 0; offset <= 7; offset++) {
     const idx = (todayIndex + offset) % 7;
     const dayKey = DAY_BY_INDEX[idx];
     if (!block.days.includes(dayKey)) continue;

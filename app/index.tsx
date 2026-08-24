@@ -15,6 +15,7 @@ import { ProgressCard } from '../src/features/schedule/components/ProgressCard';
 import { SchedulerErrorCard } from '../src/features/schedule/components/SchedulerErrorCard';
 import { focusBlocksRunnableLocally } from '../src/features/schedule/localRuntime';
 import { buildFocusProgress } from '../src/features/schedule/progress';
+import { assertRuntimeMonitorCapacity } from '../src/features/schedule/runtimeCapacity';
 import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
 import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
 import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
@@ -26,8 +27,9 @@ import { ProtectionStatusCard } from '../src/shared/components/ProtectionStatusC
 import { Screen } from '../src/shared/components/Screen';
 import { Section } from '../src/shared/components/Section';
 import { haptic } from '../src/shared/design/haptics';
+import { errorMessage } from '../src/shared/errors';
 
-export default function MainFeedScreen(): JSX.Element {
+export default function MainFeedScreen(): React.JSX.Element {
   const router = useRouter();
   const authorizationStatus = useBlockerStore((s) => s.authorizationStatus);
   const busyState = useBlockerStore((s) => s.busyState);
@@ -50,6 +52,9 @@ export default function MainFeedScreen(): JSX.Element {
   } = useAdminState();
   const supportsTamperProtection =
     BlockerBridge.capabilities.supportsTamperProtection;
+  const canReconcileRuntime =
+    hasPermissions ||
+    BlockerBridge.capabilities.canReconcileWithoutAuthorization;
   const isAdminLocked =
     supportsTamperProtection && adminState.kind === 'locked';
   const setupBlock = useSettingsStore((s) => s.setupBlock);
@@ -74,9 +79,10 @@ export default function MainFeedScreen(): JSX.Element {
     unsupportedEnabledBlockCount:
       setupVerification.unsupportedEnabledBlockCount,
   });
+  const showAdvancedConfiguration = quickStartPhase === null;
 
   useEffect(() => {
-    if (!hasPermissions) {
+    if (!canReconcileRuntime) {
       setSchedulerError(null);
       return;
     }
@@ -88,9 +94,7 @@ export default function MainFeedScreen(): JSX.Element {
         if (isCurrent) setSchedulerError(null);
       } catch (caught) {
         if (isCurrent) {
-          setSchedulerError(
-            caught instanceof Error ? caught.message : String(caught),
-          );
+          setSchedulerError(errorMessage(caught));
         }
       }
     }
@@ -99,7 +103,7 @@ export default function MainFeedScreen(): JSX.Element {
     return () => {
       isCurrent = false;
     };
-  }, [runnableBlocks, setupBlockForThisDevice, hasPermissions]);
+  }, [runnableBlocks, setupBlockForThisDevice, canReconcileRuntime]);
 
   const handleGrant = async (): Promise<void> => {
     void haptic.commit();
@@ -107,7 +111,23 @@ export default function MainFeedScreen(): JSX.Element {
   };
 
   const handleToggle = (blockId: string, nextIsEnabled: boolean): void => {
+    if (nextIsEnabled) {
+      const nextEnabledBlockIds = [
+        ...enabledBlockIds.filter((id) => id !== blockId),
+        blockId,
+      ];
+      try {
+        assertRuntimeMonitorCapacity(
+          focusBlocksRunnableLocally(focusBlocks, nextEnabledBlockIds),
+          setupBlockForThisDevice,
+        );
+      } catch (error) {
+        setSchedulerError(errorMessage(error));
+        return;
+      }
+    }
     void haptic.select();
+    setSchedulerError(null);
     setBlockEnabled(blockId, nextIsEnabled);
   };
 
@@ -134,6 +154,13 @@ export default function MainFeedScreen(): JSX.Element {
     () => buildFocusProgress(runnableBlocks, now),
     [runnableBlocks, now],
   );
+  const showConfigurationSection =
+    quickStartPhase !== null ||
+    schedulerError !== null ||
+    (showAdvancedConfiguration &&
+      (progress.enabledBlockCount > 0 ||
+        showProtectionCard ||
+        supportsTamperProtection));
 
   return (
     <Screen padded={false} edgeEffect="soft">
@@ -155,60 +182,76 @@ export default function MainFeedScreen(): JSX.Element {
           />
         )}
 
-        <Section title="Configuration">
-          {quickStartPhase !== null ? (
-            <QuickStartCard
-              phase={quickStartPhase}
-              isPrimaryLoading={
-                quickStartPhase === 'grantAccess' && busyState === 'authorizing'
-              }
-              onPrimary={handleQuickStartPrimary}
-            />
-          ) : null}
+        {showConfigurationSection ? (
+          <Section title="Configuration">
+            {quickStartPhase !== null ? (
+              <QuickStartCard
+                phase={quickStartPhase}
+                isPrimaryLoading={
+                  quickStartPhase === 'grantAccess' &&
+                  busyState === 'authorizing'
+                }
+                onPrimary={handleQuickStartPrimary}
+              />
+            ) : null}
 
-          <ReviewPromptCard verification={setupVerification} />
+            {showAdvancedConfiguration ? (
+              <ReviewPromptCard
+                completedScheduledWindowCount={
+                  progress.completedScheduledWindowCount
+                }
+                verification={setupVerification}
+              />
+            ) : null}
 
-          {schedulerError !== null ? (
-            <SchedulerErrorCard message={schedulerError} />
-          ) : null}
+            {schedulerError !== null ? (
+              <SchedulerErrorCard message={schedulerError} />
+            ) : null}
 
-          <ProgressCard progress={progress} />
+            {showAdvancedConfiguration ? (
+              <ProgressCard progress={progress} />
+            ) : null}
 
-          {showProtectionCard && (
-            <ProtectionStatusCard
-              posture={posture}
-              onPress={() => router.push('/protection')}
-            />
-          )}
+            {showAdvancedConfiguration && showProtectionCard ? (
+              <ProtectionStatusCard
+                posture={posture}
+                onPress={() => router.push('/protection')}
+              />
+            ) : null}
 
-          {supportsTamperProtection && (
-            <LockInSettingsCard
-              now={adminNow}
-              state={adminState}
-              setupBlock={setupBlock}
-              onPress={() => router.push('/settings')}
-            />
-          )}
-        </Section>
+            {supportsTamperProtection &&
+            (showAdvancedConfiguration || isAdminLocked) ? (
+              <LockInSettingsCard
+                now={adminNow}
+                state={adminState}
+                setupBlock={setupBlock}
+                onPress={() => router.push('/settings')}
+              />
+            ) : null}
+          </Section>
+        ) : null}
 
-        <FocusBlockListSection
-          focusBlocks={focusBlocks}
-          enabledBlockIds={enabledBlockIds}
-          isAdminLocked={isAdminLocked}
-          now={now}
-          onAdd={() => {
-            void haptic.select();
-            router.push('/add-focus-block');
-          }}
-          onEdit={(blockId) => {
-            void haptic.select();
-            router.push({
-              pathname: '/add-focus-block',
-              params: { id: blockId },
-            });
-          }}
-          onToggle={handleToggle}
-        />
+        {focusBlocks.length > 0 || quickStartPhase === null ? (
+          <FocusBlockListSection
+            focusBlocks={focusBlocks}
+            hasBlockingAccess={hasPermissions}
+            enabledBlockIds={enabledBlockIds}
+            isAdminLocked={isAdminLocked}
+            now={now}
+            onAdd={() => {
+              void haptic.select();
+              router.push('/add-focus-block');
+            }}
+            onEdit={(blockId) => {
+              void haptic.select();
+              router.push({
+                pathname: '/add-focus-block',
+                params: { id: blockId },
+              });
+            }}
+            onToggle={handleToggle}
+          />
+        ) : null}
       </ScrollView>
     </Screen>
   );

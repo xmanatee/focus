@@ -14,6 +14,7 @@ import { FocusBlockRow } from './FocusBlockRow';
 interface FocusBlockListSectionProps {
   readonly enabledBlockIds: readonly string[];
   readonly focusBlocks: readonly FocusBlock[];
+  readonly hasBlockingAccess: boolean;
   readonly isAdminLocked: boolean;
   readonly now: Date;
   readonly onAdd: () => void;
@@ -24,12 +25,13 @@ interface FocusBlockListSectionProps {
 export function FocusBlockListSection({
   enabledBlockIds,
   focusBlocks,
+  hasBlockingAccess,
   isAdminLocked,
   now,
   onAdd,
   onEdit,
   onToggle,
-}: FocusBlockListSectionProps): JSX.Element {
+}: FocusBlockListSectionProps): React.JSX.Element {
   return (
     <Section
       title="Focus Blocks"
@@ -73,10 +75,12 @@ export function FocusBlockListSection({
               needsDeviceSelection={needsDeviceSelection}
               unsupportedReason={unsupportedReason}
               toggleDisabled={
-                isActive ||
+                (isActive && block.strict) ||
                 (isAdminLocked && runnableBlock.isEnabled) ||
                 (!isEnabled &&
-                  (needsDeviceSelection || unsupportedReason !== null))
+                  (!hasBlockingAccess ||
+                    needsDeviceSelection ||
+                    unsupportedReason !== null))
               }
               onPress={() => onEdit(block.id)}
               onToggle={(next) => onToggle(block.id, next)}

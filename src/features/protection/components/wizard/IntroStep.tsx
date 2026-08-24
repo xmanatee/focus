@@ -11,7 +11,10 @@ interface IntroStepProps {
   readonly onClose: () => void;
 }
 
-export function IntroStep({ onNext, onClose }: IntroStepProps): JSX.Element {
+export function IntroStep({
+  onNext,
+  onClose,
+}: IntroStepProps): React.JSX.Element {
   return (
     <WizardStepShell
       step={1}

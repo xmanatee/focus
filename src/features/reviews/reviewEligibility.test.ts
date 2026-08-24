@@ -21,6 +21,7 @@ describe('shouldShowReviewPrompt', () => {
     expect(
       shouldShowReviewPrompt(
         readyVerification,
+        3,
         { kind: 'eligible' },
         Date.now(),
       ),
@@ -32,6 +33,7 @@ describe('shouldShowReviewPrompt', () => {
           ...readyVerification,
           activeBlockCount: 1,
         },
+        3,
         { kind: 'eligible' },
         Date.now(),
       ),
@@ -46,6 +48,7 @@ describe('shouldShowReviewPrompt', () => {
           level: 'blocked',
           missingDeviceSelectionCount: 1,
         },
+        3,
         { kind: 'eligible' },
         Date.now(),
       ),
@@ -54,6 +57,7 @@ describe('shouldShowReviewPrompt', () => {
     expect(
       shouldShowReviewPrompt(
         readyVerification,
+        3,
         snoozeReviewPrompt(Date.now()),
         Date.now(),
       ),
@@ -62,9 +66,29 @@ describe('shouldShowReviewPrompt', () => {
     expect(
       shouldShowReviewPrompt(
         readyVerification,
+        3,
         markReviewPromptReviewed(Date.now()),
         Date.now(),
       ),
     ).toBe(false);
+  });
+
+  it('waits for several completed focus windows', () => {
+    expect(
+      shouldShowReviewPrompt(
+        readyVerification,
+        2,
+        { kind: 'eligible' },
+        Date.now(),
+      ),
+    ).toBe(false);
+    expect(
+      shouldShowReviewPrompt(
+        readyVerification,
+        3,
+        { kind: 'eligible' },
+        Date.now(),
+      ),
+    ).toBe(true);
   });
 });

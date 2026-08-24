@@ -16,7 +16,7 @@ export function NotifyRow({
   value,
   onChange,
   disabled = false,
-}: NotifyRowProps): JSX.Element {
+}: NotifyRowProps): React.JSX.Element {
   const colors = useThemeColors();
   return (
     <View className="flex-row items-center justify-between gap-4">

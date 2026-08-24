@@ -25,7 +25,7 @@ function DeviceBlockRow({
   readonly needsSelection: boolean;
   readonly unsupportedReason: string | null;
   readonly onPress: () => void;
-}): JSX.Element {
+}): React.JSX.Element {
   const needsAction = needsSelection || unsupportedReason !== null;
   return (
     <Card onPress={onPress}>
@@ -66,7 +66,7 @@ function DeviceBlockRow({
   );
 }
 
-export default function FinishDeviceScreen(): JSX.Element {
+export default function FinishDeviceScreen(): React.JSX.Element {
   const router = useRouter();
   const dismiss = useDismiss();
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
@@ -115,8 +115,8 @@ export default function FinishDeviceScreen(): JSX.Element {
                   This device is ready
                 </Typography>
                 <Typography variant="body" tone="muted">
-                  Every enabled synced block has local app selection data and
-                  uses features this device can enforce.
+                  Every enabled block has local app selection data and uses
+                  features this device can enforce.
                 </Typography>
               </View>
             </View>

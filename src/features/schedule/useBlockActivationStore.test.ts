@@ -22,15 +22,21 @@ describe('useBlockActivationStore', () => {
     ]);
   });
 
-  it('prunes local activation for blocks that no longer exist', () => {
+  it('retains activation only for blocks that remain ready here', () => {
     const store = useBlockActivationStore.getState();
     store.setBlockEnabled('block-a', true);
     store.setBlockEnabled('block-b', true);
 
-    store.syncBlockPresence(['block-b']);
+    store.retainEnabledBlocks(['block-b']);
 
     expect(useBlockActivationStore.getState().enabledBlockIds).toEqual([
       'block-b',
     ]);
+  });
+
+  it('rejects an empty block id', () => {
+    expect(() =>
+      useBlockActivationStore.getState().setBlockEnabled(' ', true),
+    ).toThrow(/id is required/i);
   });
 });

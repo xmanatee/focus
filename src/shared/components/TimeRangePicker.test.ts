@@ -1,32 +1,18 @@
-import React from 'react';
-import TestRenderer from 'react-test-renderer';
-import { describe, expect, it, vi } from 'vitest';
+import React, { act } from 'react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { findAll, renderTestRoot } from '../../test-helpers/reactTest';
 import { TimeRangePicker } from './TimeRangePicker';
 
 type MockProps = Record<string, unknown> & {
   readonly children?: React.ReactNode;
 };
 
-vi.mock('@react-native-community/datetimepicker', () => ({
-  default: (props: Record<string, unknown>) =>
-    React.createElement('DateTimePicker', {
-      ...props,
-      testType: 'date-time-picker',
-    }),
+const nativePicker = vi.hoisted(() => ({
+  open: vi.fn(),
 }));
 
-vi.mock('../design/theme', () => ({
-  useThemeColors: () => ({
-    surface: '#F8F2E8',
-    surfaceSunken: '#EDE5D6',
-    ink: '#2B221A',
-    inkMuted: '#7A6D5F',
-    inkFaint: '#B8AC9D',
-    signal: '#EA7A3A',
-    divider: '#E4DBC9',
-    danger: '#D94B2F',
-  }),
-  useIsDark: () => false,
+vi.mock('@react-native-community/datetimepicker', () => ({
+  DateTimePickerAndroid: nativePicker,
 }));
 
 vi.mock('./Typography', () => ({
@@ -34,28 +20,66 @@ vi.mock('./Typography', () => ({
     React.createElement('Text', props, children),
 }));
 
-describe('TimeRangePicker', () => {
-  it('uses the native compact picker without transform hacks', () => {
-    const tree = TestRenderer.create(
+describe('TimeRangePicker on Android', () => {
+  beforeEach(() => {
+    nativePicker.open.mockReset();
+  });
+
+  it('opens one native dialog only after the requested time is pressed', async () => {
+    const onStartChange = vi.fn();
+    const start = new Date('2026-06-15T09:00:00');
+    const end = new Date('2026-06-15T17:00:00');
+    const tree = await renderTestRoot(
+      React.createElement(TimeRangePicker, {
+        start,
+        end,
+        onStartChange,
+        onEndChange: vi.fn(),
+      }),
+    );
+
+    expect(nativePicker.open).not.toHaveBeenCalled();
+    const buttons = findAll(
+      tree,
+      (node) => node.props.accessibilityRole === 'button',
+    );
+    expect(buttons).toHaveLength(2);
+
+    act(() => buttons[0]?.props.onPress());
+    expect(nativePicker.open).toHaveBeenCalledTimes(1);
+
+    const options = nativePicker.open.mock.calls[0]?.[0];
+    expect(options).toMatchObject({
+      value: start,
+      mode: 'time',
+      display: 'default',
+    });
+
+    act(() => options.onChange({ type: 'dismissed' }, start));
+    expect(onStartChange).not.toHaveBeenCalled();
+
+    const next = new Date('2026-06-15T10:30:00');
+    act(() => options.onChange({ type: 'set' }, next));
+    expect(onStartChange).toHaveBeenCalledWith(next);
+  });
+
+  it('disables both time controls in read-only mode', async () => {
+    const tree = await renderTestRoot(
       React.createElement(TimeRangePicker, {
         start: new Date('2026-06-15T09:00:00'),
         end: new Date('2026-06-15T17:00:00'),
         onStartChange: vi.fn(),
         onEndChange: vi.fn(),
+        disabled: true,
       }),
     );
 
-    const pickers = tree.root.findAll(
-      (node) => node.props.testType === 'date-time-picker',
+    const buttons = findAll(
+      tree,
+      (node) => node.props.accessibilityRole === 'button',
     );
-
-    expect(pickers).toHaveLength(2);
-    expect(pickers.map((picker) => picker.props.display)).toEqual([
-      'compact',
-      'compact',
-    ]);
-    expect(
-      pickers.every((picker) => picker.props.style?.transform === undefined),
-    ).toBe(true);
+    expect(buttons.every((button) => button.props.disabled === true)).toBe(
+      true,
+    );
   });
 });

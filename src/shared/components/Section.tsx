@@ -12,7 +12,7 @@ export function Section({
   title,
   action,
   children,
-}: SectionProps): JSX.Element {
+}: SectionProps): React.JSX.Element {
   return (
     <View className="gap-3">
       <View className="flex-row items-center justify-between">

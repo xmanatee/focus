@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { BlurTargetView } from 'expo-blur';
+import { type ReactNode, useRef } from 'react';
 import { View } from 'react-native';
 import { type Edge, SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColors } from '../design/theme';
@@ -16,23 +17,33 @@ export function Screen({
   edges = ['top', 'bottom'],
   edgeEffect = 'none',
   padded = true,
-}: ScreenProps): JSX.Element {
+}: ScreenProps): React.JSX.Element {
   const colors = useThemeColors();
   const showTop = edgeEffect === 'soft' && edges.includes('top');
   const showBottom = edgeEffect === 'soft' && edges.includes('bottom');
+  const blurTarget = useRef<View>(null);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <SafeAreaView
-        edges={edges}
+      <BlurTargetView
+        ref={blurTarget}
         style={{ flex: 1, backgroundColor: colors.surface }}
       >
-        <View className={`flex-1 ${padded ? 'px-screen' : ''}`}>
-          {children}
-        </View>
-      </SafeAreaView>
+        <SafeAreaView
+          edges={edges}
+          style={{ flex: 1, backgroundColor: colors.surface }}
+        >
+          <View className={`flex-1 ${padded ? 'px-screen' : ''}`}>
+            {children}
+          </View>
+        </SafeAreaView>
+      </BlurTargetView>
       {edgeEffect === 'soft' ? (
-        <ScreenEdgeEffect showBottom={showBottom} showTop={showTop} />
+        <ScreenEdgeEffect
+          blurTarget={blurTarget}
+          showBottom={showBottom}
+          showTop={showTop}
+        />
       ) : null}
     </View>
   );

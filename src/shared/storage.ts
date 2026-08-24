@@ -1,49 +1,42 @@
 import * as Cloud from '@nauverse/expo-cloud-settings';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 import { type StateStorage, createJSONStorage } from 'zustand/middleware';
-
-function cloudIsUsable(): boolean {
-  return Platform.OS === 'ios' && Cloud.isAvailable();
-}
+import { AsyncStorage } from './storage.base';
 
 const cloudBackedStorage: StateStorage = {
   getItem: async (key) => {
-    const local = await AsyncStorage.getItem(key);
-    if (local !== null) {
-      return local;
-    }
-    if (!cloudIsUsable()) {
-      return null;
+    if (!Cloud.isAvailable()) {
+      return AsyncStorage.getItem(key);
     }
     const remote = Cloud.getString(key);
     if (remote !== null) {
       await AsyncStorage.setItem(key, remote);
+    } else {
+      await AsyncStorage.removeItem(key);
     }
     return remote;
   },
   setItem: async (key, value) => {
-    await AsyncStorage.setItem(key, value);
-    if (cloudIsUsable()) {
+    if (Cloud.isAvailable()) {
       Cloud.setString(key, value);
     }
+    await AsyncStorage.setItem(key, value);
   },
   removeItem: async (key) => {
-    await AsyncStorage.removeItem(key);
-    if (cloudIsUsable()) {
+    if (Cloud.isAvailable()) {
       Cloud.remove(key);
     }
+    await AsyncStorage.removeItem(key);
   },
 };
 
 export const persistedStorage = createJSONStorage(() => cloudBackedStorage);
-export const localStorage = createJSONStorage(() => AsyncStorage);
+export { deviceStorage, localStorage, newId } from './storage.base';
 
-export function attachCloudSync(
+export function attachPersistedStorageSync(
   onRemoteChange: () => void,
   onError: (error: unknown) => void,
 ): () => void {
-  if (!cloudIsUsable()) {
+  if (!Cloud.isAvailable()) {
     return () => {};
   }
   const subscription = Cloud.addChangeListener(async (event) => {
@@ -62,10 +55,4 @@ export function attachCloudSync(
     }
   });
   return () => subscription.remove();
-}
-
-export function newId(): string {
-  return `${Date.now().toString(36)}_${Math.random()
-    .toString(36)
-    .slice(2, 10)}`;
 }

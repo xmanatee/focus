@@ -1,6 +1,7 @@
 import type { SetupVerification } from '../diagnostics/diagnostics';
 
 const REVIEW_PROMPT_SNOOZE_MS = 21 * 24 * 60 * 60 * 1000;
+const MINIMUM_COMPLETED_WINDOWS = 3;
 
 export type ReviewPromptState =
   | { readonly kind: 'eligible' }
@@ -17,15 +18,25 @@ export function parseReviewPromptState(raw: string | null): ReviewPromptState {
     case 'eligible':
       return parsed;
     case 'snoozed':
-      if (typeof parsed.until !== 'number') {
+      if (
+        typeof parsed.until !== 'number' ||
+        !Number.isFinite(parsed.until) ||
+        parsed.until <= 0
+      ) {
         throw new Error('Invalid review prompt snooze state.');
       }
       return parsed;
     case 'reviewed':
-      if (typeof parsed.at !== 'number') {
+      if (
+        typeof parsed.at !== 'number' ||
+        !Number.isFinite(parsed.at) ||
+        parsed.at <= 0
+      ) {
         throw new Error('Invalid review prompt reviewed state.');
       }
       return parsed;
+    default:
+      throw new Error('Invalid review prompt state.');
   }
 }
 
@@ -35,6 +46,7 @@ export function serializeReviewPromptState(state: ReviewPromptState): string {
 
 export function shouldShowReviewPrompt(
   verification: SetupVerification,
+  completedScheduledWindowCount: number,
   promptState: ReviewPromptState,
   nowMs: number,
 ): boolean {
@@ -50,6 +62,7 @@ export function shouldShowReviewPrompt(
     verification.level === 'ready' &&
     verification.blockCount > 0 &&
     verification.activeBlockCount === 0 &&
+    completedScheduledWindowCount >= MINIMUM_COMPLETED_WINDOWS &&
     verification.missingDeviceSelectionCount === 0 &&
     verification.unsupportedEnabledBlockCount === 0
   );

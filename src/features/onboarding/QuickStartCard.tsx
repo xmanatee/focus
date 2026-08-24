@@ -49,7 +49,7 @@ export function QuickStartCard({
   onPrimary,
   phase,
   isPrimaryLoading = false,
-}: QuickStartCardProps): JSX.Element {
+}: QuickStartCardProps): React.JSX.Element {
   const copy = copyForPhase(phase);
 
   return (

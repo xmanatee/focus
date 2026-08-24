@@ -10,18 +10,17 @@ import java.util.Calendar
 class FocusAccessibilityService : AccessibilityService() {
   private val handler = Handler(Looper.getMainLooper())
   private var lastForegroundPackage: String? = null
-  private var lastBlockedPackage: String? = null
-  private var lastBlockedAtMillis: Long = 0
 
   private val guard = object : Runnable {
     override fun run() {
       lastForegroundPackage?.let(::blockIfNeeded)
-      handler.postDelayed(this, GUARD_INTERVAL_MS)
+      handler.postDelayed(this, millisUntilNextMinute())
     }
   }
 
   override fun onServiceConnected() {
     super.onServiceConnected()
+    handler.removeCallbacks(guard)
     handler.post(guard)
   }
 
@@ -47,29 +46,19 @@ class FocusAccessibilityService : AccessibilityService() {
       Calendar.getInstance(),
     ) ?: return
 
-    val now = System.currentTimeMillis()
-    if (
-      packageName == lastBlockedPackage &&
-      now - lastBlockedAtMillis < BLOCK_LAUNCH_THROTTLE_MS
-    ) {
-      return
-    }
-    lastBlockedPackage = packageName
-    lastBlockedAtMillis = now
+    if (BlockedActivity.ownsForeground) return
+    BlockedActivity.markLaunchRequested()
 
-    performGlobalAction(GLOBAL_ACTION_HOME)
     val intent = Intent(this, BlockedActivity::class.java)
       .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
       .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
       .putExtra(BlockedActivity.EXTRA_BLOCK_NAME, block.name)
     startActivity(intent)
   }
-
-  companion object {
-    private const val GUARD_INTERVAL_MS = 15_000L
-    private const val BLOCK_LAUNCH_THROTTLE_MS = 2_000L
-  }
 }
+
+internal fun millisUntilNextMinute(nowMillis: Long = System.currentTimeMillis()): Long =
+  60_000L - nowMillis % 60_000L
 
 private fun AccessibilityEvent.isForegroundWindowEvent(): Boolean =
   eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||

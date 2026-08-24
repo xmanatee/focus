@@ -30,7 +30,7 @@ export function BlockFormCard({
   onToggleDay,
   showTimeRange = true,
   disabled = false,
-}: BlockFormCardProps): JSX.Element {
+}: BlockFormCardProps): React.JSX.Element {
   const colors = useThemeColors();
 
   return (

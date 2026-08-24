@@ -1,8 +1,7 @@
 import React from 'react';
-import TestRenderer from 'react-test-renderer';
 import { describe, expect, it, vi } from 'vitest';
 import { focusBlockInput } from '../../../test-helpers/focusBlockFixtures';
-import { collectText } from '../../../test-helpers/reactTest';
+import { collectText, renderTestRoot } from '../../../test-helpers/reactTest';
 import { FocusBlockRow } from './FocusBlockRow';
 
 type MockProps = Record<string, unknown> & {
@@ -37,7 +36,7 @@ vi.mock('../../../shared/design/theme', () => ({
 }));
 
 describe('FocusBlockRow', () => {
-  it('marks overnight schedules in the visible rule summary', () => {
+  it('marks overnight schedules in the visible rule summary', async () => {
     const block = {
       id: 'overnight',
       ...focusBlockInput({
@@ -47,7 +46,7 @@ describe('FocusBlockRow', () => {
       }),
     };
 
-    const tree = TestRenderer.create(
+    const tree = await renderTestRoot(
       React.createElement(FocusBlockRow, {
         block,
         isEnabled: true,
@@ -60,10 +59,10 @@ describe('FocusBlockRow', () => {
       }),
     );
 
-    expect(collectText(tree.root)).toContain('Mon · 22:00–06:00 next day');
+    expect(collectText(tree.container)).toContain('Mon · 22:00–06:00 next day');
   });
 
-  it('keeps synced app counts visible while this device still needs local selection', () => {
+  it('keeps synced app counts visible while this device still needs local selection', async () => {
     const block = {
       id: 'needs-local-selection',
       ...focusBlockInput({
@@ -80,7 +79,7 @@ describe('FocusBlockRow', () => {
       }),
     };
 
-    const tree = TestRenderer.create(
+    const tree = await renderTestRoot(
       React.createElement(FocusBlockRow, {
         block,
         isEnabled: true,
@@ -93,19 +92,19 @@ describe('FocusBlockRow', () => {
       }),
     );
 
-    const text = collectText(tree.root);
+    const text = collectText(tree.container);
     expect(text).toContain('Pick apps here');
     expect(text).toContain('1 site');
     expect(text).toContain('36 apps, 1 category, 4 domains');
   });
 
-  it('marks blocks that cannot run on this device runtime', () => {
+  it('marks blocks that cannot run on this device runtime', async () => {
     const block = {
       id: 'unsupported',
       ...focusBlockInput(),
     };
 
-    const tree = TestRenderer.create(
+    const tree = await renderTestRoot(
       React.createElement(FocusBlockRow, {
         block,
         isEnabled: true,
@@ -118,6 +117,6 @@ describe('FocusBlockRow', () => {
       }),
     );
 
-    expect(collectText(tree.root)).toContain('Unsupported here');
+    expect(collectText(tree.container)).toContain('Unsupported here');
   });
 });

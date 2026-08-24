@@ -17,7 +17,7 @@ export function FormActions({
   onSave,
   onDelete,
   onCancel,
-}: FormActionsProps): JSX.Element {
+}: FormActionsProps): React.JSX.Element {
   if (readOnly) {
     return (
       <View className="gap-3">

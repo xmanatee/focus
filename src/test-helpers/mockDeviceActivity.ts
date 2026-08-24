@@ -32,6 +32,7 @@ const deviceActivityState = vi.hoisted(() => ({
   activities: new Set<string>(),
   stoppedActivities: [] as string[][],
   cleanedActivities: [] as string[],
+  monitoringStartGates: [] as Promise<void>[],
 }));
 
 export const {
@@ -45,6 +46,16 @@ export const {
   cleanedActivities,
 } = deviceActivityState;
 
+export function deferNextMonitoringStart(): () => void {
+  let release = (): void => undefined;
+  deviceActivityState.monitoringStartGates.push(
+    new Promise<void>((resolve) => {
+      release = resolve;
+    }),
+  );
+  return release;
+}
+
 export function resetDeviceActivityMock(): void {
   slotStore.clear();
   configuredActions.length = 0;
@@ -54,6 +65,7 @@ export function resetDeviceActivityMock(): void {
   activities.clear();
   stoppedActivities.length = 0;
   cleanedActivities.length = 0;
+  deviceActivityState.monitoringStartGates.length = 0;
   deviceActivityState.authorizationStatus = 0;
 }
 
@@ -100,11 +112,12 @@ vi.mock('react-native-device-activity', () => ({
       payload: { payload, triggeredBy },
     });
   },
-  startMonitoring: (
+  startMonitoring: async (
     activityName: string,
     schedule: unknown,
     events: readonly unknown[],
   ) => {
+    await deviceActivityState.monitoringStartGates.shift();
     deviceActivityState.activities.add(activityName);
     deviceActivityState.monitoringCalls.push({
       activityName,

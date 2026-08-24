@@ -1,72 +1,23 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  configuredActions,
-  eventRecords,
+  deferNextMonitoringStart,
   manualActions,
   monitoringCalls,
   resetDeviceActivityMock,
   slotStore,
 } from '../../test-helpers/mockDeviceActivity';
+import { storageMap } from '../../test-helpers/mockPersistedStorage';
+import {
+  configuredActionsFor,
+  runtimeBlock,
+  savedSelection,
+} from '../../test-helpers/schedulerFixtures';
 import { reconcileFocusBlocks } from './scheduler';
-import type { RuntimeFocusBlock } from './types';
-
-function savedSelection(
-  webDomains: readonly string[] = [],
-): RuntimeFocusBlock['selection'] {
-  return {
-    activitySelection: {
-      status: 'saved',
-      applicationCount: 1,
-      categoryCount: 0,
-      webDomainCount: 0,
-      includeEntireCategory: true,
-    },
-    webDomains,
-  };
-}
-
-function block(overrides: Partial<RuntimeFocusBlock>): RuntimeFocusBlock {
-  return {
-    id: 'block',
-    name: 'Block',
-    startTime: '09:00',
-    endTime: '17:00',
-    days: ['mon'],
-    isEnabled: true,
-    selection: savedSelection(),
-    notifyOnStart: false,
-    notifyOnEnd: false,
-    strict: false,
-    rule: { kind: 'blockDuringSchedule' },
-    ...overrides,
-  };
-}
-
-const BUDGET_WEB_ACTIVITY = 'focusblocks.budget.budget-web.mon';
-
-function budgetWebBlock(
-  webDomains: readonly string[] = ['youtube.com'],
-): RuntimeFocusBlock {
-  return block({
-    id: 'budget-web',
-    rule: { kind: 'dailyBudget', minutes: 10 },
-    selection: savedSelection(webDomains),
-  });
-}
-
-function actionsFor(activityName: string, callbackName: string) {
-  const config = configuredActions.find(
-    (entry) =>
-      entry.activityName === activityName &&
-      entry.callbackName === callbackName,
-  );
-  expect(config).toBeDefined();
-  return config?.actions ?? [];
-}
 
 describe('reconcileFocusBlocks', () => {
   beforeEach(() => {
     resetDeviceActivityMock();
+    storageMap.clear();
   });
 
   it('recomputes the full active shield state at overlapping boundaries', async () => {
@@ -75,14 +26,14 @@ describe('reconcileFocusBlocks', () => {
 
     await reconcileFocusBlocks(
       [
-        block({
+        runtimeBlock({
           id: 'a',
           name: 'A',
           startTime: '09:00',
           endTime: '11:00',
           selection: savedSelection(['a.example']),
         }),
-        block({
+        runtimeBlock({
           id: 'b',
           name: 'B',
           startTime: '10:00',
@@ -94,7 +45,7 @@ describe('reconcileFocusBlocks', () => {
     );
 
     expect(
-      actionsFor('focusblocks.block.b.mon', 'intervalDidStart').map(
+      configuredActionsFor('focusblocks.block.b.mon', 'intervalDidStart').map(
         (action) => action.type,
       ),
     ).toEqual([
@@ -107,7 +58,7 @@ describe('reconcileFocusBlocks', () => {
     ]);
 
     expect(
-      actionsFor('focusblocks.block.a.mon', 'intervalDidEnd').map(
+      configuredActionsFor('focusblocks.block.a.mon', 'intervalDidEnd').map(
         (action) => action.type,
       ),
     ).toEqual([
@@ -119,24 +70,26 @@ describe('reconcileFocusBlocks', () => {
   });
 
   it('does not configure app block actions when synced metadata has no local selection slot', async () => {
-    await reconcileFocusBlocks([block({ id: 'synced' })], null);
+    await reconcileFocusBlocks([runtimeBlock({ id: 'synced' })], null);
 
     expect(
-      actionsFor('focusblocks.block.synced.mon', 'intervalDidStart').map(
-        (action) => action.type,
-      ),
+      configuredActionsFor(
+        'focusblocks.block.synced.mon',
+        'intervalDidStart',
+      ).map((action) => action.type),
     ).toEqual(['resetBlocks', 'clearWebContentFilterPolicy']);
   });
 
   it('configures app block actions when the local selection slot exists', async () => {
     slotStore.set('block.local', 'selection-local');
 
-    await reconcileFocusBlocks([block({ id: 'local' })], null);
+    await reconcileFocusBlocks([runtimeBlock({ id: 'local' })], null);
 
     expect(
-      actionsFor('focusblocks.block.local.mon', 'intervalDidStart').map(
-        (action) => action.type,
-      ),
+      configuredActionsFor(
+        'focusblocks.block.local.mon',
+        'intervalDidStart',
+      ).map((action) => action.type),
     ).toEqual(['resetBlocks', 'clearWebContentFilterPolicy', 'blockSelection']);
   });
 
@@ -144,7 +97,7 @@ describe('reconcileFocusBlocks', () => {
     slotStore.set('block.local', 'selection-local');
 
     await reconcileFocusBlocks(
-      [block({ id: 'local' })],
+      [runtimeBlock({ id: 'local' })],
       null,
       new Date('2026-04-27T10:00:00'),
     );
@@ -156,143 +109,56 @@ describe('reconcileFocusBlocks', () => {
     ]);
   });
 
-  it('configures daily budget monitors with past activity included', async () => {
-    slotStore.set('block.budget', 'selection-budget');
+  it('keeps unchanged native monitors instead of restarting them', async () => {
+    const focusBlock = runtimeBlock({ id: 'stable' });
 
+    await reconcileFocusBlocks([focusBlock], null);
+    await reconcileFocusBlocks([focusBlock], null);
+
+    expect(monitoringCalls).toHaveLength(1);
+  });
+
+  it('replaces a native monitor when its plan changes', async () => {
+    await reconcileFocusBlocks([runtimeBlock({ id: 'changed' })], null);
     await reconcileFocusBlocks(
-      [
-        block({
-          id: 'budget',
-          rule: { kind: 'dailyBudget', minutes: 10 },
-        }),
-      ],
+      [runtimeBlock({ id: 'changed', endTime: '18:00' })],
       null,
     );
 
-    expect(monitoringCalls).toEqual([
-      {
-        activityName: 'focusblocks.budget.budget.mon',
-        schedule: {
-          intervalStart: { hour: 0, minute: 0, weekday: 2 },
-          intervalEnd: { hour: 0, minute: 0, weekday: 3 },
-          repeats: true,
-          warningTime: { minute: 5 },
-        },
-        events: [
-          {
-            eventName: 'limit',
-            familyActivitySelection: 'selection-budget',
-            threshold: { minute: 10 },
-            includesPastActivity: true,
-          },
-        ],
-      },
-    ]);
-
-    expect(
-      actionsFor('focusblocks.budget.budget.mon', 'eventDidReachThreshold').map(
-        (action) => action.type,
-      ),
-    ).toEqual(['blockSelection']);
-
-    expect(
-      actionsFor('focusblocks.budget.budget.mon', 'intervalDidEnd').map(
-        (action) => action.type,
-      ),
-    ).toEqual(['resetBlocks', 'clearWebContentFilterPolicy']);
+    expect(monitoringCalls).toHaveLength(2);
+    expect(monitoringCalls[1]?.schedule).toEqual(
+      expect.objectContaining({
+        intervalEnd: { hour: 18, minute: 0, weekday: 2 },
+      }),
+    );
   });
 
-  it('configures a pre-limit warning notification for larger daily budgets', async () => {
-    slotStore.set('block.budget', 'selection-budget');
+  it('serializes concurrent reconciliations so the newest state wins', async () => {
+    slotStore.set('block.first', 'selection-first');
+    slotStore.set('block.latest', 'selection-latest');
+    const releaseFirst = deferNextMonitoringStart();
 
-    await reconcileFocusBlocks(
-      [
-        block({
-          id: 'budget',
-          rule: { kind: 'dailyBudget', minutes: 15 },
-        }),
-      ],
-      null,
-    );
-
-    expect(monitoringCalls[0].schedule).toEqual(
-      expect.objectContaining({ warningTime: { minute: 5 } }),
-    );
-    expect(
-      actionsFor(
-        'focusblocks.budget.budget.mon',
-        'eventWillReachThresholdWarning',
-      ).map((action) => action.type),
-    ).toEqual(['sendNotification']);
-  });
-
-  it('adds website domains when a budget threshold fires', async () => {
-    slotStore.set('block.budget-web', 'selection-budget-web');
-
-    await reconcileFocusBlocks(
-      [budgetWebBlock(['youtube.com', 'm.youtube.com'])],
-      null,
-    );
-
-    expect(
-      actionsFor(BUDGET_WEB_ACTIVITY, 'eventDidReachThreshold').map(
-        (action) => action.type,
-      ),
-    ).toEqual(['blockSelection', 'addWebContentFilterDomains']);
-  });
-
-  it('reapplies budget website blocking during current-state reconcile', async () => {
-    slotStore.set('block.budget-web', 'selection-budget-web');
-    eventRecords.push(
-      {
-        activityName: BUDGET_WEB_ACTIVITY,
-        callbackName: 'intervalDidStart',
-        lastCalledAt: 100,
-      },
-      {
-        activityName: BUDGET_WEB_ACTIVITY,
-        callbackName: 'eventDidReachThreshold',
-        eventName: 'limit',
-        lastCalledAt: 200,
-      },
-    );
-
-    await reconcileFocusBlocks(
-      [budgetWebBlock()],
+    const first = reconcileFocusBlocks(
+      [runtimeBlock({ id: 'first' })],
       null,
       new Date('2026-04-27T10:00:00'),
     );
+    await Promise.resolve();
 
-    expect(manualActions.map((action) => action.type)).toEqual([
-      'resetBlocks',
-      'blockSelection',
-      'clearWebContentFilterPolicy',
-      'setWebContentFilterPolicy',
-    ]);
-    expect(manualActions[3]?.payload).toEqual({
-      payload: { type: 'specific', domains: ['youtube.com'] },
+    const latest = reconcileFocusBlocks(
+      [runtimeBlock({ id: 'latest' })],
+      null,
+      new Date('2026-04-27T10:00:00'),
+    );
+    releaseFirst();
+    await Promise.all([first, latest]);
+
+    const appliedSelections = manualActions.filter(
+      (action) => action.type === 'blockSelection',
+    );
+    expect(appliedSelections.at(-1)?.payload).toEqual({
+      payload: { activitySelectionId: 'block.latest' },
       triggeredBy: 'focusblocks current-state reconcile',
     });
-  });
-
-  it('does not reapply budget website blocking from a threshold without an interval start', async () => {
-    slotStore.set('block.budget-web', 'selection-budget-web');
-    eventRecords.push({
-      activityName: BUDGET_WEB_ACTIVITY,
-      callbackName: 'eventDidReachThreshold',
-      eventName: 'limit',
-      lastCalledAt: 200,
-    });
-
-    await reconcileFocusBlocks(
-      [budgetWebBlock()],
-      null,
-      new Date('2026-04-27T10:00:00'),
-    );
-
-    expect(manualActions.map((action) => action.type)).toEqual([
-      'resetBlocks',
-      'clearWebContentFilterPolicy',
-    ]);
   });
 });

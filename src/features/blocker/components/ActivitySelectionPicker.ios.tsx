@@ -10,7 +10,7 @@ interface ActivitySelectionPickerProps {
 
 export function ActivitySelectionPicker(
   props: ActivitySelectionPickerProps,
-): JSX.Element {
+): React.JSX.Element {
   return (
     <DeviceActivitySelectionSheetViewPersisted
       familyActivitySelectionId={props.familyActivitySelectionId}

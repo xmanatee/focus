@@ -24,7 +24,7 @@ const NEXT: Record<WizardStep, WizardStep> = {
   confirm: 'confirm',
 };
 
-export default function ProtectionWizardScreen(): JSX.Element {
+export default function ProtectionWizardScreen(): React.JSX.Element {
   const onClose = useDismiss();
   const setup = useTamperSetupStore((s) => s.setup);
   const markIntroSeen = useTamperSetupStore((s) => s.markIntroSeen);

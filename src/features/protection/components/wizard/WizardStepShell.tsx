@@ -16,7 +16,7 @@ export function WizardStepShell({
   title,
   onClose,
   children,
-}: WizardStepShellProps): JSX.Element {
+}: WizardStepShellProps): React.JSX.Element {
   return (
     <Screen padded={false} edges={['bottom']} edgeEffect="soft">
       <ScrollView

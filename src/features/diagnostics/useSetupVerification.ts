@@ -1,18 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useCurrentMinute } from '../../shared/hooks/useCurrentMinute';
 import { evaluateSetupVerification } from './diagnostics';
 import type { SetupVerification } from './diagnostics';
 import { useDiagnosticsSnapshot } from './useDiagnosticsSnapshot';
 
-const TICK_MS = 15_000;
-
 export function useSetupVerification(): SetupVerification {
   const snapshot = useDiagnosticsSnapshot();
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), TICK_MS);
-    return () => clearInterval(interval);
-  }, []);
+  const now = useCurrentMinute();
 
   return useMemo(
     () => evaluateSetupVerification({ ...snapshot, now }),

@@ -1,3 +1,8 @@
 <resources>
   <color name="splashscreen_background">#1A1510</color>
+  <color name="focus_surface">#1A1510</color>
+  <color name="focus_ink">#FFF4E7</color>
+  <color name="focus_muted">#C9B9A7</color>
+  <color name="focus_signal">#FF8A47</color>
+  <color name="focus_on_signal">#1A1510</color>
 </resources>

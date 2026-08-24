@@ -27,7 +27,7 @@ export function Card({
   disabled = false,
   className = '',
   children,
-}: CardProps): JSX.Element {
+}: CardProps): React.JSX.Element {
   const classes = `${BASE} ${toneClasses[tone]} ${
     disabled ? 'opacity-50' : ''
   } ${className}`;

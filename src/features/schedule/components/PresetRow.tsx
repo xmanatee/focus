@@ -23,7 +23,7 @@ export function PresetRow({
   onSelect,
   onLongPress,
   disabled = false,
-}: PresetRowProps): JSX.Element {
+}: PresetRowProps): React.JSX.Element {
   return (
     <Section title="Presets">
       <View className="gap-2">

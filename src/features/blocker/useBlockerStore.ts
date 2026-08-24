@@ -4,6 +4,7 @@ import {
   type AuthorizationStatus,
   BlockerBridge,
 } from '../../bridge/BlockerBridge';
+import { errorMessage } from '../../shared/errors';
 
 type BusyState = 'idle' | 'authorizing';
 
@@ -71,6 +72,9 @@ export const useBlockerStore = create<BlockerState>()((set) => ({
           : await BlockerBridge.refreshAuthorizationStatus(),
       });
       return granted;
+    } catch (error) {
+      Alert.alert('Could not request blocking access', errorMessage(error));
+      return false;
     } finally {
       set({ busyState: 'idle' });
     }
@@ -78,9 +82,5 @@ export const useBlockerStore = create<BlockerState>()((set) => ({
 }));
 
 BlockerBridge.subscribeToAuthorizationStatus((status) => {
-  useBlockerStore.setState({ authorizationStatus: status });
-});
-
-void BlockerBridge.refreshAuthorizationStatus().then((status) => {
   useBlockerStore.setState({ authorizationStatus: status });
 });

@@ -33,13 +33,17 @@ export function resolveAdminState(
     return { kind: 'unlocked', reason: 'disabled-on-device' };
   }
 
-  const asFocusBlock = { ...setupBlock, isEnabled: true };
+  const editWindow = {
+    ...setupBlock,
+    isEnabled: true,
+    rule: { kind: 'blockDuringSchedule' } as const,
+  };
 
-  if (isFocusBlockActiveAt(asFocusBlock, now)) {
+  if (isFocusBlockActiveAt(editWindow, now)) {
     return { kind: 'unlocked', reason: 'inside-block' };
   }
 
-  const next = nextStartAfter(asFocusBlock, now);
+  const next = nextStartAfter(editWindow, now);
   return {
     kind: 'locked',
     nextUnlock: next,

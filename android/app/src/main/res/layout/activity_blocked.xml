@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:gravity="center"
+  android:orientation="vertical"
+  android:paddingHorizontal="32dp"
+  android:paddingVertical="48dp">
+
+  <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:text="@string/blocked_title"
+    android:textColor="@color/focus_ink"
+    android:textSize="34sp"
+    android:textStyle="bold"/>
+
+  <TextView
+    android:id="@+id/blocked_message"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:ellipsize="end"
+    android:gravity="center"
+    android:maxLines="3"
+    android:textColor="@color/focus_muted"
+    android:textSize="18sp"/>
+
+  <Button
+    android:id="@+id/back_to_focus"
+    android:layout_width="wrap_content"
+    android:layout_height="56dp"
+    android:layout_marginTop="28dp"
+    android:background="@drawable/blocked_button_background"
+    android:minWidth="220dp"
+    android:paddingHorizontal="24dp"
+    android:stateListAnimator="@null"
+    android:text="@string/back_to_focus"
+    android:textAllCaps="false"
+    android:textColor="@color/focus_on_signal"
+    android:textSize="17sp"
+    android:textStyle="bold"/>
+</LinearLayout>

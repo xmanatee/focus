@@ -30,9 +30,11 @@ export interface BlockingCapabilities {
   readonly authorizationDisclosure: BlockingAccessDisclosure | null;
   readonly authorizationAccessName: string;
   readonly authorizationRequestBody: string;
+  readonly canReconcileWithoutAuthorization: boolean;
   readonly deniedAuthorizationDetail: string;
   readonly deniedAuthorizationAction: 'appSettings' | 'authorizationSettings';
   readonly finishDeviceBody: string;
+  readonly maxScheduledMonitors: number | null;
   readonly selectionTitle: string;
   readonly runtimeKind: 'deviceActivity' | 'androidAccessibility';
   readonly supportsAppCategories: boolean;
@@ -94,11 +96,11 @@ export interface DeviceActivityModule {
 }
 
 export interface AndroidBlockerModule {
-  readonly initialAuthorizationStatus?: AuthorizationStatus;
+  readonly initialAuthorizationStatus: AuthorizationStatus;
+  readonly getAuthorizationStatus: () => AuthorizationStatus;
   readonly getSelectionSlotValue: (slotId: string) => string | undefined;
   readonly listSelectableApplications: () => Promise<SelectableApplication[]>;
   readonly reconcileRuntimeBlocks: (payload: string) => Promise<void>;
-  readonly refreshAuthorizationStatus: () => Promise<AuthorizationStatus>;
   readonly requestAuthorization: () => Promise<boolean>;
   readonly setSelectionSlotValue: (slotId: string, value: string) => boolean;
 }
@@ -115,9 +117,6 @@ export interface IBlockerBridge {
   getActivityEvents(activityName: string): readonly NativeActivityEventRecord[];
   getSelectionSlotValue(slotId: string): string | undefined;
   listSelectableApplications(): Promise<readonly SelectableApplication[]>;
-  reconcileRuntimeBlocks(
-    blocks: readonly RuntimeFocusBlock[],
-    generatedAt: Date,
-  ): Promise<void>;
+  reconcileRuntimeBlocks(blocks: readonly RuntimeFocusBlock[]): Promise<void>;
   setSelectionSlotValue(slotId: string, value: string | undefined): void;
 }

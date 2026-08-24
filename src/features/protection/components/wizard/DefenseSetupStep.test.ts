@@ -1,7 +1,7 @@
-import React from 'react';
-import TestRenderer, { act } from 'react-test-renderer';
+import React, { act } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { storageMap } from '../../../../test-helpers/mockPersistedStorage';
+import { findOne, renderTestRoot } from '../../../../test-helpers/reactTest';
 import { useTamperSetupStore } from '../../useTamperSetupStore';
 import { DefenseSetupStep } from './DefenseSetupStep';
 
@@ -57,8 +57,8 @@ function resetStore(): void {
 describe('DefenseSetupStep', () => {
   beforeEach(resetStore);
 
-  it('keeps continue disabled until the defense has been confirmed', () => {
-    const tree = TestRenderer.create(
+  it('keeps continue disabled until the defense has been confirmed', async () => {
+    const tree = await renderTestRoot(
       React.createElement(DefenseSetupStep, {
         defense: 'screenTimeLock',
         step: 2,
@@ -67,15 +67,18 @@ describe('DefenseSetupStep', () => {
       }),
     );
 
-    const continueButton = tree.root
-      .findAll((node) => node.props.testType === 'button')
-      .find((node) => node.props.title === 'Continue');
+    const continueButton = findOne(
+      tree,
+      (node) =>
+        node.props.testType === 'button' && node.props.title === 'Continue',
+      'Continue button',
+    );
 
-    expect(continueButton?.props.disabled).toBe(true);
+    expect(continueButton.props.disabled).toBe(true);
 
     act(() => {
       useTamperSetupStore.getState().toggle('screenTimeLock');
-      tree.update(
+      tree.render(
         React.createElement(DefenseSetupStep, {
           defense: 'screenTimeLock',
           step: 2,
@@ -85,10 +88,13 @@ describe('DefenseSetupStep', () => {
       );
     });
 
-    const enabledContinueButton = tree.root
-      .findAll((node) => node.props.testType === 'button')
-      .find((node) => node.props.title === 'Continue');
+    const enabledContinueButton = findOne(
+      tree,
+      (node) =>
+        node.props.testType === 'button' && node.props.title === 'Continue',
+      'Continue button',
+    );
 
-    expect(enabledContinueButton?.props.disabled).toBe(false);
+    expect(enabledContinueButton.props.disabled).toBe(false);
   });
 });

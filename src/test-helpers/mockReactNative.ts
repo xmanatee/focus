@@ -1,6 +1,8 @@
 import React from 'react';
 import { vi } from 'vitest';
 
+Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+
 type MockProps = Record<string, unknown> & {
   readonly children?: React.ReactNode;
 };
@@ -14,7 +16,13 @@ vi.mock('react-native', () => ({
   AppState: {
     addEventListener: () => ({ remove: vi.fn() }),
   },
-  FlatList: ({ data, renderItem, ListEmptyComponent, ...props }: MockProps) => {
+  FlatList: ({
+    data,
+    renderItem,
+    keyExtractor,
+    ListEmptyComponent,
+    ...props
+  }: MockProps) => {
     const render = renderItem as
       | ((args: {
           item: unknown;
@@ -22,9 +30,19 @@ vi.mock('react-native', () => ({
           separators: object;
         }) => React.ReactNode)
       | undefined;
+    const getKey = keyExtractor as
+      | ((item: unknown, index: number) => string)
+      | undefined;
     const children =
       Array.isArray(data) && data.length > 0 && render
-        ? data.map((item, index) => render({ item, index, separators: {} }))
+        ? data.map((item, index) => {
+            const child = render({ item, index, separators: {} });
+            return React.isValidElement(child)
+              ? React.cloneElement(child, {
+                  key: getKey?.(item, index) ?? String(index),
+                })
+              : child;
+          })
         : (ListEmptyComponent as React.ReactNode);
     return React.createElement('FlatList', props, children);
   },

@@ -17,7 +17,7 @@ export function NotificationsCard({
   onChangeStart,
   onChangeEnd,
   disabled = false,
-}: NotificationsCardProps): JSX.Element {
+}: NotificationsCardProps): React.JSX.Element {
   return (
     <Section title="Notifications">
       <Card>

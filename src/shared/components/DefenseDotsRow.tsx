@@ -5,7 +5,9 @@ interface DefenseDotsRowProps {
   readonly defenses: ProtectionPosture['defenses'];
 }
 
-export function DefenseDotsRow({ defenses }: DefenseDotsRowProps): JSX.Element {
+export function DefenseDotsRow({
+  defenses,
+}: DefenseDotsRowProps): React.JSX.Element {
   return (
     <View className="flex-row gap-1.5">
       {defenses.map((d) => (

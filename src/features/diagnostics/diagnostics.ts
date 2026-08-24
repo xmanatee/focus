@@ -50,16 +50,19 @@ export function setupActionForCheck(
 }
 
 export interface DiagnosticsInput {
-  readonly appVersion?: string;
   readonly authorizationStatus: AuthorizationStatus;
   readonly enabledBlockIds: readonly string[];
   readonly focusBlocks: readonly FocusBlock[];
-  readonly generatedAt?: Date;
   readonly now: Date;
   readonly populatedSelectionSlots: ReadonlySet<string>;
   readonly posture: ProtectionPosture;
   readonly setupBlock: SetupBlock | null;
   readonly setupBlockEnabledOnDevice: boolean;
+}
+
+interface DiagnosticsReportInput extends DiagnosticsInput {
+  readonly appVersion: string;
+  readonly generatedAt: Date;
 }
 
 export interface SetupVerification {
@@ -222,18 +225,16 @@ function diagnosticsLockInState(input: DiagnosticsInput): string {
   return 'editableAlways';
 }
 
-export function buildDiagnosticsReport(input: DiagnosticsInput): string {
-  const generatedAt = input.generatedAt ?? new Date();
+export function buildDiagnosticsReport(input: DiagnosticsReportInput): string {
   const verification = evaluateSetupVerification(input);
   const lines = [
     'Focus Blocks Diagnostics',
-    `Generated: ${generatedAt.toISOString()}`,
-    `Version: ${input.appVersion ?? 'unknown'}`,
+    `Generated: ${input.generatedAt.toISOString()}`,
+    `Version: ${input.appVersion}`,
     `${BlockerBridge.capabilities.authorizationAccessName}: ${input.authorizationStatus}`,
     `Protection: ${input.posture.score}`,
     `Lock-in: ${diagnosticsLockInState(input)}`,
-    `Blocks: ${input.focusBlocks.length}`,
-    `Synced blocks: ${verification.blockCount}`,
+    `Blocks: ${verification.blockCount}`,
     `Missing device selections: ${verification.missingDeviceSelectionCount}`,
     `Unsupported enabled blocks: ${verification.unsupportedEnabledBlockCount}`,
     '',

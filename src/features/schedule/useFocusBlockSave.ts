@@ -7,8 +7,11 @@ import {
 } from '../../shared/hooks/useAsyncAction';
 import { requestNotificationPermissions } from '../../shared/notifications';
 import { selectionHasBlockedTargets } from '../blocker/types';
+import type { SetupBlock } from '../settings/adminState';
 import { inputUsesBudgetWarning } from './budget';
 import { activitySelectionNeedsLocalSlot } from './localActivitySelection';
+import { focusBlocksRunnableLocally } from './localRuntime';
+import { assertRuntimeMonitorCapacity } from './runtimeCapacity';
 import type { FocusBlockInput } from './types';
 import { useBlockActivationStore } from './useBlockActivationStore';
 import { useFocusBlockStore } from './useFocusBlockStore';
@@ -19,6 +22,7 @@ interface UseFocusBlockSaveArgs {
   readonly newBlockId: string;
   readonly buildInput: () => FocusBlockInput | Promise<FocusBlockInput>;
   readonly markSelectionSaved: () => void;
+  readonly setupBlockForThisDevice: SetupBlock | null;
   readonly dismiss: () => void;
 }
 
@@ -35,12 +39,12 @@ export function useFocusBlockSave({
   newBlockId,
   buildInput,
   markSelectionSaved,
+  setupBlockForThisDevice,
   dismiss,
 }: UseFocusBlockSaveArgs): UseFocusBlockSaveResult {
   const addFocusBlock = useFocusBlockStore((s) => s.addFocusBlock);
   const updateFocusBlock = useFocusBlockStore((s) => s.updateFocusBlock);
   const deleteFocusBlock = useFocusBlockStore((s) => s.deleteFocusBlock);
-  const setBlockEnabled = useBlockActivationStore((s) => s.setBlockEnabled);
   const { error, isPending, run } = useAsyncAction();
 
   const save = async (): Promise<void> => {
@@ -59,6 +63,23 @@ export function useFocusBlockSave({
         throw new Error('Pick apps on this device before saving this block.');
       }
       validateFocusBlockInput(input);
+      const enabledBlockIds =
+        useBlockActivationStore.getState().enabledBlockIds;
+      if (editId !== null && enabledBlockIds.includes(editId)) {
+        const candidate = {
+          ...input,
+          id: editId,
+          name: input.name.trim(),
+        };
+        const currentFocusBlocks = useFocusBlockStore.getState().focusBlocks;
+        const nextFocusBlocks = currentFocusBlocks.map((block) =>
+          block.id === editId ? candidate : block,
+        );
+        assertRuntimeMonitorCapacity(
+          focusBlocksRunnableLocally(nextFocusBlocks, enabledBlockIds),
+          setupBlockForThisDevice,
+        );
+      }
       if (
         BlockerBridge.capabilities.supportsScheduleNotifications &&
         (input.notifyOnStart || input.notifyOnEnd)
@@ -77,10 +98,7 @@ export function useFocusBlockSave({
       }
       void haptic.commit();
       if (editId) updateFocusBlock(editId, input);
-      else {
-        addFocusBlock(newBlockId, input);
-        setBlockEnabled(newBlockId, true);
-      }
+      else addFocusBlock(newBlockId, input);
       markSelectionSaved();
     }, 'Could not save block.');
     if (success) dismiss();

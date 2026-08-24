@@ -1,31 +1,35 @@
 package love.nemi.focus
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.content.Intent
 import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
+import androidx.core.content.edit
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.module.annotations.ReactModule
 
+@ReactModule(name = FocusAndroidBlockerModule.NAME)
 class FocusAndroidBlockerModule(
   private val reactContext: ReactApplicationContext,
 ) : ReactContextBaseJavaModule(reactContext) {
-  override fun getName() = "FocusAndroidBlocker"
+  override fun getName() = NAME
 
   override fun getConstants(): MutableMap<String, Any> =
     mutableMapOf("initialAuthorizationStatus" to authorizationStatus())
 
   @ReactMethod
   fun requestAuthorization(promise: Promise) {
-    FocusBlockerStorage.prefs(reactContext)
-      .edit()
-      .putBoolean(AUTHORIZATION_REQUESTED_KEY, true)
-      .apply()
+    FocusBlockerStorage.prefs(reactContext).edit {
+      putBoolean(AUTHORIZATION_REQUESTED_KEY, true)
+    }
 
     val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-    val activity = currentActivity
+    val activity = reactContext.currentActivity
     if (activity != null) {
       activity.startActivity(intent)
     } else {
@@ -35,10 +39,8 @@ class FocusAndroidBlockerModule(
     promise.resolve(isAccessibilityEnabled())
   }
 
-  @ReactMethod
-  fun refreshAuthorizationStatus(promise: Promise) {
-    promise.resolve(authorizationStatus())
-  }
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  fun getAuthorizationStatus(): String = authorizationStatus()
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   fun getSelectionSlotValue(slotId: String): String? =
@@ -47,13 +49,13 @@ class FocusAndroidBlockerModule(
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   fun setSelectionSlotValue(slotId: String, value: String): Boolean {
-    val editor = FocusBlockerStorage.prefs(reactContext).edit()
-    if (value.isEmpty()) {
-      editor.remove(FocusBlockerStorage.slotKey(slotId))
-    } else {
-      editor.putString(FocusBlockerStorage.slotKey(slotId), value)
+    FocusBlockerStorage.prefs(reactContext).edit {
+      if (value.isEmpty()) {
+        remove(FocusBlockerStorage.slotKey(slotId))
+      } else {
+        putString(FocusBlockerStorage.slotKey(slotId), value)
+      }
     }
-    editor.apply()
     return true
   }
 
@@ -97,25 +99,18 @@ class FocusAndroidBlockerModule(
   }
 
   private fun isAccessibilityEnabled(): Boolean {
-    val enabled = Settings.Secure.getInt(
-      reactContext.contentResolver,
-      Settings.Secure.ACCESSIBILITY_ENABLED,
-      0,
-    ) == 1
-    if (!enabled) return false
-
-    val expected = ComponentName(
-      reactContext,
-      FocusAccessibilityService::class.java,
-    ).flattenToString()
-    val services = Settings.Secure.getString(
-      reactContext.contentResolver,
-      Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
-    ) ?: return false
-    return services.split(':').any { it.equals(expected, ignoreCase = true) }
+    val expected = ComponentName(reactContext, FocusAccessibilityService::class.java)
+    val manager = reactContext.getSystemService(AccessibilityManager::class.java)
+    return manager
+      .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+      .any { service ->
+        val info = service.resolveInfo.serviceInfo
+        ComponentName(info.packageName, info.name) == expected
+      }
   }
 
   companion object {
+    const val NAME = "FocusAndroidBlocker"
     private const val AUTHORIZATION_REQUESTED_KEY = "authorizationRequested"
   }
 }

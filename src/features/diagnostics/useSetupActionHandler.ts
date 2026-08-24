@@ -1,7 +1,7 @@
-import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 import { BlockerBridge } from '../../bridge/BlockerBridge';
+import { openAppSettings } from '../../shared/openAppSettings';
 import { useBlockerStore } from '../blocker/useBlockerStore';
 import type { SetupVerificationAction } from './diagnostics';
 
@@ -21,7 +21,7 @@ export function useSetupActionHandler(): (
             BlockerBridge.capabilities.deniedAuthorizationAction ===
               'appSettings'
           ) {
-            void Linking.openSettings();
+            openAppSettings();
           } else {
             void requestPermissions();
           }

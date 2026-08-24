@@ -35,7 +35,7 @@ export function BlockingCard({
   onAddDomain,
   onRemoveDomain,
   disabled = false,
-}: BlockingCardProps): JSX.Element {
+}: BlockingCardProps): React.JSX.Element {
   const colors = useThemeColors();
   const capabilities = BlockerBridge.capabilities;
   const hasReachedWebsiteLimit = webDomains.length >= MAX_WEB_DOMAINS;

@@ -1,0 +1,36 @@
+Focus Blocks helps you stay with the schedules you choose.
+
+Pick distracting apps, choose the days and times they should be blocked, and enable each block when you are ready. When a selected app opens during an active blocking period, Focus Blocks returns you to a clear blocked screen.
+
+SIMPLE SCHEDULED BLOCKING
+
+• Block selected apps during work, study, sleep, or digital-detox hours
+• Allow selected apps only inside a schedule
+• Create recurring rules for the days that matter
+• Keep every block off until you explicitly enable it on this device
+• See whether blocking access, app selection, and enabled rules are ready
+
+PRIVATE BY DEFAULT
+
+• No Focus Blocks account
+• No ads or analytics
+• No backend
+• Rules and app selections stay on this Android device
+• No iCloud sync on Android
+
+ANDROID ACCESSIBILITY USE
+
+Focus Blocks uses Android Accessibility as a core part of scheduled app blocking. After a separate in-app disclosure and your affirmative choice to continue, Android Settings lets you enable the Focus Blocks app blocking service.
+
+The service receives foreground window-change events, uses the foreground application identifier to compare the current app with the schedules you created, and opens the Focus Blocks blocked screen when a selected app is blocked.
+
+The service cannot retrieve window content. Focus Blocks does not read screen text, inspect the view hierarchy, capture keystrokes, take screenshots, perform gestures, change system settings, or sell or share Accessibility data. You can disable the service at any time in Android Accessibility settings.
+
+ANDROID FEATURE SCOPE
+
+The Android version currently supports scheduled blocking for individually selected apps. Daily usage budgets, app-category blocking, website blocking, schedule notifications, iCloud sync, and Lock-in protection are available only where explicitly shown in the app and are not part of Android blocking.
+
+Focus Blocks is self-directed and is not a parental-control or device-management product.
+
+Privacy policy: https://focus.nemi.love/privacy/
+Support: https://focus.nemi.love/support/

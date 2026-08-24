@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ScrollView, View } from 'react-native';
 import { BlockerBridge } from '../src/bridge/BlockerBridge';
 import { DiagnosticsCard } from '../src/features/diagnostics/components/DiagnosticsCard';
@@ -21,9 +21,8 @@ import { Screen } from '../src/shared/components/Screen';
 import { Section } from '../src/shared/components/Section';
 import { Typography } from '../src/shared/components/Typography';
 import { formatActiveDays } from '../src/shared/days';
+import { useCurrentMinute } from '../src/shared/hooks/useCurrentMinute';
 import { useDismiss } from '../src/shared/hooks/useDismiss';
-
-const TICK_MS = 15_000;
 
 function ruleLabel(block: FocusBlock): string {
   const schedule = `${formatActiveDays(block.days)} ${block.startTime}-${
@@ -67,7 +66,7 @@ function RuleDiagnosticRow({
   readonly now: Date;
   readonly selectionReady: boolean;
   readonly unsupportedReason: string | null;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <Card>
       <View className="flex-row items-start justify-between gap-3">
@@ -107,16 +106,11 @@ function RuleDiagnosticRow({
   );
 }
 
-export default function DiagnosticsScreen(): JSX.Element {
+export default function DiagnosticsScreen(): React.JSX.Element {
   const dismiss = useDismiss();
   const snapshot = useDiagnosticsSnapshot();
   const handleSetupAction = useSetupActionHandler();
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const interval = setInterval(() => setNow(new Date()), TICK_MS);
-    return () => clearInterval(interval);
-  }, []);
+  const now = useCurrentMinute();
 
   const verification = useMemo(
     () => evaluateSetupVerification({ ...snapshot, now }),
@@ -180,7 +174,7 @@ export default function DiagnosticsScreen(): JSX.Element {
           {snapshot.focusBlocks.length === 0 ? (
             <Card tone="dashed">
               <Typography variant="body" tone="muted" align="center">
-                No synced rules are available yet.
+                No rules are available yet.
               </Typography>
             </Card>
           ) : (

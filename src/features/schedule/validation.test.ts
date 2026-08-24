@@ -160,4 +160,45 @@ describe('validateFocusBlockInput', () => {
       ),
     ).toThrow(/50 websites/i);
   });
+
+  it('rejects unknown rule kinds at the domain boundary', () => {
+    const input = baseInput();
+    Reflect.set(input, 'rule', { kind: 'unknown' });
+
+    expect(() => validateFocusBlockInput(input)).toThrow(
+      /unsupported block rule/i,
+    );
+  });
+
+  it('rejects inconsistent saved selection metadata', () => {
+    expect(() =>
+      validateFocusBlockInput(
+        baseInput({
+          selection: {
+            activitySelection: {
+              status: 'saved',
+              applicationCount: 0,
+              categoryCount: 0,
+              webDomainCount: 0,
+              includeEntireCategory: true,
+            },
+            webDomains: [],
+          },
+        }),
+      ),
+    ).toThrow(/saved app selection/i);
+  });
+
+  it('rejects duplicate or non-canonical website domains', () => {
+    expect(() =>
+      validateFocusBlockInput(
+        baseInput({
+          selection: {
+            ...EMPTY_BLOCK_SELECTION,
+            webDomains: ['Example.com', 'example.com'],
+          },
+        }),
+      ),
+    ).toThrow(/canonical domains/i);
+  });
 });

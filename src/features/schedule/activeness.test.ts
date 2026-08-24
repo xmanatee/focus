@@ -14,6 +14,7 @@ const overnight = {
   startTime: '22:00',
   endTime: '06:00',
   isEnabled: true,
+  rule: { kind: 'blockDuringSchedule' } as const,
 };
 
 function at(iso: string): Date {
@@ -125,6 +126,15 @@ describe('nextStartAfter', () => {
   it('skips non-scheduled days', () => {
     const next = nextStartAfter(weekday, at('2026-04-25T10:00:00'));
     expect(next?.day).toBe('mon');
+  });
+
+  it('returns the same weekday next week when todays start has passed', () => {
+    const next = nextStartAfter(
+      { ...weekday, days: ['mon'] },
+      at('2026-04-27T10:00:00'),
+    );
+    expect(next?.day).toBe('mon');
+    expect(next?.at).toEqual(at('2026-05-04T09:00:00'));
   });
 
   it('returns null when block is disabled', () => {

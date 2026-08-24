@@ -1,8 +1,8 @@
-import DateTimePicker, {
+import {
+  DateTimePickerAndroid,
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-import { View } from 'react-native';
-import { useIsDark, useThemeColors } from '../design/theme';
+import { Pressable, View } from 'react-native';
 import { Typography } from './Typography';
 
 interface TimeRangePickerProps {
@@ -19,28 +19,19 @@ export function TimeRangePicker({
   onStartChange,
   onEndChange,
   disabled = false,
-}: TimeRangePickerProps): JSX.Element {
-  const colors = useThemeColors();
-  const isDark = useIsDark();
-
+}: TimeRangePickerProps): React.JSX.Element {
   return (
-    <View className="flex-row items-end justify-between">
+    <View className="flex-row gap-3">
       <Cell
         label="Starts"
-        align="start"
         value={start}
         onChange={onStartChange}
-        isDark={isDark}
-        inkColor={colors.ink}
         disabled={disabled}
       />
       <Cell
         label="Ends"
-        align="end"
         value={end}
         onChange={onEndChange}
-        isDark={isDark}
-        inkColor={colors.ink}
         disabled={disabled}
       />
     </View>
@@ -49,40 +40,50 @@ export function TimeRangePicker({
 
 function Cell({
   label,
-  align,
   value,
   onChange,
-  isDark,
-  inkColor,
   disabled,
 }: {
   label: string;
-  align: 'start' | 'end';
   value: Date;
   onChange: (next: Date) => void;
-  isDark: boolean;
-  inkColor: string;
   disabled: boolean;
-}): JSX.Element {
-  const handle = (_: DateTimePickerEvent, next: Date | undefined): void => {
-    if (next) onChange(next);
+}): React.JSX.Element {
+  const formatted = new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(value);
+
+  const open = (): void => {
+    DateTimePickerAndroid.open({
+      value,
+      mode: 'time',
+      display: 'default',
+      onChange: (event: DateTimePickerEvent, next: Date | undefined) => {
+        if (event.type === 'set' && next) onChange(next);
+      },
+    });
   };
-  const isStart = align === 'start';
+
   return (
-    <View className={`gap-2 ${isStart ? 'items-start' : 'items-end'}`}>
+    <View className="flex-1 gap-2">
       <Typography variant="label" tone="faint">
         {label}
       </Typography>
-      <DateTimePicker
-        accessibilityLabel={label}
-        value={value}
-        mode="time"
-        display="compact"
-        themeVariant={isDark ? 'dark' : 'light'}
-        onChange={handle}
+      <Pressable
+        accessibilityLabel={`${label}, ${formatted}`}
+        accessibilityRole="button"
+        accessibilityState={{ disabled }}
         disabled={disabled}
-        textColor={inkColor}
-      />
+        onPress={open}
+        className={`min-h-12 items-center justify-center rounded-xl bg-surface-sunken px-4 ${
+          disabled ? 'opacity-40' : ''
+        }`}
+      >
+        <Typography variant="body-md" tone="ink">
+          {formatted}
+        </Typography>
+      </Pressable>
     </View>
   );
 }

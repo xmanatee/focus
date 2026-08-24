@@ -3,5 +3,4 @@
   android:accessibilityFeedbackType="feedbackGeneric"
   android:canRetrieveWindowContent="false"
   android:description="@string/focus_accessibility_service_description"
-  android:isAccessibilityTool="false"
   android:notificationTimeout="100" />

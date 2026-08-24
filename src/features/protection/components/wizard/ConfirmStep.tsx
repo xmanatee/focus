@@ -9,7 +9,7 @@ interface ConfirmStepProps {
   readonly onClose: () => void;
 }
 
-export function ConfirmStep({ onClose }: ConfirmStepProps): JSX.Element {
+export function ConfirmStep({ onClose }: ConfirmStepProps): React.JSX.Element {
   return (
     <WizardStepShell
       step={4}

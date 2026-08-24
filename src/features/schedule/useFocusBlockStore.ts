@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { BlockerBridge } from '../../bridge/BlockerBridge';
 import { persistedStorage } from '../../shared/storage';
+import { isRecord } from '../../shared/validation';
 import { clearSlot } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
 import { assertAdminUnlocked } from '../settings/adminState';
@@ -30,8 +31,11 @@ function assertEditable(block: FocusBlock): void {
     block,
     useBlockActivationStore.getState().isBlockEnabled(block.id),
   );
-  if (getFocusBlockRuntimeStatus(blockOnThisDevice, now).kind === 'active') {
-    throw new Error('Cannot change a block while it is active.');
+  if (
+    block.strict &&
+    getFocusBlockRuntimeStatus(blockOnThisDevice, now).kind === 'active'
+  ) {
+    throw new Error('Cannot change a strict block while it is active.');
   }
   if (!blockOnThisDevice.isEnabled) {
     return;
@@ -66,10 +70,6 @@ interface PersistedFocusBlock {
   readonly strict: boolean;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
 function parsePersistedBlock(value: unknown): FocusBlock {
   if (!isRecord(value)) {
     throw new Error('Stored focus block is invalid.');
@@ -78,6 +78,7 @@ function parsePersistedBlock(value: unknown): FocusBlock {
   const block = value as Partial<PersistedFocusBlock>;
   if (
     typeof block.id !== 'string' ||
+    block.id.trim().length === 0 ||
     typeof block.name !== 'string' ||
     typeof block.startTime !== 'string' ||
     typeof block.endTime !== 'string' ||
@@ -118,9 +119,18 @@ function mergePersistedState(
   const persisted = state as {
     readonly focusBlocks?: readonly unknown[];
   };
+  if (!Array.isArray(persisted.focusBlocks)) {
+    throw new Error('Stored focus blocks are invalid.');
+  }
+  const focusBlocks = persisted.focusBlocks.map(parsePersistedBlock);
+  if (
+    new Set(focusBlocks.map((block) => block.id)).size !== focusBlocks.length
+  ) {
+    throw new Error('Stored focus block ids must be unique.');
+  }
   return {
     ...current,
-    focusBlocks: (persisted.focusBlocks ?? []).map(parsePersistedBlock),
+    focusBlocks,
   };
 }
 
@@ -130,6 +140,12 @@ export const useFocusBlockStore = create<FocusBlockState>()(
       focusBlocks: [],
 
       addFocusBlock: (id, input) => {
+        if (id.trim().length === 0) {
+          throw new Error('Focus block id is required.');
+        }
+        if (get().focusBlocks.some((block) => block.id === id)) {
+          throw new Error('Focus block id already exists.');
+        }
         const normalized = normalizeInput(input);
         validateFocusBlockInput(normalized);
         set((state) => ({
@@ -159,9 +175,10 @@ export const useFocusBlockStore = create<FocusBlockState>()(
 
       deleteFocusBlock: (id) => {
         const existing = get().focusBlocks.find((b) => b.id === id);
-        if (existing) {
-          assertEditable(existing);
+        if (!existing) {
+          throw new Error('Focus block not found.');
         }
+        assertEditable(existing);
         clearSlot(selectionIdForBlock(id));
         useBlockActivationStore.getState().setBlockEnabled(id, false);
         set((state) => ({

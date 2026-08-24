@@ -30,7 +30,7 @@ describe('resolveEditPolicy', () => {
     const policy = resolveEditPolicy(lockedState, null, now);
     expect(policy.readOnly).toBe(false);
     expect(policy.title).toBe('Lock-in is active');
-    expect(policy.message).toContain('You can add new blocks');
+    expect(policy.message).toContain('stay editable while off');
   });
 
   it('is read-only when editing an existing block and admin is locked', () => {
@@ -56,10 +56,20 @@ describe('resolveEditPolicy', () => {
     expect(policy.title).toBeNull();
   });
 
-  it('is read-only when block is active even if admin is unlocked', () => {
+  it('keeps a regular active block editable when admin is unlocked', () => {
     const policy = resolveEditPolicy(unlockedState, mockBlock, now);
+    expect(policy.readOnly).toBe(false);
+    expect(policy.title).toBeNull();
+  });
+
+  it('makes an active strict block read-only when admin is unlocked', () => {
+    const policy = resolveEditPolicy(
+      unlockedState,
+      { ...mockBlock, strict: true },
+      now,
+    );
     expect(policy.readOnly).toBe(true);
     expect(policy.title).toBe('Read-only');
-    expect(policy.message).toContain('active');
+    expect(policy.message).toContain('strict block is active');
   });
 });

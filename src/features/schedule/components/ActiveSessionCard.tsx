@@ -15,7 +15,7 @@ export function ActiveSessionCard({
   extraStatuses,
   now,
   status,
-}: ActiveSessionCardProps): JSX.Element {
+}: ActiveSessionCardProps): React.JSX.Element {
   const { block } = status;
 
   return (

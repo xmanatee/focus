@@ -55,7 +55,7 @@ export function useFocusBlockForm(
   );
   const [strict, setStrict] = useState<boolean>(existing?.strict ?? false);
   const [rule, setRule] = useState<FocusBlockRule>(
-    existing?.rule ?? { kind: 'blockDuringSchedule' },
+    existing ? existing.rule : { kind: 'blockDuringSchedule' },
   );
 
   const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);

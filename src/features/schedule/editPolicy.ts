@@ -20,7 +20,7 @@ export function resolveEditPolicy(
         readOnly: false,
         title: 'Lock-in is active',
         message:
-          'You can add new blocks, but they cannot be edited or removed until your next setup window.',
+          'You can add new blocks while Lock-in is active. They stay editable while off; once turned on, Lock-in protects them.',
       };
     }
     if (!existing.isEnabled) {
@@ -39,11 +39,11 @@ export function resolveEditPolicy(
     existing === null
       ? { kind: 'inactive' as const }
       : getFocusBlockRuntimeStatus(existing, now);
-  if (status.kind === 'active') {
+  if (status.kind === 'active' && existing?.strict) {
     return {
       readOnly: true,
       title: 'Read-only',
-      message: `This block is active. Editable ${formatRelative(
+      message: `This strict block is active. Editable ${formatRelative(
         status.endsAt,
         now,
       )}.`,

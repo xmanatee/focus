@@ -19,14 +19,6 @@ function reset(): void {
   useSettingsStore.setState({ setupBlock: null });
 }
 
-function focusBlockStorageKey(): string {
-  const name = useFocusBlockStore.persist.getOptions().name;
-  if (name === undefined) {
-    throw new Error('Focus block storage key is missing.');
-  }
-  return name;
-}
-
 describe('useFocusBlockStore', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -64,6 +56,21 @@ describe('useFocusBlockStore', () => {
         .addFocusBlock('id-1', focusBlockInput({ strict: true }));
       expect(useFocusBlockStore.getState().focusBlocks[0].strict).toBe(true);
     });
+
+    it('rejects duplicate block ids', () => {
+      const store = useFocusBlockStore.getState();
+      store.addFocusBlock('id-1', focusBlockInput());
+
+      expect(() => store.addFocusBlock('id-1', focusBlockInput())).toThrow(
+        /already exists/i,
+      );
+    });
+
+    it('rejects an empty block id', () => {
+      expect(() =>
+        useFocusBlockStore.getState().addFocusBlock(' ', focusBlockInput()),
+      ).toThrow(/id is required/i);
+    });
   });
 
   describe('updateFocusBlock', () => {
@@ -79,15 +86,33 @@ describe('useFocusBlockStore', () => {
       ).toThrow(/lock-in/i);
     });
 
-    it('rejects when the block is currently active', () => {
+    it('allows changing a regular block while it is active', () => {
       vi.setSystemTime(new Date('2026-04-27T12:00:00'));
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
       useBlockActivationStore.getState().setBlockEnabled('id-1', true);
+      useFocusBlockStore
+        .getState()
+        .updateFocusBlock('id-1', focusBlockInput({ name: 'Renamed' }));
+
+      expect(useFocusBlockStore.getState().focusBlocks[0].name).toBe('Renamed');
+    });
+
+    it('rejects changing a strict block while it is active', () => {
+      vi.setSystemTime(new Date('2026-04-27T12:00:00'));
+      useFocusBlockStore
+        .getState()
+        .addFocusBlock('id-1', focusBlockInput({ strict: true }));
+      useBlockActivationStore.getState().setBlockEnabled('id-1', true);
+
       expect(() =>
-        useFocusBlockStore
-          .getState()
-          .updateFocusBlock('id-1', focusBlockInput({ name: 'Renamed' })),
-      ).toThrow(/while it is active/i);
+        useFocusBlockStore.getState().updateFocusBlock(
+          'id-1',
+          focusBlockInput({
+            name: 'Renamed',
+            strict: true,
+          }),
+        ),
+      ).toThrow(/strict block while it is active/i);
     });
 
     it('allows update when unlocked and not active', () => {
@@ -165,6 +190,12 @@ describe('useFocusBlockStore', () => {
   });
 
   describe('deleteFocusBlock', () => {
+    it('rejects deleting a block that does not exist', () => {
+      expect(() =>
+        useFocusBlockStore.getState().deleteFocusBlock('missing'),
+      ).toThrow(/not found/i);
+    });
+
     it('rejects when admin is locked', () => {
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
       useBlockActivationStore.getState().setBlockEnabled('id-1', true);
@@ -195,62 +226,6 @@ describe('useFocusBlockStore', () => {
       store.clearAllStrict();
       const after = useFocusBlockStore.getState().focusBlocks;
       expect(after.every((b) => b.strict === false)).toBe(true);
-    });
-  });
-
-  describe('persisted state', () => {
-    function persistedBlock() {
-      return {
-        ...focusBlockInput(),
-        id: 'stored-block',
-        name: 'Stored block',
-      };
-    }
-
-    it('hydrates when no focus blocks have been stored yet', async () => {
-      await useFocusBlockStore.persist.rehydrate();
-
-      expect(useFocusBlockStore.persist.hasHydrated()).toBe(true);
-      expect(useFocusBlockStore.getState().focusBlocks).toEqual([]);
-    });
-
-    it('hydrates current explicit focus block data', async () => {
-      storageMap.set(
-        focusBlockStorageKey(),
-        JSON.stringify({
-          state: { focusBlocks: [persistedBlock()] },
-          version: 2,
-        }),
-      );
-
-      await useFocusBlockStore.persist.rehydrate();
-
-      expect(useFocusBlockStore.persist.hasHydrated()).toBe(true);
-      expect(useFocusBlockStore.getState().focusBlocks).toEqual([
-        persistedBlock(),
-      ]);
-    });
-
-    it('rejects persisted blocks without an explicit rule', async () => {
-      const consoleError = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => undefined);
-      const { rule: _rule, ...withoutRule } = persistedBlock();
-      storageMap.set(
-        focusBlockStorageKey(),
-        JSON.stringify({
-          state: { focusBlocks: [withoutRule] },
-          version: 2,
-        }),
-      );
-
-      try {
-        await useFocusBlockStore.persist.rehydrate();
-        expect(useFocusBlockStore.persist.hasHydrated()).toBe(false);
-        expect(useFocusBlockStore.getState().focusBlocks).toEqual([]);
-      } finally {
-        consoleError.mockRestore();
-      }
     });
   });
 });

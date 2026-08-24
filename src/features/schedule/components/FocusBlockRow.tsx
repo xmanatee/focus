@@ -27,7 +27,7 @@ export function FocusBlockRow({
   toggleDisabled,
   onPress,
   onToggle,
-}: FocusBlockRowProps): JSX.Element {
+}: FocusBlockRowProps): React.JSX.Element {
   const colors = useThemeColors();
   const { selection } = block;
   const showsActivitySelectionSummary =
@@ -119,7 +119,7 @@ function SelectionPill({
     | 'globe'
     | 'square.grid.2x2.fill';
   label: string;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <View className="bg-surface-sunken px-3 py-1.5 rounded-full flex-row items-center gap-2">
       <Icon name={icon} size={12} tone="muted" />

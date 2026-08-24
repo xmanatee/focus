@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useCurrentMinute } from '../../shared/hooks/useCurrentMinute';
 import { type AdminState, resolveAdminState } from './adminState';
 import { useSetupBlockDeviceStore } from './setupBlockDeviceStore';
 import { useSettingsStore } from './useSettingsStore';
-
-const TICK_MS = 15_000;
 
 interface AdminStateView {
   readonly isEnabledOnDevice: boolean;
@@ -16,14 +15,7 @@ export function useAdminState(): AdminStateView {
   const isEnabledOnDevice = useSetupBlockDeviceStore(
     (s) => s.isEnabledOnDevice,
   );
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(new Date());
-    }, TICK_MS);
-    return () => clearInterval(interval);
-  }, []);
+  const now = useCurrentMinute();
 
   return useMemo<AdminStateView>(
     () => ({

@@ -18,6 +18,7 @@ import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
 import { useThemeColors } from '../../../shared/design/theme';
+import { errorMessage } from '../../../shared/errors';
 import type { ActivitySelectionMetadata, SelectionSlotId } from '../types';
 
 interface ActivitySelectionPickerProps {
@@ -27,57 +28,89 @@ interface ActivitySelectionPickerProps {
   readonly onSelectionChange: (metadata: ActivitySelectionMetadata) => void;
 }
 
+type ApplicationLoadState =
+  | { readonly kind: 'loading' }
+  | {
+      readonly kind: 'ready';
+      readonly applications: readonly SelectableApplication[];
+    }
+  | { readonly kind: 'error'; readonly message: string };
+
 export function ActivitySelectionPicker({
   familyActivitySelectionId,
   onDismissRequest,
   onSelectionChange,
-}: ActivitySelectionPickerProps): JSX.Element {
+}: ActivitySelectionPickerProps): React.JSX.Element {
   const colors = useThemeColors();
-  const [applications, setApplications] = useState<
-    readonly SelectableApplication[]
-  >([]);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [storedApplications] = useState<readonly SelectableApplication[]>(() =>
+    parseSelectedApplications(
+      BlockerBridge.getSelectionSlotValue(familyActivitySelectionId),
+    ),
+  );
+  const [loadState, setLoadState] = useState<ApplicationLoadState>({
+    kind: 'loading',
+  });
   const [query, setQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
-    () =>
-      new Set(
-        parseSelectedApplications(
-          BlockerBridge.getSelectionSlotValue(familyActivitySelectionId),
-        ).map((app) => app.id),
-      ),
+    () => new Set(storedApplications.map((app) => app.id)),
   );
 
   useEffect(() => {
+    if (loadState.kind !== 'loading') return;
     let isCurrent = true;
     void BlockerBridge.listSelectableApplications().then(
       (items) => {
         if (!isCurrent) return;
-        setApplications(items);
-        setLoadError(null);
+        setLoadState({ kind: 'ready', applications: items });
       },
       (caught) => {
         if (!isCurrent) return;
-        setLoadError(caught instanceof Error ? caught.message : String(caught));
+        setLoadState({
+          kind: 'error',
+          message: errorMessage(caught),
+        });
       },
     );
     return () => {
       isCurrent = false;
     };
-  }, []);
+  }, [loadState.kind]);
+
+  const knownApplications = useMemo(() => {
+    const byId = new Map(
+      storedApplications.map((app) => [app.id, app] as const),
+    );
+    if (loadState.kind === 'ready') {
+      for (const app of loadState.applications) byId.set(app.id, app);
+    }
+    return [...byId.values()];
+  }, [loadState, storedApplications]);
+
+  const visibleApplications =
+    loadState.kind === 'ready' ? knownApplications : [];
+  const availableApplicationIds = useMemo(
+    () =>
+      new Set(
+        loadState.kind === 'ready'
+          ? loadState.applications.map((app) => app.id)
+          : [],
+      ),
+    [loadState],
+  );
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase();
-    if (normalized.length === 0) return applications;
-    return applications.filter(
+    if (normalized.length === 0) return visibleApplications;
+    return visibleApplications.filter(
       (app) =>
         app.name.toLocaleLowerCase().includes(normalized) ||
         app.id.toLocaleLowerCase().includes(normalized),
     );
-  }, [applications, query]);
+  }, [query, visibleApplications]);
 
   const selectedApplications = useMemo(
-    () => applications.filter((app) => selectedIds.has(app.id)),
-    [applications, selectedIds],
+    () => knownApplications.filter((app) => selectedIds.has(app.id)),
+    [knownApplications, selectedIds],
   );
 
   const toggleApp = (app: SelectableApplication): void => {
@@ -106,6 +139,7 @@ export function ActivitySelectionPicker({
 
   const renderItem: ListRenderItem<SelectableApplication> = ({ item }) => {
     const isSelected = selectedIds.has(item.id);
+    const isAvailable = availableApplicationIds.has(item.id);
     return (
       <Pressable
         accessibilityRole="checkbox"
@@ -123,7 +157,7 @@ export function ActivitySelectionPicker({
             {item.name}
           </Typography>
           <Typography variant="caption" tone="muted">
-            {item.id}
+            {isAvailable ? item.id : `${item.id} · Not currently installed`}
           </Typography>
         </View>
       </Pressable>
@@ -148,7 +182,7 @@ export function ActivitySelectionPicker({
           <Pressable
             accessibilityLabel="Close app picker"
             accessibilityRole="button"
-            hitSlop={12}
+            className="h-11 w-11 items-center justify-center"
             onPress={onDismissRequest}
           >
             <Icon name="xmark.circle.fill" size={28} tone="faint" />
@@ -175,14 +209,33 @@ export function ActivitySelectionPicker({
             keyboardShouldPersistTaps="handled"
             renderItem={renderItem}
             ListEmptyComponent={
-              <Typography variant="body" tone={loadError ? 'signal' : 'muted'}>
-                {loadError ?? 'No installed apps found.'}
+              <Typography
+                variant="body"
+                tone={loadState.kind === 'error' ? 'signal' : 'muted'}
+              >
+                {loadState.kind === 'loading'
+                  ? 'Loading installed apps...'
+                  : loadState.kind === 'error'
+                    ? loadState.message
+                    : 'No installed apps found.'}
               </Typography>
             }
           />
         </Card>
 
-        <Button title="Save apps" variant="commit" onPress={commit} />
+        {loadState.kind === 'error' ? (
+          <Button
+            title="Try again"
+            variant="ghost"
+            onPress={() => setLoadState({ kind: 'loading' })}
+          />
+        ) : null}
+        <Button
+          title="Save apps"
+          variant="commit"
+          disabled={loadState.kind !== 'ready'}
+          onPress={commit}
+        />
       </View>
     </Modal>
   );

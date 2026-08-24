@@ -1,10 +1,10 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons } from '@react-native-vector-icons/ionicons';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import type { ComponentProps } from 'react';
 import { type ThemeColors, useThemeColors } from '../design/theme';
 
 type IconTone = 'muted' | 'faint' | 'signal' | 'surface';
-type SymbolName = SymbolViewProps['name'];
+export type SymbolName = Extract<SymbolViewProps['name'], string>;
 type FallbackName = ComponentProps<typeof Ionicons>['name'];
 
 interface IconProps {
@@ -49,7 +49,7 @@ function resolveTone(tone: IconTone, colors: ThemeColors): string {
   }
 }
 
-export function Icon({ name, size, tone }: IconProps): JSX.Element {
+export function Icon({ name, size, tone }: IconProps): React.JSX.Element {
   const colors = useThemeColors();
   const color = resolveTone(tone, colors);
   const fallbackName = fallbackNameBySymbolName[name] ?? 'help-circle-outline';

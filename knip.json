@@ -1,14 +1,18 @@
 {
   "$schema": "./node_modules/knip/schema.json",
-  "ignoreFiles": [
+  "entry": [
+    "app/**/*.{ts,tsx}",
+    "scripts/**/*.{js,mjs}",
+    "src/**/*.android.{ts,tsx}",
+    "src/**/*.ios.{ts,tsx}",
     "babel.config.js",
     "metro.config.js",
-    "plugins/with-focusblocks-icloud.js",
-    "src/features/blocker/components/ActivitySelectionPicker.ios.tsx",
-    "site/*.css",
+    "plugins/*.js",
     "store.config.js",
     "targets/**/expo-target.config.js"
   ],
+  "ignoreFiles": ["site/*.css"],
+  "ignoreDependencies": ["chalk"],
   "ignoreIssues": {
     "app.json": ["unlisted"]
   },

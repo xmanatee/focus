@@ -14,7 +14,7 @@ export function DayPicker({
   selected,
   onToggle,
   disabled = false,
-}: DayPickerProps): JSX.Element {
+}: DayPickerProps): React.JSX.Element {
   return (
     <View className="flex-row justify-between">
       {DAYS.map((day) => {

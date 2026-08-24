@@ -43,7 +43,7 @@ export function SetupVerificationCard({
   readonly onAction?: (action: SetupVerificationAction) => void;
   readonly onOpenDetails?: () => void;
   readonly verification: SetupVerification;
-}): JSX.Element {
+}): React.JSX.Element {
   const tone = verification.level === 'ready' ? 'raised' : 'signal';
 
   return (

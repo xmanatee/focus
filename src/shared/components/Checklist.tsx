@@ -14,7 +14,10 @@ interface ChecklistProps {
   readonly onToggle: (id: string) => void;
 }
 
-export function Checklist({ items, onToggle }: ChecklistProps): JSX.Element {
+export function Checklist({
+  items,
+  onToggle,
+}: ChecklistProps): React.JSX.Element {
   return (
     <View className="gap-2">
       {items.map((item) => {

@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Privacy Policy - Focus Blocks</title>
-<meta name="description" content="Focus Blocks does not collect, transmit, or share personal data. No account, analytics, ads, backend, or third-party SDKs.">
+<meta name="description" content="How Focus Blocks handles app selections, Screen Time data, Android Accessibility events, local storage, and optional iCloud sync.">
 <meta name="theme-color" content="#F8F2E8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1A1510" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://focus.nemi.love/privacy/">
 <link rel="icon" href="/assets/focus-blocks-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Privacy Policy - Focus Blocks">
-<meta property="og:description" content="No account, analytics, ads, backend, or third-party SDKs. Rules can sync only through your own iCloud account.">
+<meta property="og:description" content="No account, analytics, ads, or backend. Blocking data stays on your device; iOS rules can optionally sync through your iCloud account.">
 <meta property="og:url" content="https://focus.nemi.love/privacy/">
 <meta property="og:image" content="https://focus.nemi.love/assets/focus-blocks-home.webp">
 <link rel="stylesheet" href="/styles.css">
@@ -34,16 +34,16 @@
   <main id="main" class="doc-page">
     <p class="eyebrow">Privacy Policy</p>
     <h1>Private by default.</h1>
-    <p class="lede">Effective date: 2026-06-05</p>
+    <p class="lede">Effective date: 2026-07-23</p>
 
     <div class="doc-card">
       <strong>Summary</strong>
-      <p>Focus Blocks does not collect, transmit, or share personal data. There is no account, no analytics, no ads, no backend, and no third-party SDKs.</p>
+      <p>Focus Blocks does not collect, transmit, sell, or share personal data. There is no account, analytics, advertising, or Focus Blocks backend.</p>
     </div>
 
     <h2>What data is handled</h2>
 
-    <h3>On your device</h3>
+    <h3>On iPhone and iPad</h3>
     <ul>
       <li><strong>App and category selections</strong> you choose through Apple's <code>FamilyActivityPicker</code>. These are stored locally and used only to decide what to shield.</li>
       <li><strong>Rules</strong> you create, including schedules, daily budgets, strict mode, and non-private selection metadata.</li>
@@ -51,34 +51,44 @@
     </ul>
     <p>Focus Blocks does not read, count, log, or transmit your app usage. Apple's Screen Time framework performs shielding on the operating-system side based on the rules you set.</p>
 
-    <h3>In your own iCloud</h3>
+    <h3>On Android</h3>
+    <ul>
+      <li><strong>Selected applications</strong>, including the package identifiers and labels you choose from the launchable apps installed on the device.</li>
+      <li><strong>Rules</strong> you create, including names, schedules, selected days, and whether each rule is enabled locally.</li>
+      <li><strong>Foreground application identifiers</strong> delivered by Android Accessibility window-change events. Focus Blocks compares the current identifier with your enabled rules on the device and opens its blocked screen when a rule applies.</li>
+    </ul>
+    <p>The Android Accessibility service cannot retrieve window content and does not read screen text, inspect the view hierarchy, capture keystrokes, take screenshots, perform gestures, or transmit Accessibility data. It uses foreground application identifiers only for the app-blocking action you configure. You can disable the service at any time in Android Accessibility settings.</p>
+
+    <h3>Optional iCloud sync on iOS</h3>
     <ul>
       <li>Your rules and preferences can be written to Apple's iCloud Key-Value Store, container <code>iCloud.love.nemi.focus</code>, so your setup is available on your own iPhone and iPad.</li>
       <li>Screen Time app selections do not sync as reusable app tokens. Each device stores its own private <code>FamilyActivitySelection</code> token after you confirm apps on that device.</li>
       <li>This data is stored in your iCloud account, under your Apple ID. The developer of Focus Blocks has no access to it, cannot read it, and cannot enumerate users.</li>
       <li>You can stop this sync by turning off iCloud Drive for Focus Blocks in <strong>Settings -> [your name] -> iCloud</strong>.</li>
     </ul>
+    <p>Android data is local and does not sync through iCloud.</p>
 
     <h2>What Focus Blocks never does</h2>
     <ul>
       <li>Does not create an account or require one.</li>
-      <li>Does not include analytics, crash reporters, advertising SDKs, or any third-party SDKs that transmit data.</li>
+      <li>Does not include analytics, crash-reporting, or advertising SDKs.</li>
       <li>Does not send data to our servers. There are no servers.</li>
       <li>Does not monitor or log which apps you use, when, or for how long.</li>
       <li>Does not manage other people's devices. Focus Blocks is self-directed, not parental control.</li>
     </ul>
 
     <h2>Children's privacy</h2>
-    <p>Focus Blocks is rated 4+ and safe for all ages. Because it does not collect data, it is designed to avoid collecting children's personal information.</p>
+    <p>Focus Blocks does not knowingly collect personal information from children or anyone else.</p>
 
     <h2>Security</h2>
-    <p>On-device data is protected by iOS app-sandbox and data-protection mechanisms. iCloud Key-Value sync is handled by Apple.</p>
+    <p>Local data is protected by the application sandbox provided by iOS or Android. Optional iCloud Key-Value sync is handled by Apple.</p>
 
     <h2>Your rights</h2>
     <p>Because we do not collect personal data, we have nothing to export, correct, or delete on our end. To remove Focus Blocks data:</p>
     <ol>
-      <li>Delete the app to remove local storage.</li>
-      <li>Use iCloud account storage settings to remove Focus Blocks iCloud Key-Value entries.</li>
+      <li>Disable Focus Blocks in Android Accessibility settings if you enabled Android blocking.</li>
+      <li>Delete the app to remove its local storage.</li>
+      <li>On iOS, use iCloud account storage settings to remove Focus Blocks iCloud Key-Value entries.</li>
     </ol>
 
     <h2>Changes</h2>

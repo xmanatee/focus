@@ -3,7 +3,7 @@ import { DefenseDotsRow } from '../../../shared/components/DefenseDotsRow';
 import { Typography } from '../../../shared/components/Typography';
 import { useProtectionPosture } from '../useProtectionPosture';
 
-export function PostureStatusPanel(): JSX.Element {
+export function PostureStatusPanel(): React.JSX.Element {
   const posture = useProtectionPosture();
   return (
     <Card>

@@ -4,6 +4,7 @@ import {
   monitoringCalls,
   resetDeviceActivityMock,
 } from '../../test-helpers/mockDeviceActivity';
+import { storageMap } from '../../test-helpers/mockPersistedStorage';
 import { reconcileFocusBlocks } from './scheduler';
 import { DAY_OF_WEEK_VALUES, type RuntimeFocusBlock } from './types';
 
@@ -35,6 +36,7 @@ function block(id: string): RuntimeFocusBlock {
 describe('reconcileFocusBlocks monitor limits', () => {
   beforeEach(() => {
     resetDeviceActivityMock();
+    storageMap.clear();
   });
 
   it('rejects plans above the iOS activity limit before applying monitors', async () => {

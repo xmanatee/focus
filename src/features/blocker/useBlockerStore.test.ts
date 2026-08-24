@@ -54,13 +54,12 @@ describe('useBlockerStore', () => {
     expect(useBlockerStore.getState().authorizationStatus).toBe('authorized');
   });
 
-  it('returns to idle when native authorization fails', async () => {
+  it('reports native authorization failure and returns to idle', async () => {
     nativeAuthorization.throwsOnRequest = true;
 
-    await expect(
-      useBlockerStore.getState().requestPermissions(),
-    ).rejects.toThrow(/failed/i);
+    const granted = await useBlockerStore.getState().requestPermissions();
 
+    expect(granted).toBe(false);
     expect(useBlockerStore.getState().busyState).toBe('idle');
   });
 });
