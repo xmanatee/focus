@@ -2,7 +2,7 @@ pre-commit:
   parallel: true
   commands:
     biome:
-      run: npx @biomejs/biome check --apply {staged_files}
+      run: npx @biomejs/biome check --apply --no-errors-on-unmatched {staged_files}
     tsc:
       run: npx tsc --noEmit
     line-limit:
