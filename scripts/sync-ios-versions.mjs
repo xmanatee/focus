@@ -1,4 +1,3 @@
-import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import {
   patchDeviceMonitor,
@@ -21,38 +20,19 @@ const UPSTREAM_SHARED_SWIFT_PATH =
   'node_modules/react-native-device-activity/ios/Shared.swift';
 const TARGET_SHARED_SWIFT_PATH = 'targets/Shared.swift';
 
-function readPlistValue(path, key) {
-  const value = readPlistValueIfPresent(path, key);
-  if (value === null) {
+function setPlistString(path, key, value) {
+  const source = fs.readFileSync(path, 'utf8');
+  const pattern = new RegExp(`(<key>${key}</key>\\s*<string>)[^<]*(</string>)`);
+  if (!pattern.test(source)) {
     throw new Error(`${path} is missing ${key}.`);
   }
-  return value;
-}
-
-function readPlistValueIfPresent(path, key) {
-  const result = spawnSync('plutil', ['-extract', key, 'raw', path], {
-    encoding: 'utf8',
-  });
-  return result.status === 0 ? result.stdout.trim() : null;
-}
-
-function setPlistString(path, key, value) {
-  if (readPlistValue(path, key) === value) {
-    return;
+  const synced = source.replace(
+    pattern,
+    (_match, opening, closing) => `${opening}${value}${closing}`,
+  );
+  if (synced !== source) {
+    fs.writeFileSync(path, synced);
   }
-
-  execFileSync('plutil', ['-replace', key, '-string', value, path]);
-}
-
-function ensurePlistString(path, key, value) {
-  if (!fs.existsSync(path)) {
-    return;
-  }
-  if (readPlistValueIfPresent(path, key) === value) {
-    return;
-  }
-
-  execFileSync('plutil', ['-replace', key, '-string', value, path]);
 }
 
 function syncPatchedSource(upstreamPath, targetPath, patch) {
@@ -73,12 +53,19 @@ const appConfig = JSON.parse(fs.readFileSync(APP_CONFIG_PATH, 'utf8'));
 const version = appConfig.expo.version;
 const buildNumber = appConfig.expo.ios.buildNumber;
 
-if (typeof version !== 'string' || version.length === 0) {
-  throw new Error('app.json expo.version must be a non-empty string.');
+if (
+  typeof version !== 'string' ||
+  !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)
+) {
+  throw new Error('app.json expo.version must be a semantic version.');
 }
 
-if (typeof buildNumber !== 'string' || buildNumber.length === 0) {
-  throw new Error('app.json expo.ios.buildNumber must be a non-empty string.');
+if (
+  typeof buildNumber !== 'string' ||
+  !/^[1-9]\d*$/.test(buildNumber) ||
+  !Number.isSafeInteger(Number(buildNumber))
+) {
+  throw new Error('app.json expo.ios.buildNumber must be a positive integer.');
 }
 
 const project = fs.readFileSync(PROJECT_PATH, 'utf8');
@@ -97,8 +84,8 @@ setPlistString(MAIN_PLIST_PATH, 'CFBundleShortVersionString', version);
 setPlistString(MAIN_PLIST_PATH, 'CFBundleVersion', buildNumber);
 
 for (const path of EXTENSION_PLIST_PATHS) {
-  ensurePlistString(path, 'CFBundleShortVersionString', version);
-  ensurePlistString(path, 'CFBundleVersion', buildNumber);
+  setPlistString(path, 'CFBundleShortVersionString', version);
+  setPlistString(path, 'CFBundleVersion', buildNumber);
 }
 
 syncPatchedSource(
