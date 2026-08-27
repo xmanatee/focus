@@ -39,6 +39,9 @@ jobs:
       - name: Native structure
         run: npm run check-native
 
+      - name: Release distribution
+        run: npm run check-release
+
       - name: Knip
         run: npm run check-unused
 

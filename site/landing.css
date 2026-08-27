@@ -87,10 +87,27 @@
 .faq summary::marker { color: var(--signal-strong); }
 .faq p { margin-top: 10px; }
 .faq + .doc-card { margin-top: 20px; }
+.download-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.download-card {
+  display: flex;
+  flex-direction: column;
+}
+.download-card .actions {
+  align-items: center;
+  margin-top: auto;
+  padding-top: 24px;
+}
+.checksum-link {
+  color: var(--ink-muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+.checksum-link:hover { color: var(--signal-strong); }
 
 @media (max-width: 860px) {
   .hero,
-  .split { grid-template-columns: 1fr; }
+  .split,
+  .download-grid { grid-template-columns: 1fr; }
   .hero {
     min-height: auto;
     padding-top: 24px;

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Focus Blocks: App Blocker for iPhone and iPad</title>
-<meta name="description" content="Block distracting apps on a schedule, set daily screen time limits, and keep focus without an account, ads, analytics, or guilt.">
+<title>Focus Blocks: App Blocker for iPhone, iPad, and Android</title>
+<meta name="description" content="Block distracting apps on a schedule on iPhone, iPad, and Android. Add daily limits and Lock-in on Apple devices, with no account, ads, or analytics.">
 <meta name="keywords" content="app blocker, screen time limit, block YouTube, focus app, study focus, productivity, digital detox">
 <meta name="theme-color" content="#F8F2E8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1A1510" media="(prefers-color-scheme: dark)">
@@ -13,12 +13,12 @@
 <link rel="apple-touch-icon" href="/assets/focus-blocks-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Focus Blocks: App Blocker">
-<meta property="og:description" content="Block apps on schedule. Set daily limits. Stay focused without an account.">
+<meta property="og:description" content="Block distracting apps on schedule across iPhone, iPad, and Android without an account or tracking.">
 <meta property="og:url" content="https://focus.nemi.love/">
 <meta property="og:image" content="https://focus.nemi.love/assets/focus-blocks-home.webp">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Focus Blocks: App Blocker">
-<meta name="twitter:description" content="Block apps on schedule. Set daily limits. Stay focused without an account.">
+<meta name="twitter:description" content="Block distracting apps on schedule across iPhone, iPad, and Android without an account or tracking.">
 <meta name="twitter:image" content="https://focus.nemi.love/assets/focus-blocks-home.webp">
 <link rel="stylesheet" href="/styles.css">
 <link rel="stylesheet" href="/landing.css">
@@ -28,15 +28,18 @@
   "@type": "SoftwareApplication",
   "name": "Focus Blocks: App Blocker",
   "applicationCategory": "ProductivityApplication",
-  "operatingSystem": "iOS",
+  "operatingSystem": ["iOS 18 or later", "Android 7.0 or later"],
   "url": "https://focus.nemi.love/",
-  "downloadUrl": "https://apps.apple.com/us/app/focus-blocks-app-blocker/id6763754394",
+  "downloadUrl": [
+    "https://apps.apple.com/us/app/focus-blocks-app-blocker/id6763754394",
+    "https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk"
+  ],
   "offers": {
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "USD"
   },
-  "description": "Focus Blocks blocks distracting apps on a schedule, supports daily app budgets, and works without an account, ads, analytics, or a developer backend."
+  "description": "Focus Blocks blocks distracting apps on schedules across iOS and Android. iPhone and iPad also support daily app budgets, websites, and Lock-in."
 }
 </script>
 </head>
@@ -50,6 +53,7 @@
     </a>
     <nav class="nav-links" aria-label="Primary navigation">
       <a href="#how-it-works">How it works</a>
+      <a href="#download">Download</a>
       <a href="#privacy">Privacy</a>
       <a href="/support/">Support</a>
     </nav>
@@ -60,16 +64,17 @@
       <div class="hero-copy">
         <p class="eyebrow">Screen Time, without the guilt loop</p>
         <h1 id="hero-title">Block apps when focus matters.</h1>
-        <p class="lede">Focus Blocks hides distracting apps during the rules you choose: work hours, study sessions, daily limits, or a stricter Lock-in window.</p>
+        <p class="lede">Focus Blocks keeps selected apps out of reach during the schedules you choose. iPhone and iPad also support daily limits, websites, and stricter Lock-in windows.</p>
         <div class="actions">
           <a class="button button-primary" href="https://apps.apple.com/us/app/focus-blocks-app-blocker/id6763754394">View on the App Store</a>
-          <a class="button button-secondary" href="#how-it-works">See how it works</a>
+          <a class="button button-secondary" href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk">Download Android APK</a>
         </div>
         <div class="hero-proof">
           <span class="pill">No account</span>
           <span class="pill">No ads</span>
           <span class="pill">No analytics</span>
           <span class="pill">iOS 18+</span>
+          <span class="pill">Android 7+</span>
         </div>
       </div>
       <div class="device-stage">
@@ -80,7 +85,7 @@
     <section class="section section-narrow" aria-labelledby="why-title">
       <p class="eyebrow">Why it exists</p>
       <h2 id="why-title">A blocker for people who already know what pulls them in.</h2>
-      <p class="section-lede">Focus Blocks is not a streak app, a social layer, or a lecture. It is a small commitment tool: pick the distractions, pick the rule, and let iOS keep them out of reach.</p>
+      <p class="section-lede">Focus Blocks is not a streak app, a social layer, or a lecture. It is a small commitment tool: pick the distractions, pick the rule, and let your device keep them out of reach.</p>
       <div class="grid">
         <article class="card">
           <strong>Schedules</strong>
@@ -88,11 +93,11 @@
         </article>
         <article class="card">
           <strong>Daily budgets</strong>
-          <p>Allow a small amount of time, then block the selected apps once the minutes are gone.</p>
+          <p>On iPhone and iPad, allow a small amount of time, then block selected apps once the minutes are gone.</p>
         </article>
         <article class="card">
           <strong>Strict Lock-in</strong>
-          <p>Add a setup window so future-you cannot casually undo the rule during a weak moment.</p>
+          <p>On iPhone and iPad, add a setup window so future-you cannot casually undo a rule during a weak moment.</p>
         </article>
       </div>
     </section>
@@ -104,15 +109,15 @@
         <div class="steps">
           <div class="step">
             <span class="step-number">1</span>
-            <p><strong>Pick apps, sites, or categories.</strong><br>Use Apple's Screen Time picker to select what should disappear.</p>
+            <p><strong>Pick the distractions.</strong><br>Choose installed apps on either platform. iPhone and iPad can also select sites and app categories.</p>
           </div>
           <div class="step">
             <span class="step-number">2</span>
-            <p><strong>Set the rule.</strong><br>Use a schedule, a daily budget, or both when you want more precision.</p>
+            <p><strong>Set the rule.</strong><br>Schedules work across platforms. Daily budgets and combined rules are available on iPhone and iPad.</p>
           </div>
           <div class="step">
             <span class="step-number">3</span>
-            <p><strong>Stay with the decision.</strong><br>When a rule applies, selected apps are shielded system-wide until they are allowed again.</p>
+            <p><strong>Stay with the decision.</strong><br>Apple devices apply system shields; Android returns blocked apps to a dedicated Focus Blocks screen.</p>
           </div>
         </div>
       </div>
@@ -123,7 +128,7 @@
       <div class="privacy-band">
         <p class="eyebrow">Private by default</p>
         <h2 id="privacy-title">No account. No tracking. No backend.</h2>
-        <p class="section-lede">Rules can sync through your own iCloud account, under your own Apple ID. Screen Time app selections are private device-local tokens, so each iPhone or iPad confirms its own apps.</p>
+        <p class="section-lede">Android rules and app selections stay on your device. On iPhone and iPad, rules can sync through your own iCloud account while private Screen Time selections remain device-local.</p>
         <div class="actions">
           <a class="button button-secondary" href="/privacy/">Read the privacy policy</a>
           <a class="button button-secondary" href="/support/">Get support</a>
@@ -137,7 +142,7 @@
       <div class="grid">
         <article class="card">
           <strong>Block YouTube after ten minutes</strong>
-          <p>Use a daily app budget for apps that are useful in small doses but costly when they run long.</p>
+          <p>On iPhone and iPad, use a daily app budget for apps that are useful in small doses but costly when they run long.</p>
         </article>
         <article class="card">
           <strong>Keep social apps away during work</strong>
@@ -162,6 +167,29 @@
       </div>
     </section>
 
+    <section id="download" class="section section-narrow" aria-labelledby="download-title">
+      <p class="eyebrow">Download</p>
+      <h2 id="download-title">Choose the build for your device.</h2>
+      <p class="section-lede">Both versions are free, require no account, and keep blocking data under your control.</p>
+      <div class="grid download-grid">
+        <article class="card download-card">
+          <strong>iPhone and iPad</strong>
+          <p>Install the App Store version for schedules, daily budgets, websites, categories, iCloud rule sync, and Lock-in.</p>
+          <div class="actions">
+            <a class="button button-primary" href="https://apps.apple.com/us/app/focus-blocks-app-blocker/id6763754394">Open App Store</a>
+          </div>
+        </article>
+        <article class="card download-card">
+          <strong>Android</strong>
+          <p>Install the signed release APK for scheduled app blocking on Android 7.0 or later. Android will ask you to approve installation from your browser once.</p>
+          <div class="actions">
+            <a class="button button-primary" href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk">Download APK</a>
+            <a class="checksum-link" href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk.sha256">SHA-256 checksum</a>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <section class="section section-narrow" aria-labelledby="faq-title">
       <p class="eyebrow">Questions</p>
       <h2 id="faq-title">What people usually ask before installing.</h2>
@@ -172,20 +200,24 @@
         </details>
         <details>
           <summary>Does it read which apps I use?</summary>
-          <p>No. Apple's Screen Time framework performs shielding on the operating-system side. Focus Blocks does not run analytics or send usage data to a server.</p>
+          <p>No. Apple devices use private Screen Time selections. On Android, the Accessibility service compares only the foreground app identifier with your local rules. Focus Blocks does not run analytics or send usage data to a server.</p>
         </details>
         <details>
-          <summary>Why does each device ask me to confirm apps?</summary>
+          <summary>Why does each Apple device ask me to confirm apps?</summary>
           <p>Screen Time selections are private device-local tokens. Rules can sync through iCloud, but app selections must be confirmed on each iPhone or iPad.</p>
         </details>
         <details>
           <summary>What version of iOS do I need?</summary>
           <p>Focus Blocks requires iOS 18 or later.</p>
         </details>
+        <details>
+          <summary>How do I install the Android APK?</summary>
+          <p>Download the signed APK from this page, open it, and approve installation from your browser when Android asks. Future APK releases signed with the same Focus Blocks key can update the installed app.</p>
+        </details>
       </div>
       <div class="doc-card">
         <strong>Need setup help?</strong>
-        <p>Use <a href="/support/">Focus Blocks support</a> for Screen Time permission issues, daily budget setup, per-device app selections, iCloud sync, and troubleshooting.</p>
+        <p>Use <a href="/support/">Focus Blocks support</a> for Screen Time or Android Accessibility access, schedules, daily budgets, per-device app selections, APK installation, and troubleshooting.</p>
       </div>
     </section>
   </main>

@@ -1,34 +1,91 @@
 name: Release
 
 # Required GitHub Actions secrets:
-#   EXPO_TOKEN              — Expo robot-user token, project-scoped
-#   APPLE_TEAM_ID           — 10-char Apple Developer Team ID
-#   APPLE_REVIEW_FIRST_NAME — App Review contact, given name
-#   APPLE_REVIEW_LAST_NAME  — App Review contact, family name
-#   APPLE_REVIEW_EMAIL      — App Review contact email
-#   APPLE_REVIEW_PHONE      — App Review contact phone (E.164, e.g. +447…)
+#   EXPO_TOKEN              - Expo robot-user token, project-scoped
+#   APPLE_TEAM_ID           - 10-char Apple Developer Team ID
+#   APPLE_REVIEW_FIRST_NAME - App Review contact, given name
+#   APPLE_REVIEW_LAST_NAME  - App Review contact, family name
+#   APPLE_REVIEW_EMAIL      - App Review contact email
+#   APPLE_REVIEW_PHONE      - App Review contact phone (E.164, e.g. +447...)
 
 on:
   push:
-    tags:
-      - "v*.*.*"
-  workflow_dispatch:
-    inputs:
-      submit:
-        description: "Submit completed builds to the stores"
-        type: boolean
-        default: true
-      push_metadata:
-        description: "Sync ASC listing from store.config.js"
-        type: boolean
-        default: true
+    branches: [main]
+    paths: [package.json]
 
 concurrency:
   group: release
   cancel-in-progress: false
 
+env:
+  EAS_CLI_VERSION: 22.6.0
+
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      should_release: ${{ steps.release.outputs.should_release }}
+      release_tag: ${{ steps.release.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Determine release version
+        id: release
+        env:
+          PREVIOUS_SHA: ${{ github.event.before }}
+        run: |
+          git show "${PREVIOUS_SHA}:package.json" > "$RUNNER_TEMP/previous-package.json"
+          git show "${PREVIOUS_SHA}:app.json" > "$RUNNER_TEMP/previous-app.json"
+          node scripts/release-version.mjs package.json app.json "$RUNNER_TEMP/previous-package.json" "$RUNNER_TEMP/previous-app.json" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        if: steps.release.outputs.should_release == 'true'
+        run: npm ci
+
+      - name: Validate release source
+        if: steps.release.outputs.should_release == 'true'
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run check-lines
+          npm run check-antipatterns
+          npm run check-native
+          npm run check-release
+          npm run check-unused
+          npm test
+
+      - name: Create release tag
+        if: steps.release.outputs.should_release == 'true'
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.release_tag }}
+        run: |
+          existing_tag="$(git tag --list "$RELEASE_TAG")"
+          if [[ -n "$existing_tag" ]]; then
+            tagged_sha="$(git rev-list -n 1 "$RELEASE_TAG")"
+            if [[ "$tagged_sha" != "$GITHUB_SHA" ]]; then
+              echo "$RELEASE_TAG already points to $tagged_sha, not $GITHUB_SHA." >&2
+              exit 1
+            fi
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag --annotate "$RELEASE_TAG" --message "Release ${RELEASE_TAG#v}"
+          fi
+          git push origin "refs/tags/$RELEASE_TAG"
+
   ios:
+    needs: validate
+    if: needs.validate.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -50,10 +107,9 @@ jobs:
         run: npm ci
 
       - name: Validate metadata
-        run: npm exec --yes --package eas-cli -- eas metadata:lint
+        run: npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas metadata:lint
 
       - name: Push metadata to App Store Connect
-        if: ${{ github.event.inputs.push_metadata != 'false' }}
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: node scripts/run-eas-metadata-push.mjs
@@ -61,17 +117,22 @@ jobs:
       - name: Build iOS production
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npm exec --yes --package eas-cli -- eas build --platform ios --profile production --non-interactive --wait
+        run: npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas build --platform ios --profile production --non-interactive --wait --json > "$RUNNER_TEMP/eas-ios-build.json"
 
       - name: Submit iOS build to App Store Connect
-        if: ${{ github.event.inputs.submit != 'false' }}
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npm exec --yes --package eas-cli -- eas submit --platform ios --latest --non-interactive --wait
+        run: |
+          build_id="$(node scripts/eas-build-output.mjs build-id "$RUNNER_TEMP/eas-ios-build.json" IOS)"
+          npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas submit --platform ios --id "$build_id" --non-interactive --wait
 
-  android:
+  android_apk:
+    needs: validate
+    if: needs.validate.outputs.should_release == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v5
 
@@ -83,13 +144,60 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Android production
+      - name: Build signed Android APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npm exec --yes --package eas-cli -- eas build --platform android --profile production --non-interactive --wait
+        run: npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas build --platform android --profile apk --non-interactive --wait --json > "$RUNNER_TEMP/eas-apk-build.json"
 
-      - name: Submit to Google Play internal testing
-        if: ${{ github.event.inputs.submit != 'false' }}
+      - name: Download Android APK
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: npm exec --yes --package eas-cli -- eas submit --platform android --profile production --latest --non-interactive --wait
+        run: |
+          build_id="$(node scripts/eas-build-output.mjs build-id "$RUNNER_TEMP/eas-apk-build.json" ANDROID)"
+          npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas build:download --build-id "$build_id" --non-interactive --json > "$RUNNER_TEMP/eas-apk-download.json"
+          apk_path="$(node scripts/eas-build-output.mjs artifact-path "$RUNNER_TEMP/eas-apk-download.json" .apk)"
+          mkdir -p dist
+          cp "$apk_path" dist/focus-blocks-android.apk
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools build-tools;36.0.0"
+
+      - name: Verify Android APK
+        run: |
+          "$ANDROID_SDK_ROOT/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/focus-blocks-android.apk
+          "$ANDROID_SDK_ROOT/build-tools/36.0.0/aapt" dump badging dist/focus-blocks-android.apk > "$RUNNER_TEMP/apk-badging.txt"
+          grep -Fq "package: name='love.nemi.focus'" "$RUNNER_TEMP/apk-badging.txt"
+          version="$(node -p "require('./package.json').version")"
+          grep -Fq "versionName='$version'" "$RUNNER_TEMP/apk-badging.txt"
+
+      - name: Create APK checksum
+        working-directory: dist
+        run: sha256sum focus-blocks-android.apk > focus-blocks-android.apk.sha256
+
+      - name: Retain APK workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: focus-blocks-android-${{ needs.validate.outputs.release_tag }}
+          path: |
+            dist/focus-blocks-android.apk
+            dist/focus-blocks-android.apk.sha256
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30
+
+      - name: Publish APK on GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
+        run: |
+          if gh release view "$RELEASE_TAG" > /dev/null; then
+            gh release upload "$RELEASE_TAG" dist/focus-blocks-android.apk dist/focus-blocks-android.apk.sha256 --clobber
+          else
+            gh release create "$RELEASE_TAG" dist/focus-blocks-android.apk dist/focus-blocks-android.apk.sha256 --verify-tag --generate-notes --latest
+          fi

@@ -56,6 +56,7 @@ export function ReviewPromptCard({
   if (promptState === null) return null;
 
   const nowMs = Date.now();
+  const storeUrl = StoreReview.storeUrl();
   const shouldShow = shouldShowReviewPrompt(
     verification,
     completedScheduledWindowCount,
@@ -63,7 +64,7 @@ export function ReviewPromptCard({
     nowMs,
   );
 
-  if (!shouldShow) return null;
+  if (!shouldShow || storeUrl === null) return null;
 
   const saveState = async (next: ReviewPromptState): Promise<void> => {
     try {
@@ -84,10 +85,6 @@ export function ReviewPromptCard({
 
   const rate = async (): Promise<void> => {
     try {
-      const storeUrl = StoreReview.storeUrl();
-      if (storeUrl === null) {
-        throw new Error('The App Store page is not available.');
-      }
       await Linking.openURL(storeUrl);
       await saveState(markReviewPromptReviewed(nowMs));
     } catch (caught) {

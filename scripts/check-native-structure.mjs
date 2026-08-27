@@ -43,10 +43,10 @@ function checkVersioning() {
   const iosProject = read('ios/FocusBlocks.xcodeproj/project.pbxproj');
   const iosInfo = read('ios/FocusBlocks/Info.plist');
 
-  expectEqual(packageJson.dependencies.expo, '~57.0.15', 'Expo SDK');
+  expectEqual(packageJson.dependencies.expo, '~57.0.17', 'Expo SDK');
   expectEqual(
     packageJson.dependencies['react-native'],
-    '0.86.2',
+    '0.86.3',
     'React Native',
   );
   expectEqual(packageJson.engines.node, '>=22.13.0', 'Node.js engine');

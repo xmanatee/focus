@@ -141,6 +141,13 @@ describe('ReviewPromptCard', () => {
     const tree = await renderCard(readyVerification, 2);
     expect(findAll(tree, isButton)).toHaveLength(0);
   });
+
+  it('stays hidden without a public store page', async () => {
+    asyncStorage.getItem.mockResolvedValue(null);
+    storeReview.storeUrl.mockReturnValue(null);
+    const tree = await renderCard(readyVerification);
+    expect(findAll(tree, isButton)).toHaveLength(0);
+  });
 });
 
 function isButton(node: TestInstance): boolean {
