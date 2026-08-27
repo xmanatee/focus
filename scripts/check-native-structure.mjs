@@ -272,11 +272,17 @@ function checkReleaseAssets() {
     'play-store/en-US/full-description.txt',
     'site/privacy/index.html',
     'site/support/index.html',
+    'styles.d.ts',
   ]) {
     if (!fs.existsSync(path)) {
       throw new Error(`Required release asset is missing: ${path}.`);
     }
   }
+  expectIncludes(
+    read('styles.d.ts'),
+    "declare module '*.css';",
+    'CSS module declaration',
+  );
 }
 
 checkVersioning();
