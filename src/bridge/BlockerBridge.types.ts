@@ -8,7 +8,15 @@ import type {
 import type { RuntimeFocusBlock } from '../features/schedule/types';
 
 export type AuthorizationStatus = 'authorized' | 'denied' | 'notDetermined';
+export type AuthorizationSetupStep =
+  | 'authorizationSettings'
+  | 'restrictedSettings';
 export type DeviceActivityAction = Action;
+
+export interface BlockingAuthorizationState {
+  readonly setupStep: AuthorizationSetupStep;
+  readonly status: AuthorizationStatus;
+}
 
 interface NativeEventSubscription {
   remove(): void;
@@ -23,6 +31,12 @@ export interface BlockingAccessDisclosure {
   readonly body: string;
   readonly cancelAction: string;
   readonly continueAction: string;
+  readonly title: string;
+}
+
+export interface BlockingAccessSetupCopy {
+  readonly action: string;
+  readonly body: string;
   readonly title: string;
 }
 
@@ -43,6 +57,7 @@ export interface BlockingCapabilities {
   readonly supportsTamperProtection: boolean;
   readonly supportsWebsiteBlocking: boolean;
   readonly maxWebDomains: number;
+  readonly restrictedSettingsSetup: BlockingAccessSetupCopy | null;
 }
 
 export type NativeActivityEventRecord = Pick<
@@ -96,23 +111,22 @@ export interface DeviceActivityModule {
 }
 
 export interface AndroidBlockerModule {
-  readonly initialAuthorizationStatus: AuthorizationStatus;
-  readonly getAuthorizationStatus: () => AuthorizationStatus;
+  readonly initialAuthorizationState: unknown;
+  readonly getAuthorizationState: () => unknown;
   readonly getSelectionSlotValue: (slotId: string) => string | undefined;
   readonly listSelectableApplications: () => Promise<SelectableApplication[]>;
   readonly reconcileRuntimeBlocks: (payload: string) => Promise<void>;
-  readonly requestAuthorization: () => Promise<boolean>;
+  readonly requestAuthorization: () => Promise<unknown>;
   readonly setSelectionSlotValue: (slotId: string, value: string) => boolean;
 }
 
 export interface IBlockerBridge {
   readonly capabilities: BlockingCapabilities;
   readonly deviceActivity: DeviceActivityModule;
-  requestAuthorization(): Promise<boolean>;
-  readInitialAuthorizationStatus(): AuthorizationStatus;
-  refreshAuthorizationStatus(): Promise<AuthorizationStatus>;
-  subscribeToAuthorizationStatus(
-    listener: (status: AuthorizationStatus) => void,
+  requestAuthorization(): Promise<BlockingAuthorizationState>;
+  readInitialAuthorizationState(): BlockingAuthorizationState;
+  subscribeToAuthorizationState(
+    listener: (state: BlockingAuthorizationState) => void,
   ): () => void;
   getActivityEvents(activityName: string): readonly NativeActivityEventRecord[];
   getSelectionSlotValue(slotId: string): string | undefined;

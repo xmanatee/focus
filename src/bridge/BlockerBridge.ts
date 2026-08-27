@@ -1,10 +1,12 @@
 import * as DeviceActivity from 'react-native-device-activity';
 import {
+  parseBlockingAuthorizationState,
   parseSelectedApplications,
   serializeSelectedApplications,
 } from './BlockerBridge.shared';
 import type {
   AuthorizationStatus,
+  BlockingAuthorizationState,
   BlockingCapabilities,
   DeviceActivityModule,
   IBlockerBridge,
@@ -13,7 +15,7 @@ import type {
 } from './BlockerBridge.types';
 
 export type {
-  AuthorizationStatus,
+  BlockingAuthorizationState,
   DeviceActivityAction,
   SelectableApplication,
 } from './BlockerBridge.types';
@@ -31,6 +33,7 @@ const CAPABILITIES: BlockingCapabilities = {
     'Rules sync with iCloud, but iOS keeps app selections private to each iPhone and iPad. Pick apps once on this device before those app blocks can apply here.',
   maxScheduledMonitors: 20,
   maxWebDomains: 50,
+  restrictedSettingsSetup: null,
   runtimeKind: 'deviceActivity',
   selectionTitle: 'Apps & Categories',
   supportsAppCategories: true,
@@ -58,26 +61,34 @@ class ScreenTimeBlockerBridge implements IBlockerBridge {
     return loadDeviceActivityModule();
   }
 
-  async requestAuthorization(): Promise<boolean> {
+  async requestAuthorization(): Promise<BlockingAuthorizationState> {
     const native = this.deviceActivity;
     await native.requestAuthorization('individual');
     const status = await native.pollAuthorizationStatus();
-    return mapAuthorizationStatus(status) === 'authorized';
+    return {
+      setupStep: 'authorizationSettings',
+      status: mapAuthorizationStatus(status),
+    };
   }
 
-  readInitialAuthorizationStatus(): AuthorizationStatus {
-    return mapAuthorizationStatus(this.deviceActivity.getAuthorizationStatus());
+  readInitialAuthorizationState(): BlockingAuthorizationState {
+    return parseBlockingAuthorizationState({
+      setupStep: 'authorizationSettings',
+      status: mapAuthorizationStatus(
+        this.deviceActivity.getAuthorizationStatus(),
+      ),
+    });
   }
 
-  async refreshAuthorizationStatus(): Promise<AuthorizationStatus> {
-    return this.readInitialAuthorizationStatus();
-  }
-
-  subscribeToAuthorizationStatus(
-    listener: (status: AuthorizationStatus) => void,
+  subscribeToAuthorizationState(
+    listener: (state: BlockingAuthorizationState) => void,
   ): () => void {
     const subscription = this.deviceActivity.onAuthorizationStatusChange(
-      (event) => listener(mapAuthorizationStatus(event.authorizationStatus)),
+      (event) =>
+        listener({
+          setupStep: 'authorizationSettings',
+          status: mapAuthorizationStatus(event.authorizationStatus),
+        }),
     );
     return () => subscription.remove();
   }

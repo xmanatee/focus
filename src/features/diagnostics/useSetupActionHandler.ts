@@ -9,7 +9,7 @@ export function useSetupActionHandler(): (
   action: SetupVerificationAction,
 ) => void {
   const router = useRouter();
-  const authorizationStatus = useBlockerStore((s) => s.authorizationStatus);
+  const authorization = useBlockerStore((s) => s.authorization);
   const requestPermissions = useBlockerStore((s) => s.requestPermissions);
 
   return useCallback(
@@ -17,7 +17,7 @@ export function useSetupActionHandler(): (
       switch (action) {
         case 'requestBlockingAccess':
           if (
-            authorizationStatus === 'denied' &&
+            authorization.status === 'denied' &&
             BlockerBridge.capabilities.deniedAuthorizationAction ===
               'appSettings'
           ) {
@@ -40,6 +40,6 @@ export function useSetupActionHandler(): (
           return;
       }
     },
-    [authorizationStatus, requestPermissions, router],
+    [authorization, requestPermissions, router],
   );
 }

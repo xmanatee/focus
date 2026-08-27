@@ -111,15 +111,11 @@ function checkAndroid() {
   const properties = read('android/gradle.properties');
   const wrapper = read('android/gradle/wrapper/gradle-wrapper.properties');
   const manifest = read('android/app/src/main/AndroidManifest.xml');
-  const application = read(
-    'android/app/src/main/java/love/nemi/focus/MainApplication.kt',
-  );
-  const activity = read(
-    'android/app/src/main/java/love/nemi/focus/MainActivity.kt',
-  );
-  const blockerModule = read(
-    'android/app/src/main/java/love/nemi/focus/FocusAndroidBlockerModule.kt',
-  );
+  const javaRoot = 'android/app/src/main/java/love/nemi/focus';
+  const application = read(`${javaRoot}/MainApplication.kt`);
+  const activity = read(`${javaRoot}/MainActivity.kt`);
+  const blockerModule = read(`${javaRoot}/FocusAndroidBlockerModule.kt`);
+  const authorizationSetup = read(`${javaRoot}/AuthorizationSetup.kt`);
   const styles = read('android/app/src/main/res/values/styles.xml');
   const lint = read('android/app/lint.xml');
 
@@ -154,13 +150,21 @@ function checkAndroid() {
   );
   expectIncludes(
     blockerModule,
-    'fun getAuthorizationStatus(): String = authorizationStatus()',
+    'fun getAuthorizationState() = authorizationState()',
     'FocusAndroidBlockerModule',
   );
-  expectExcludes(
-    blockerModule,
-    'fun refreshAuthorizationStatus',
-    'FocusAndroidBlockerModule',
+  for (const requirement of [
+    'ACTION_APPLICATION_DETAILS_SETTINGS',
+    'ACTION_ACCESSIBILITY_SETTINGS',
+    'getInstallSourceInfo',
+    'PACKAGE_SOURCE_STORE',
+  ]) {
+    expectIncludes(blockerModule, requirement, 'FocusAndroidBlockerModule');
+  }
+  expectIncludes(
+    authorizationSetup,
+    'resolveAuthorizationSetupStep',
+    'AuthorizationSetup',
   );
   expectIncludes(styles, 'parent="Theme.SplashScreen"', 'Android splash theme');
   expectIncludes(styles, '@drawable/splashscreen_logo', 'Android splash theme');

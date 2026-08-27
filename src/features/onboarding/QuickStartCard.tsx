@@ -14,7 +14,17 @@ interface QuickStartCopy {
 
 function copyForPhase(phase: QuickStartPhase): QuickStartCopy {
   const capabilities = BlockerBridge.capabilities;
-  const copy: Record<QuickStartPhase, QuickStartCopy> = {
+  if (phase === 'prepareRestrictedSettings') {
+    const copy = capabilities.restrictedSettingsSetup;
+    if (copy === null) {
+      throw new Error('Restricted-settings setup copy is unavailable.');
+    }
+    return copy;
+  }
+  const copy: Record<
+    Exclude<QuickStartPhase, 'prepareRestrictedSettings'>,
+    QuickStartCopy
+  > = {
     grantAccess: {
       title: `Start with ${capabilities.authorizationAccessName}`,
       body: capabilities.authorizationRequestBody,

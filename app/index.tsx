@@ -31,10 +31,10 @@ import { errorMessage } from '../src/shared/errors';
 
 export default function MainFeedScreen(): React.JSX.Element {
   const router = useRouter();
-  const authorizationStatus = useBlockerStore((s) => s.authorizationStatus);
+  const authorization = useBlockerStore((s) => s.authorization);
   const busyState = useBlockerStore((s) => s.busyState);
   const requestPermissions = useBlockerStore((s) => s.requestPermissions);
-  const hasPermissions = authorizationStatus === 'authorized';
+  const hasPermissions = authorization.status === 'authorized';
 
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
@@ -73,7 +73,7 @@ export default function MainFeedScreen(): React.JSX.Element {
   const [schedulerError, setSchedulerError] = useState<string | null>(null);
 
   const quickStartPhase = resolveQuickStartPhase({
-    authorizationStatus,
+    authorization,
     blockCount: focusBlocks.length,
     missingDeviceSelectionCount: setupVerification.missingDeviceSelectionCount,
     unsupportedEnabledBlockCount:
@@ -132,7 +132,10 @@ export default function MainFeedScreen(): React.JSX.Element {
   };
 
   const handleQuickStartPrimary = (): void => {
-    if (quickStartPhase === 'grantAccess') {
+    if (
+      quickStartPhase === 'prepareRestrictedSettings' ||
+      quickStartPhase === 'grantAccess'
+    ) {
       void handleGrant();
       return;
     }
@@ -188,7 +191,8 @@ export default function MainFeedScreen(): React.JSX.Element {
               <QuickStartCard
                 phase={quickStartPhase}
                 isPrimaryLoading={
-                  quickStartPhase === 'grantAccess' &&
+                  (quickStartPhase === 'prepareRestrictedSettings' ||
+                    quickStartPhase === 'grantAccess') &&
                   busyState === 'authorizing'
                 }
                 onPrimary={handleQuickStartPrimary}

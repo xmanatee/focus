@@ -1,13 +1,14 @@
-import type { AuthorizationStatus } from '../../bridge/BlockerBridge';
+import type { BlockingAuthorizationState } from '../../bridge/BlockerBridge';
 
 export type QuickStartPhase =
+  | 'prepareRestrictedSettings'
   | 'grantAccess'
   | 'openSettings'
   | 'createFirstBlock'
   | 'finishDevice';
 
 interface QuickStartInput {
-  readonly authorizationStatus: AuthorizationStatus;
+  readonly authorization: BlockingAuthorizationState;
   readonly blockCount: number;
   readonly missingDeviceSelectionCount: number;
   readonly unsupportedEnabledBlockCount: number;
@@ -16,8 +17,14 @@ interface QuickStartInput {
 export function resolveQuickStartPhase(
   input: QuickStartInput,
 ): QuickStartPhase | null {
-  if (input.authorizationStatus === 'denied') return 'openSettings';
-  if (input.authorizationStatus !== 'authorized') return 'grantAccess';
+  if (
+    input.authorization.status !== 'authorized' &&
+    input.authorization.setupStep === 'restrictedSettings'
+  ) {
+    return 'prepareRestrictedSettings';
+  }
+  if (input.authorization.status === 'denied') return 'openSettings';
+  if (input.authorization.status !== 'authorized') return 'grantAccess';
   if (input.blockCount === 0) return 'createFirstBlock';
   if (
     input.missingDeviceSelectionCount > 0 ||

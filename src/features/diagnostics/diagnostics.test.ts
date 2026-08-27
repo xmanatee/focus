@@ -37,9 +37,36 @@ function block(id: string, overrides: Partial<FocusBlock> = {}): FocusBlock {
 }
 
 describe('evaluateSetupVerification', () => {
+  it('identifies the restricted-settings repair step for sideloaded APKs', () => {
+    const result = evaluateSetupVerification({
+      authorization: {
+        setupStep: 'restrictedSettings',
+        status: 'notDetermined',
+      },
+      enabledBlockIds: [],
+      focusBlocks: [],
+      now: new Date('2026-06-05T10:00:00'),
+      populatedSelectionSlots: new Set(),
+      posture: FULL_POSTURE,
+      setupBlock: null,
+      setupBlockEnabledOnDevice: false,
+    });
+
+    expect(result.checks).toContainEqual(
+      expect.objectContaining({
+        detail: 'Allow restricted settings in App info',
+        id: 'blockingAccess',
+        status: 'fail',
+      }),
+    );
+  });
+
   it('flags synced blocks that need local app selection', () => {
     const result = evaluateSetupVerification({
-      authorizationStatus: 'authorized',
+      authorization: {
+        setupStep: 'authorizationSettings',
+        status: 'authorized',
+      },
       enabledBlockIds: ['one'],
       focusBlocks: [block('one')],
       now: new Date('2026-06-05T10:00:00'),
@@ -61,7 +88,10 @@ describe('evaluateSetupVerification', () => {
 
   it('does not fail local selections for synced blocks that are off here', () => {
     const result = evaluateSetupVerification({
-      authorizationStatus: 'authorized',
+      authorization: {
+        setupStep: 'authorizationSettings',
+        status: 'authorized',
+      },
       enabledBlockIds: [],
       focusBlocks: [block('one')],
       now: new Date('2026-06-05T10:00:00'),
@@ -82,7 +112,10 @@ describe('evaluateSetupVerification', () => {
 
   it('reports ready when permissions and device selections are complete', () => {
     const result = evaluateSetupVerification({
-      authorizationStatus: 'authorized',
+      authorization: {
+        setupStep: 'authorizationSettings',
+        status: 'authorized',
+      },
       enabledBlockIds: ['one'],
       focusBlocks: [block('one')],
       now: new Date('2026-06-05T10:00:00'),
@@ -110,7 +143,10 @@ describe('buildDiagnosticsReport', () => {
   it('exports counts and statuses without private target names', () => {
     const report = buildDiagnosticsReport({
       appVersion: '1.0.1',
-      authorizationStatus: 'authorized',
+      authorization: {
+        setupStep: 'authorizationSettings',
+        status: 'authorized',
+      },
       enabledBlockIds: ['one'],
       focusBlocks: [block('one', { name: 'Secret YouTube Block' })],
       generatedAt: new Date('2026-06-05T10:00:00Z'),

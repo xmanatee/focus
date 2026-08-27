@@ -3,6 +3,9 @@ package love.nemi.focus
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageInstaller
+import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import androidx.core.content.edit
@@ -20,15 +23,45 @@ class FocusAndroidBlockerModule(
   override fun getName() = NAME
 
   override fun getConstants(): MutableMap<String, Any> =
-    mutableMapOf("initialAuthorizationStatus" to authorizationStatus())
+    mutableMapOf("initialAuthorizationState" to authorizationState())
 
   @ReactMethod
   fun requestAuthorization(promise: Promise) {
-    FocusBlockerStorage.prefs(reactContext).edit {
-      putBoolean(AUTHORIZATION_REQUESTED_KEY, true)
+    val prefs = FocusBlockerStorage.prefs(reactContext)
+    val step = currentAuthorizationSetupStep()
+    val intent = when (step) {
+      AuthorizationSetupStep.RESTRICTED_SETTINGS -> {
+        Intent(
+          Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+          Uri.fromParts("package", reactContext.packageName, null),
+        )
+      }
+      AuthorizationSetupStep.ACCESSIBILITY_SETTINGS -> {
+        Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+      }
     }
 
-    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+    if (intent.resolveActivity(reactContext.packageManager) == null) {
+      promise.reject(
+        "E_SETTINGS_UNAVAILABLE",
+        "Android could not open the required system settings page.",
+      )
+      return
+    }
+    when (step) {
+      AuthorizationSetupStep.RESTRICTED_SETTINGS ->
+        prefs.edit { putBoolean(APP_INFO_OPENED_KEY, true) }
+      AuthorizationSetupStep.ACCESSIBILITY_SETTINGS -> {
+        val accessibilityEverEnabled = prefs.getBoolean(
+          ACCESSIBILITY_EVER_ENABLED_KEY,
+          false,
+        )
+        prefs.edit {
+          putBoolean(AUTHORIZATION_REQUESTED_KEY, true)
+          if (!accessibilityEverEnabled) remove(APP_INFO_OPENED_KEY)
+        }
+      }
+    }
     val activity = reactContext.currentActivity
     if (activity != null) {
       activity.startActivity(intent)
@@ -36,11 +69,11 @@ class FocusAndroidBlockerModule(
       intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
       reactContext.startActivity(intent)
     }
-    promise.resolve(isAccessibilityEnabled())
+    promise.resolve(authorizationState())
   }
 
   @ReactMethod(isBlockingSynchronousMethod = true)
-  fun getAuthorizationStatus(): String = authorizationStatus()
+  fun getAuthorizationState() = authorizationState()
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   fun getSelectionSlotValue(slotId: String): String? =
@@ -91,12 +124,52 @@ class FocusAndroidBlockerModule(
     promise.resolve(null)
   }
 
-  private fun authorizationStatus(): String {
-    if (isAccessibilityEnabled()) return "authorized"
-    val requested = FocusBlockerStorage.prefs(reactContext)
-      .getBoolean(AUTHORIZATION_REQUESTED_KEY, false)
-    return if (requested) "denied" else "notDetermined"
+  private fun authorizationState() = Arguments.createMap().apply {
+    val prefs = FocusBlockerStorage.prefs(reactContext)
+    val accessibilityEnabled = isAccessibilityEnabled()
+    val wasAccessibilityEverEnabled = prefs.getBoolean(
+      ACCESSIBILITY_EVER_ENABLED_KEY,
+      false,
+    )
+    val accessibilityEverEnabled = accessibilityEnabled ||
+      wasAccessibilityEverEnabled
+    if (accessibilityEnabled && !wasAccessibilityEverEnabled) {
+      prefs.edit {
+        putBoolean(ACCESSIBILITY_EVER_ENABLED_KEY, true)
+        remove(APP_INFO_OPENED_KEY)
+      }
+    }
+    val status = when {
+      accessibilityEnabled -> "authorized"
+      prefs.getBoolean(AUTHORIZATION_REQUESTED_KEY, false) -> "denied"
+      else -> "notDetermined"
+    }
+    val setupStep = resolveAuthorizationSetupStep(
+      restrictedSettingsRequired = restrictedSettingsRequired(),
+      accessibilityEverEnabled = accessibilityEverEnabled,
+      appInfoOpened = prefs.getBoolean(APP_INFO_OPENED_KEY, false),
+    )
+    putString("status", status)
+    putString("setupStep", setupStep.wireValue)
   }
+
+  private fun currentAuthorizationSetupStep(): AuthorizationSetupStep {
+    val prefs = FocusBlockerStorage.prefs(reactContext)
+    return resolveAuthorizationSetupStep(
+      restrictedSettingsRequired = restrictedSettingsRequired(),
+      accessibilityEverEnabled = isAccessibilityEnabled() || prefs.getBoolean(
+        ACCESSIBILITY_EVER_ENABLED_KEY,
+        false,
+      ),
+      appInfoOpened = prefs.getBoolean(APP_INFO_OPENED_KEY, false),
+    )
+  }
+
+  private fun restrictedSettingsRequired(): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+      reactContext.packageManager
+        .getInstallSourceInfo(reactContext.packageName)
+        .packageSource != PackageInstaller.PACKAGE_SOURCE_STORE
 
   private fun isAccessibilityEnabled(): Boolean {
     val expected = ComponentName(reactContext, FocusAccessibilityService::class.java)
@@ -111,6 +184,8 @@ class FocusAndroidBlockerModule(
 
   companion object {
     const val NAME = "FocusAndroidBlocker"
+    private const val ACCESSIBILITY_EVER_ENABLED_KEY = "accessibilityEverEnabled"
+    private const val APP_INFO_OPENED_KEY = "appInfoOpened"
     private const val AUTHORIZATION_REQUESTED_KEY = "authorizationRequested"
   }
 }

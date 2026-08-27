@@ -1,5 +1,27 @@
 import { isRecord } from '../shared/validation';
-import type { SelectableApplication } from './BlockerBridge.types';
+import type {
+  BlockingAuthorizationState,
+  SelectableApplication,
+} from './BlockerBridge.types';
+
+export function parseBlockingAuthorizationState(
+  value: unknown,
+): BlockingAuthorizationState {
+  if (!isRecord(value)) {
+    throw new Error('Blocking authorization state is invalid.');
+  }
+  const { setupStep, status } = value;
+  if (
+    (setupStep !== 'authorizationSettings' &&
+      setupStep !== 'restrictedSettings') ||
+    (status !== 'authorized' &&
+      status !== 'denied' &&
+      status !== 'notDetermined')
+  ) {
+    throw new Error('Blocking authorization state is invalid.');
+  }
+  return { setupStep, status };
+}
 
 export function sortedUniqueApplications(
   applications: readonly SelectableApplication[],

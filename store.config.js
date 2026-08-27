@@ -78,7 +78,7 @@ const russianInfo = {
 module.exports = () => ({
   configVersion: 0,
   apple: {
-    version: '1.0.7',
+    version: '1.0.8',
     copyright: '© 2026 nemi.love',
     release: {
       automaticRelease: true,

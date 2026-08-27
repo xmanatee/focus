@@ -1,5 +1,7 @@
-import type { AuthorizationStatus } from '../../bridge/BlockerBridge';
-import { BlockerBridge } from '../../bridge/BlockerBridge';
+import {
+  BlockerBridge,
+  type BlockingAuthorizationState,
+} from '../../bridge/BlockerBridge';
 import type { ProtectionPosture } from '../protection/types';
 import { focusBlockSelectionReadyInSlots } from '../schedule/localActivitySelection';
 import { focusBlockRunnableLocally } from '../schedule/localRuntime';
@@ -50,7 +52,7 @@ export function setupActionForCheck(
 }
 
 export interface DiagnosticsInput {
-  readonly authorizationStatus: AuthorizationStatus;
+  readonly authorization: BlockingAuthorizationState;
   readonly enabledBlockIds: readonly string[];
   readonly focusBlocks: readonly FocusBlock[];
   readonly now: Date;
@@ -139,12 +141,14 @@ export function evaluateSetupVerification(
       id: 'blockingAccess',
       title: BlockerBridge.capabilities.authorizationAccessName,
       detail:
-        input.authorizationStatus === 'authorized'
+        input.authorization.status === 'authorized'
           ? 'Authorized'
-          : input.authorizationStatus === 'denied'
-            ? BlockerBridge.capabilities.deniedAuthorizationDetail
-            : 'Permission has not been granted yet',
-      status: input.authorizationStatus === 'authorized' ? 'pass' : 'fail',
+          : input.authorization.setupStep === 'restrictedSettings'
+            ? 'Allow restricted settings in App info'
+            : input.authorization.status === 'denied'
+              ? BlockerBridge.capabilities.deniedAuthorizationDetail
+              : 'Permission has not been granted yet',
+      status: input.authorization.status === 'authorized' ? 'pass' : 'fail',
     },
     {
       id: 'blocks',
@@ -231,7 +235,8 @@ export function buildDiagnosticsReport(input: DiagnosticsReportInput): string {
     'Focus Blocks Diagnostics',
     `Generated: ${input.generatedAt.toISOString()}`,
     `Version: ${input.appVersion}`,
-    `${BlockerBridge.capabilities.authorizationAccessName}: ${input.authorizationStatus}`,
+    `${BlockerBridge.capabilities.authorizationAccessName}: ${input.authorization.status}`,
+    `Blocking access setup: ${input.authorization.setupStep}`,
     `Protection: ${input.posture.score}`,
     `Lock-in: ${diagnosticsLockInState(input)}`,
     `Blocks: ${verification.blockCount}`,

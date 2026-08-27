@@ -1,12 +1,13 @@
 import { AppState, NativeModules } from 'react-native';
 import type { RuntimeFocusBlock } from '../features/schedule/types';
 import {
+  parseBlockingAuthorizationState,
   parseSelectedApplications,
   sortedUniqueApplications,
 } from './BlockerBridge.shared';
 import type {
   AndroidBlockerModule,
-  AuthorizationStatus,
+  BlockingAuthorizationState,
   BlockingCapabilities,
   DeviceActivityModule,
   IBlockerBridge,
@@ -15,7 +16,7 @@ import type {
 } from './BlockerBridge.types';
 
 export type {
-  AuthorizationStatus,
+  BlockingAuthorizationState,
   DeviceActivityAction,
   SelectableApplication,
 } from './BlockerBridge.types';
@@ -28,7 +29,7 @@ const CAPABILITIES: BlockingCapabilities = {
   authorizationDisclosure: {
     body: 'Focus Blocks uses Android Accessibility to detect the foreground app, compare it with your enabled blocks, and bring you back to Focus Blocks when a selected app is blocked. It does not read screen content, capture keystrokes, or sell or share Accessibility data. Blocking works only while this access stays enabled.',
     cancelAction: 'Not now',
-    continueAction: 'Open Settings',
+    continueAction: 'Open Accessibility',
     title: 'Allow Accessibility access?',
   },
   authorizationAccessName: 'Android blocking access',
@@ -36,11 +37,16 @@ const CAPABILITIES: BlockingCapabilities = {
     'Focus Blocks needs Accessibility access to detect blocked apps and return you to Focus Blocks when a block is active.',
   canReconcileWithoutAuthorization: true,
   deniedAuthorizationAction: 'authorizationSettings',
-  deniedAuthorizationDetail: 'Not enabled in Android Accessibility settings',
+  deniedAuthorizationDetail: 'Accessibility access is off',
   finishDeviceBody:
     'Rules and app selections stay on this Android device. Pick apps for each block and replace any unsupported rule before enabling it here.',
   maxScheduledMonitors: null,
   maxWebDomains: 0,
+  restrictedSettingsSetup: {
+    action: 'Open app info',
+    body: 'Android restricts Accessibility for apps installed outside an app store. In App info, tap the three-dot menu, choose Allow restricted settings if shown, confirm, then return to Focus Blocks.',
+    title: 'Allow APK access',
+  },
   runtimeKind: 'androidAccessibility',
   selectionTitle: 'Apps',
   supportsAppCategories: false,
@@ -58,17 +64,6 @@ function nativeModule(): AndroidBlockerModule {
     throw new Error('FocusAndroidBlocker native module is not linked.');
   }
   return module;
-}
-
-function parseAuthorizationStatus(value: unknown): AuthorizationStatus {
-  if (
-    value === 'authorized' ||
-    value === 'denied' ||
-    value === 'notDetermined'
-  ) {
-    return value;
-  }
-  throw new Error('Android blocking authorization status is invalid.');
 }
 
 function runtimePayload(blocks: readonly RuntimeFocusBlock[]): string {
@@ -96,25 +91,25 @@ class AndroidBlockerBridge implements IBlockerBridge {
     throw new Error('DeviceActivity is not available with Android blocking.');
   }
 
-  requestAuthorization(): Promise<boolean> {
-    return nativeModule().requestAuthorization();
+  async requestAuthorization(): Promise<BlockingAuthorizationState> {
+    return parseBlockingAuthorizationState(
+      await nativeModule().requestAuthorization(),
+    );
   }
 
-  readInitialAuthorizationStatus(): AuthorizationStatus {
-    return parseAuthorizationStatus(nativeModule().initialAuthorizationStatus);
+  readInitialAuthorizationState(): BlockingAuthorizationState {
+    return parseBlockingAuthorizationState(
+      nativeModule().initialAuthorizationState,
+    );
   }
 
-  async refreshAuthorizationStatus(): Promise<AuthorizationStatus> {
-    return parseAuthorizationStatus(nativeModule().getAuthorizationStatus());
-  }
-
-  subscribeToAuthorizationStatus(
-    listener: (status: AuthorizationStatus) => void,
+  subscribeToAuthorizationState(
+    listener: (state: BlockingAuthorizationState) => void,
   ): () => void {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state !== 'active') return;
       listener(
-        parseAuthorizationStatus(nativeModule().getAuthorizationStatus()),
+        parseBlockingAuthorizationState(nativeModule().getAuthorizationState()),
       );
     });
     return () => subscription.remove();

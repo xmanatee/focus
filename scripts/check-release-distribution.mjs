@@ -64,9 +64,12 @@ for (const removedEntryPoint of [
 const landingPage = read('site/index.html');
 expectIncludes(landingPage, APK_URL, 'Landing page');
 expectIncludes(landingPage, CHECKSUM_URL, 'Landing page');
+expectIncludes(landingPage, 'Allow restricted settings', 'Landing page');
 
 const supportPage = read('site/support/index.html');
 expectIncludes(supportPage, APK_URL, 'Support page');
 expectIncludes(supportPage, CHECKSUM_URL, 'Support page');
+expectIncludes(supportPage, 'Allow restricted settings', 'Support page');
+expectIncludes(supportPage, 'Background autostart', 'Support page');
 
 console.log('Android APK build, publication, and download links match.');

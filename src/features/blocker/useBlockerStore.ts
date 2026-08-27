@@ -1,21 +1,25 @@
 import { Alert } from 'react-native';
 import { create } from 'zustand';
 import {
-  type AuthorizationStatus,
   BlockerBridge,
+  type BlockingAuthorizationState,
 } from '../../bridge/BlockerBridge';
 import { errorMessage } from '../../shared/errors';
 
 type BusyState = 'idle' | 'authorizing';
 
 interface BlockerState {
+  readonly authorization: BlockingAuthorizationState;
   readonly busyState: BusyState;
-  readonly authorizationStatus: AuthorizationStatus;
-  readonly refreshAuthorizationStatus: () => Promise<void>;
   readonly requestPermissions: () => Promise<boolean>;
 }
 
-function confirmAuthorizationDisclosure(): Promise<boolean> {
+function confirmAuthorizationDisclosure(
+  authorization: BlockingAuthorizationState,
+): Promise<boolean> {
+  if (authorization.setupStep === 'restrictedSettings') {
+    return Promise.resolve(true);
+  }
   const disclosure = BlockerBridge.capabilities.authorizationDisclosure;
   if (disclosure === null) return Promise.resolve(true);
 
@@ -49,29 +53,21 @@ function confirmAuthorizationDisclosure(): Promise<boolean> {
   });
 }
 
-export const useBlockerStore = create<BlockerState>()((set) => ({
+export const useBlockerStore = create<BlockerState>()((set, get) => ({
+  authorization: BlockerBridge.readInitialAuthorizationState(),
   busyState: 'idle',
-  authorizationStatus: BlockerBridge.readInitialAuthorizationStatus(),
-
-  refreshAuthorizationStatus: async () => {
-    set({
-      authorizationStatus: await BlockerBridge.refreshAuthorizationStatus(),
-    });
-  },
 
   requestPermissions: async () => {
     set({ busyState: 'authorizing' });
     try {
-      const shouldOpenSettings = await confirmAuthorizationDisclosure();
+      const shouldOpenSettings = await confirmAuthorizationDisclosure(
+        get().authorization,
+      );
       if (!shouldOpenSettings) return false;
 
-      const granted = await BlockerBridge.requestAuthorization();
-      set({
-        authorizationStatus: granted
-          ? 'authorized'
-          : await BlockerBridge.refreshAuthorizationStatus(),
-      });
-      return granted;
+      const authorization = await BlockerBridge.requestAuthorization();
+      set({ authorization });
+      return authorization.status === 'authorized';
     } catch (error) {
       Alert.alert('Could not request blocking access', errorMessage(error));
       return false;
@@ -81,6 +77,6 @@ export const useBlockerStore = create<BlockerState>()((set) => ({
   },
 }));
 
-BlockerBridge.subscribeToAuthorizationStatus((status) => {
-  useBlockerStore.setState({ authorizationStatus: status });
+BlockerBridge.subscribeToAuthorizationState((authorization) => {
+  useBlockerStore.setState({ authorization });
 });

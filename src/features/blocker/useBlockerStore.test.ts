@@ -31,17 +31,12 @@ describe('useBlockerStore', () => {
     nativeAuthorization.status = 0;
     nativeAuthorization.throwsOnRequest = false;
     useBlockerStore.setState({
-      authorizationStatus: 'notDetermined',
+      authorization: {
+        setupStep: 'authorizationSettings',
+        status: 'notDetermined',
+      },
       busyState: 'idle',
     });
-  });
-
-  it('refreshes Screen Time authorization from native state', async () => {
-    nativeAuthorization.status = 1;
-
-    await useBlockerStore.getState().refreshAuthorizationStatus();
-
-    expect(useBlockerStore.getState().authorizationStatus).toBe('authorized');
   });
 
   it('waits for delayed native authorization status after permission approval', async () => {
@@ -51,7 +46,7 @@ describe('useBlockerStore', () => {
     const granted = await useBlockerStore.getState().requestPermissions();
 
     expect(granted).toBe(true);
-    expect(useBlockerStore.getState().authorizationStatus).toBe('authorized');
+    expect(useBlockerStore.getState().authorization.status).toBe('authorized');
   });
 
   it('reports native authorization failure and returns to idle', async () => {
