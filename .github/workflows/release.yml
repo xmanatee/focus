@@ -201,3 +201,50 @@ jobs:
           else
             gh release create "$RELEASE_TAG" dist/focus-blocks-android.apk dist/focus-blocks-android.apk.sha256 --verify-tag --generate-notes --latest
           fi
+
+  android_play_bundle:
+    needs: validate
+    if: needs.validate.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build signed Android App Bundle
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas build --platform android --profile production --non-interactive --wait --json > "$RUNNER_TEMP/eas-aab-build.json"
+
+      - name: Download and verify Android App Bundle
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          build_id="$(node scripts/eas-build-output.mjs build-id "$RUNNER_TEMP/eas-aab-build.json" ANDROID)"
+          npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas build:download --build-id "$build_id" --non-interactive --json > "$RUNNER_TEMP/eas-aab-download.json"
+          aab_path="$(node scripts/eas-build-output.mjs artifact-path "$RUNNER_TEMP/eas-aab-download.json" .aab)"
+          mkdir -p dist
+          cp "$aab_path" dist/focus-blocks-android.aab
+          jarsigner -verify dist/focus-blocks-android.aab | tee "$RUNNER_TEMP/aab-signature.txt"
+          grep -Fq "jar verified." "$RUNNER_TEMP/aab-signature.txt"
+
+      - name: Retain Play-ready App Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: focus-blocks-android-play-${{ needs.validate.outputs.release_tag }}
+          path: dist/focus-blocks-android.aab
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30

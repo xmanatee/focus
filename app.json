@@ -2,7 +2,7 @@
   "expo": {
     "name": "Focus Blocks",
     "slug": "focus-blocks",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "assetBundlePatterns": ["**/*"],
@@ -11,7 +11,7 @@
       "bundleIdentifier": "love.nemi.focus",
       "appStoreUrl": "https://apps.apple.com/app/id6763754394",
       "appleTeamId": "569HBLNQPC",
-      "buildNumber": "18",
+      "buildNumber": "19",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
@@ -67,7 +67,7 @@
     },
     "android": {
       "package": "love.nemi.focus",
-      "versionCode": 18,
+      "versionCode": 19,
       "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

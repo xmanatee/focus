@@ -42,10 +42,13 @@ for (const requirement of [
   'Determine release version',
   'Create release tag',
   '--profile apk',
+  '--profile production',
   'apksigner',
+  'jarsigner',
   'actions/upload-artifact@v4',
   'gh release create',
   APK_NAME,
+  'focus-blocks-android.aab',
 ]) {
   expectIncludes(releaseWorkflow, requirement, 'Release workflow');
 }
@@ -65,11 +68,19 @@ const landingPage = read('site/index.html');
 expectIncludes(landingPage, APK_URL, 'Landing page');
 expectIncludes(landingPage, CHECKSUM_URL, 'Landing page');
 expectIncludes(landingPage, 'Allow restricted settings', 'Landing page');
+expectIncludes(landingPage, 'Play Protect may block', 'Landing page');
+expectIncludes(landingPage, 'Do not disable Play Protect', 'Landing page');
 
 const supportPage = read('site/support/index.html');
 expectIncludes(supportPage, APK_URL, 'Support page');
 expectIncludes(supportPage, CHECKSUM_URL, 'Support page');
 expectIncludes(supportPage, 'Allow restricted settings', 'Support page');
 expectIncludes(supportPage, 'Background autostart', 'Support page');
+expectIncludes(
+  supportPage,
+  'Play Protect automatically blocks',
+  'Support page',
+);
+expectIncludes(supportPage, 'Do not disable Play Protect', 'Support page');
 
-console.log('Android APK build, publication, and download links match.');
+console.log('Android release artifacts and installation guidance match.');

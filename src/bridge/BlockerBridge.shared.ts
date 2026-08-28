@@ -23,7 +23,7 @@ export function parseBlockingAuthorizationState(
   return { setupStep, status };
 }
 
-export function sortedUniqueApplications(
+function sortedUniqueApplications(
   applications: readonly SelectableApplication[],
 ): readonly SelectableApplication[] {
   const byId = new Map<string, SelectableApplication>();
@@ -34,6 +34,39 @@ export function sortedUniqueApplications(
     byId.set(app.id, { id: app.id, name: app.name });
   }
   return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function parseNativeSelectionSlotValue(
+  value: unknown,
+): string | undefined {
+  if (value === null) return undefined;
+  if (typeof value !== 'string') {
+    throw new Error('Native Android selection slot is invalid.');
+  }
+  return value;
+}
+
+export function parseNativeSelectableApplications(
+  value: unknown,
+): readonly SelectableApplication[] {
+  if (!Array.isArray(value)) {
+    throw new Error('Native Android application list is invalid.');
+  }
+  const applications = value.map((item) => {
+    if (
+      !isRecord(item) ||
+      typeof item.id !== 'string' ||
+      item.id.length === 0 ||
+      item.id !== item.id.trim() ||
+      typeof item.name !== 'string' ||
+      item.name.length === 0 ||
+      item.name !== item.name.trim()
+    ) {
+      throw new Error('Native Android application list is invalid.');
+    }
+    return { id: item.id, name: item.name };
+  });
+  return sortedUniqueApplications(applications);
 }
 
 export function serializeSelectedApplications(

@@ -64,6 +64,9 @@
     <h3>Why does Focus Blocks need Android Accessibility access?</h3>
     <p>Android does not provide the same Screen Time framework as iOS. Focus Blocks uses window-change events to identify the foreground app, compare it locally with your enabled schedules, and return you to the Focus Blocks blocked screen when necessary. It cannot retrieve window content and does not read text, capture keystrokes, take screenshots, perform gestures, or share Accessibility data.</p>
 
+    <h3 id="android-install">Why does Play Protect block the Android APK?</h3>
+    <p>In selected regions, Play Protect automatically blocks apps installed from internet sources such as browsers and file managers when they request sensitive capabilities including Accessibility. The block happens before Focus Blocks can open, so it cannot be fixed by an in-app permission flow. Do not disable Play Protect. Google Play is the reliable consumer distribution path for this capability, but the Focus Blocks Play listing is not available yet. See <a href="https://developers.google.com/android/play-protect/warning-dev-guidance">Google's official warning guidance</a>.</p>
+
     <h3>How do I turn Android blocking on or off?</h3>
     <p>For an APK installed outside an app store on Android 13 or later, use the setup card in Focus Blocks to open App info. Tap the three-dot menu, choose <strong>Allow restricted settings</strong> if shown, confirm with your screen lock, and return to Focus Blocks. Use the next setup action, review the Accessibility disclosure, then enable <strong>Focus Blocks app blocking</strong>. Android requires this order and does not let apps approve the restricted setting themselves. See <a href="https://support.google.com/android/answer/12623953?hl=en">Android's official restricted-settings guide</a>.</p>
 
@@ -92,7 +95,7 @@
     <p>Focus Blocks requires Android 7.0 or later.</p>
 
     <h3>How do I install or update the Android APK?</h3>
-    <p>Download <a href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk">the latest signed APK</a>, open it, and approve installation from your browser if Android asks. On Android 13 or later, complete <strong>Allow restricted settings</strong> in App info before enabling Accessibility; Focus Blocks guides new installations through this sequence. Installing a newer APK updates the existing app while preserving its local data. You can compare the download with the published <a href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk.sha256">SHA-256 checksum</a>.</p>
+    <p>The <a href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk">latest signed APK</a> is a test build and may be blocked by Play Protect. If Android permits installation, open it normally; on Android 13 or later, complete <strong>Allow restricted settings</strong> in App info before enabling Accessibility. Installing a newer APK updates the existing app while preserving local data. Do not disable Play Protect to install it. You can compare the download with the published <a href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk.sha256">SHA-256 checksum</a>.</p>
 
     <h2>Still stuck?</h2>
     <p>Email <a href="mailto:support@nemi.love">support@nemi.love</a>. We read everything and reply as soon as we can.</p>

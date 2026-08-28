@@ -113,8 +113,8 @@ export interface DeviceActivityModule {
 export interface AndroidBlockerModule {
   readonly initialAuthorizationState: unknown;
   readonly getAuthorizationState: () => unknown;
-  readonly getSelectionSlotValue: (slotId: string) => string | undefined;
-  readonly listSelectableApplications: () => Promise<SelectableApplication[]>;
+  readonly getSelectionSlotValue: (slotId: string) => unknown;
+  readonly listSelectableApplications: () => Promise<unknown>;
   readonly reconcileRuntimeBlocks: (payload: string) => Promise<void>;
   readonly requestAuthorization: () => Promise<unknown>;
   readonly setSelectionSlotValue: (slotId: string, value: string) => boolean;

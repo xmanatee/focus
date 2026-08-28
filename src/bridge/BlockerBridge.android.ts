@@ -2,8 +2,9 @@ import { AppState, NativeModules } from 'react-native';
 import type { RuntimeFocusBlock } from '../features/schedule/types';
 import {
   parseBlockingAuthorizationState,
+  parseNativeSelectableApplications,
+  parseNativeSelectionSlotValue,
   parseSelectedApplications,
-  sortedUniqueApplications,
 } from './BlockerBridge.shared';
 import type {
   AndroidBlockerModule,
@@ -120,13 +121,15 @@ class AndroidBlockerBridge implements IBlockerBridge {
   }
 
   getSelectionSlotValue(slotId: string): string | undefined {
-    return nativeModule().getSelectionSlotValue(slotId);
+    return parseNativeSelectionSlotValue(
+      nativeModule().getSelectionSlotValue(slotId),
+    );
   }
 
   async listSelectableApplications(): Promise<
     readonly SelectableApplication[]
   > {
-    return sortedUniqueApplications(
+    return parseNativeSelectableApplications(
       await nativeModule().listSelectableApplications(),
     );
   }

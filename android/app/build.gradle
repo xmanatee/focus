@@ -27,8 +27,8 @@ android {
         applicationId = 'love.nemi.focus'
         minSdk = rootProject.ext.minSdkVersion
         targetSdk = rootProject.ext.targetSdkVersion
-        versionCode = 18
-        versionName = "1.0.8"
+        versionCode = 19
+        versionName = "1.0.9"
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"stable\""
     }
 

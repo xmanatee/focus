@@ -67,7 +67,7 @@
         <p class="lede">Focus Blocks keeps selected apps out of reach during the schedules you choose. iPhone and iPad also support daily limits, websites, and stricter Lock-in windows.</p>
         <div class="actions">
           <a class="button button-primary" href="https://apps.apple.com/us/app/focus-blocks-app-blocker/id6763754394">View on the App Store</a>
-          <a class="button button-secondary" href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk">Download Android APK</a>
+          <a class="button button-secondary" href="#download">Android install status</a>
         </div>
         <div class="hero-proof">
           <span class="pill">No account</span>
@@ -181,11 +181,12 @@
         </article>
         <article class="card download-card">
           <strong>Android</strong>
-          <p>Install the signed release APK for scheduled app blocking on Android 7.0 or later. On Android 13+, direct APK installs require one extra security confirmation: open App info, choose <strong>Allow restricted settings</strong> from the three-dot menu if shown, then enable Focus Blocks in Accessibility. The app guides you through both steps.</p>
+          <p>The Google Play listing is not available yet. Because Focus Blocks uses Accessibility for app blocking, Play Protect may block browser-downloaded APKs before installation in selected regions. Do not disable Play Protect. The signed APK remains available as a test build for devices that permit it; Android 13+ may then require <strong>Allow restricted settings</strong>.</p>
           <div class="actions">
-            <a class="button button-primary" href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk">Download APK</a>
+            <a class="button button-primary" href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk">Download test APK</a>
             <a class="checksum-link" href="https://github.com/xmanatee/focus/releases/latest/download/focus-blocks-android.apk.sha256">SHA-256 checksum</a>
           </div>
+          <p><a href="https://developers.google.com/android/play-protect/warning-dev-guidance">Read Google's Play Protect warning guidance</a>.</p>
         </article>
       </div>
     </section>
@@ -211,8 +212,8 @@
           <p>Focus Blocks requires iOS 18 or later.</p>
         </details>
         <details>
-          <summary>How do I install the Android APK?</summary>
-          <p>Download the signed APK from this page, open it, and approve installation from your browser. On Android 13 or later, Focus Blocks first opens its App info page: tap the three-dot menu, choose <strong>Allow restricted settings</strong> if shown, confirm, and return to Focus Blocks. Then use the next setup action to enable <strong>Focus Blocks app blocking</strong> in Accessibility. This extra step is Android security for apps installed outside an app store, not an ordinary permission failure.</p>
+          <summary>Why can Play Protect block the Android APK?</summary>
+          <p>In selected regions, Google automatically blocks internet-sideloaded apps that request sensitive capabilities such as Accessibility. This happens before Focus Blocks runs and is separate from Android's later <strong>Allow restricted settings</strong> step. Do not disable Play Protect. See the <a href="/support/#android-install">Android installation notes</a> for current status.</p>
         </details>
       </div>
       <div class="doc-card">

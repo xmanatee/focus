@@ -10,6 +10,7 @@ import java.util.Calendar
 class FocusAccessibilityService : AccessibilityService() {
   private val handler = Handler(Looper.getMainLooper())
   private var lastForegroundPackage: String? = null
+  private val protectedPackages by lazy { protectedBlockingPackageIds() }
 
   private val guard = object : Runnable {
     override fun run() {
@@ -39,7 +40,7 @@ class FocusAccessibilityService : AccessibilityService() {
   }
 
   private fun blockIfNeeded(packageName: String) {
-    if (packageName == applicationContext.packageName) return
+    if (!isPackageBlockable(packageName, protectedPackages)) return
     val block = FocusBlockerStorage.blockingBlockForPackage(
       this,
       packageName,

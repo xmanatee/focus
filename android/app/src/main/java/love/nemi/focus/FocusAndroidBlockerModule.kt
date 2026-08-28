@@ -96,13 +96,16 @@ class FocusAndroidBlockerModule(
   fun listSelectableApplications(promise: Promise) {
     val packageManager = reactContext.packageManager
     val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-    val ownPackage = reactContext.packageName
+    val protectedPackages = reactContext.protectedBlockingPackageIds()
     val seenPackages = mutableSetOf<String>()
     val apps = packageManager
       .queryIntentActivities(intent, 0)
       .mapNotNull { info ->
         val packageName = info.activityInfo.packageName
-        if (packageName == ownPackage || !seenPackages.add(packageName)) {
+        if (
+          !isPackageBlockable(packageName, protectedPackages) ||
+          !seenPackages.add(packageName)
+        ) {
           return@mapNotNull null
         }
         val label = info.loadLabel(packageManager).toString().trim()
