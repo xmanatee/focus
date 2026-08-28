@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
-import { extractArtifactPath, extractBuildId } from './eas-build-output.mjs';
+import { extractArtifactUrl, extractBuildId } from './eas-build-output.mjs';
 
 describe('extractBuildId', () => {
   test('returns the single successful build ID', () => {
@@ -51,17 +51,66 @@ describe('extractBuildId', () => {
   });
 });
 
-describe('extractArtifactPath', () => {
-  test('returns an APK path', () => {
-    expect(extractArtifactPath({ path: '/tmp/focus-build.apk' }, '.apk')).toBe(
-      '/tmp/focus-build.apk',
-    );
+describe('extractArtifactUrl', () => {
+  test('returns the canonical Android artifact URL', () => {
+    expect(
+      extractArtifactUrl(
+        [
+          {
+            id: 'build-123',
+            platform: 'ANDROID',
+            status: 'FINISHED',
+            artifacts: {
+              applicationArchiveUrl:
+                'https://expo.dev/artifacts/focus-build.apk',
+            },
+          },
+        ],
+        'ANDROID',
+        '.apk',
+      ),
+    ).toBe('https://expo.dev/artifacts/focus-build.apk');
   });
 
-  test.each([null, {}, { path: '' }, { path: '/tmp/focus-build.aab' }])(
-    'rejects invalid APK output %#',
-    (download) => {
-      expect(() => extractArtifactPath(download, '.apk')).toThrow();
+  test.each([
+    {},
+    { artifacts: {} },
+    { artifacts: { applicationArchiveUrl: '' } },
+    {
+      artifacts: {
+        applicationArchiveUrl: 'http://expo.dev/artifacts/focus-build.apk',
+      },
     },
-  );
+    {
+      artifacts: {
+        applicationArchiveUrl: 'https://expo.dev/artifacts/focus-build.aab',
+      },
+    },
+  ])('rejects invalid APK output %#', (artifactFields) => {
+    const builds = [
+      {
+        id: 'build-123',
+        platform: 'ANDROID',
+        status: 'FINISHED',
+        ...artifactFields,
+      },
+    ];
+    expect(() => extractArtifactUrl(builds, 'ANDROID', '.apk')).toThrow();
+  });
+
+  test('rejects unsupported artifact extensions', () => {
+    expect(() =>
+      extractArtifactUrl(
+        [
+          {
+            id: 'build-123',
+            platform: 'ANDROID',
+            status: 'FINISHED',
+          },
+        ],
+        'ANDROID',
+        '.zip',
+      ),
+    ).toThrow('Unsupported Android artifact');
+  });
 });

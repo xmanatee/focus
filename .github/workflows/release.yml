@@ -150,14 +150,10 @@ jobs:
         run: npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas build --platform android --profile apk --non-interactive --wait --json > "$RUNNER_TEMP/eas-apk-build.json"
 
       - name: Download Android APK
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          build_id="$(node scripts/eas-build-output.mjs build-id "$RUNNER_TEMP/eas-apk-build.json" ANDROID)"
-          npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas build:download --build-id "$build_id" --non-interactive --json > "$RUNNER_TEMP/eas-apk-download.json"
-          apk_path="$(node scripts/eas-build-output.mjs artifact-path "$RUNNER_TEMP/eas-apk-download.json" .apk)"
+          artifact_url="$(node scripts/eas-build-output.mjs artifact-url "$RUNNER_TEMP/eas-apk-build.json" ANDROID .apk)"
           mkdir -p dist
-          cp "$apk_path" dist/focus-blocks-android.apk
+          curl --fail --location --retry 3 --retry-all-errors --output dist/focus-blocks-android.apk "$artifact_url"
 
       - uses: actions/setup-java@v5
         with:
@@ -229,14 +225,10 @@ jobs:
         run: npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas build --platform android --profile production --non-interactive --wait --json > "$RUNNER_TEMP/eas-aab-build.json"
 
       - name: Download and verify Android App Bundle
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          build_id="$(node scripts/eas-build-output.mjs build-id "$RUNNER_TEMP/eas-aab-build.json" ANDROID)"
-          npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas build:download --build-id "$build_id" --non-interactive --json > "$RUNNER_TEMP/eas-aab-download.json"
-          aab_path="$(node scripts/eas-build-output.mjs artifact-path "$RUNNER_TEMP/eas-aab-download.json" .aab)"
+          artifact_url="$(node scripts/eas-build-output.mjs artifact-url "$RUNNER_TEMP/eas-aab-build.json" ANDROID .aab)"
           mkdir -p dist
-          cp "$aab_path" dist/focus-blocks-android.aab
+          curl --fail --location --retry 3 --retry-all-errors --output dist/focus-blocks-android.aab "$artifact_url"
           jarsigner -verify dist/focus-blocks-android.aab | tee "$RUNNER_TEMP/aab-signature.txt"
           grep -Fq "jar verified." "$RUNNER_TEMP/aab-signature.txt"
 

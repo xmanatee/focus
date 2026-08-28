@@ -45,6 +45,8 @@ for (const requirement of [
   '--profile production',
   'apksigner',
   'jarsigner',
+  'artifact-url',
+  '--retry-all-errors',
   'actions/upload-artifact@v4',
   'gh release create',
   APK_NAME,
@@ -58,6 +60,7 @@ for (const removedEntryPoint of [
   'github.event.inputs',
   'GITHUB_REF_NAME',
   'Submit to Google Play',
+  'build:download',
 ]) {
   if (releaseWorkflow.includes(removedEntryPoint)) {
     throw new Error(`Release workflow still contains ${removedEntryPoint}.`);

@@ -1,14 +1,14 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const PLATFORMS = new Set(['ANDROID', 'IOS']);
+const ANDROID_ARTIFACT_EXTENSIONS = new Set(['.aab', '.apk']);
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
-export function extractBuildId(builds, expectedPlatform) {
+function extractFinishedBuild(builds, expectedPlatform) {
   if (!PLATFORMS.has(expectedPlatform)) {
     throw new Error(`Unsupported EAS platform: ${expectedPlatform}`);
   }
@@ -30,34 +30,53 @@ export function extractBuildId(builds, expectedPlatform) {
     throw new Error('EAS build ID is missing.');
   }
 
-  return build.id;
+  return build;
 }
 
-export function extractArtifactPath(download, expectedExtension) {
-  if (download === null || typeof download !== 'object') {
-    throw new Error('EAS download output is invalid.');
-  }
-  if (typeof download.path !== 'string' || download.path.length === 0) {
-    throw new Error('EAS artifact path is missing.');
-  }
-  if (path.extname(download.path) !== expectedExtension) {
-    throw new Error(`EAS artifact must be a ${expectedExtension} file.`);
-  }
-
-  return download.path;
+export function extractBuildId(builds, expectedPlatform) {
+  return extractFinishedBuild(builds, expectedPlatform).id;
 }
 
-function main([command, filePath, expectedValue]) {
+export function extractArtifactUrl(
+  builds,
+  expectedPlatform,
+  expectedExtension,
+) {
+  if (!ANDROID_ARTIFACT_EXTENSIONS.has(expectedExtension)) {
+    throw new Error(`Unsupported Android artifact: ${expectedExtension}`);
+  }
+  const build = extractFinishedBuild(builds, expectedPlatform);
+  const artifactUrl = build.artifacts?.applicationArchiveUrl;
+  if (typeof artifactUrl !== 'string' || artifactUrl.length === 0) {
+    throw new Error('EAS artifact URL is missing.');
+  }
+
+  const url = new URL(artifactUrl);
+  if (url.protocol !== 'https:' || !url.pathname.endsWith(expectedExtension)) {
+    throw new Error(`EAS artifact must be an HTTPS ${expectedExtension} URL.`);
+  }
+
+  return url.href;
+}
+
+function main([command, filePath, expectedValue, expectedExtension]) {
   if (command === 'build-id' && filePath && expectedValue) {
     console.log(extractBuildId(readJson(filePath), expectedValue));
     return;
   }
-  if (command === 'artifact-path' && filePath && expectedValue) {
-    console.log(extractArtifactPath(readJson(filePath), expectedValue));
+  if (
+    command === 'artifact-url' &&
+    filePath &&
+    expectedValue &&
+    expectedExtension
+  ) {
+    console.log(
+      extractArtifactUrl(readJson(filePath), expectedValue, expectedExtension),
+    );
     return;
   }
   throw new Error(
-    'Usage: eas-build-output.mjs <build-id|artifact-path> <json-file> <expected-value>',
+    'Usage: eas-build-output.mjs <build-id|artifact-url> <json-file> <platform> [extension]',
   );
 }
 

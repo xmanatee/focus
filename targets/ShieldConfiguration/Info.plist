@@ -12,8 +12,8 @@
       <string>$(PRODUCT_MODULE_NAME).ShieldConfigurationExtension</string>
     </dict>
     <key>CFBundleVersion</key>
-    <string>19</string>
+    <string>20</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.9</string>
+    <string>1.0.10</string>
   </dict>
 </plist>
