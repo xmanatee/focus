@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>iPhone App Blocker for Focus and Screen Time</title>
-<meta name="description" content="Focus Blocks is an iPhone app blocker for schedules, daily limits, websites, categories, and intentional Lock-in protection.">
+<title>How to Block Apps on iPhone | Focus Blocks</title>
+<meta name="description" content="Set up an iPhone app blocker with Focus Blocks. Choose apps, set a schedule or daily limit, check blocking, and confirm selections on each device.">
 <link rel="canonical" href="https://focus.nemi.love/iphone-app-blocker/">
 <link rel="icon" href="/assets/focus-blocks-icon.png">
 <link rel="apple-touch-icon" href="/assets/focus-blocks-icon.png">
@@ -12,14 +12,15 @@
 </head>
 <body>
 <div class="site-shell">
-  <header class="nav">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="nav" aria-label="Site header">
     <a class="brand" href="/"><img src="/assets/focus-blocks-icon.png" width="38" height="38" alt=""><span>Focus Blocks</span></a>
-    <nav class="nav-links"><a href="/">Home</a><a href="/privacy/">Privacy</a><a href="/support/">Support</a></nav>
+    <nav class="nav-links" aria-label="Primary navigation"><a href="/">Home</a><a href="/privacy/">Privacy</a><a href="/support/">Support</a></nav>
   </header>
-  <main class="use-case">
+  <main id="main" class="use-case">
     <p class="eyebrow">App blocking</p>
-    <h1>An iPhone app blocker for rules you can actually keep.</h1>
-    <p class="lede">Pick distracting apps or categories with Apple's Screen Time picker, then choose when they should disappear: during focus hours, outside allowed windows, or after a daily budget.</p>
+    <h1>How to block distracting apps on iPhone.</h1>
+    <p class="lede">Choose the apps that interrupt you, then decide when to block them. Focus Blocks uses Apple's Screen Time permission to apply a blocking screen during a schedule or after a daily allowance.</p>
     <div class="actions"><a class="button button-primary" href="https://apps.apple.com/us/app/focus-blocks-app-blocker/id6763754394">View on the App Store</a><a class="button button-secondary" href="/support/">Read support</a></div>
     <h2>Core app-blocking modes</h2>
     <div class="use-case-grid">
@@ -27,6 +28,19 @@
       <article class="card"><strong>Allow only during schedule</strong><p>Make selected apps unavailable by default and only open during a chosen window.</p></article>
       <article class="card"><strong>Daily budget</strong><p>Use a hard cap for apps that are fine briefly but hard to stop.</p></article>
     </div>
+    <h2>Set up your first app block</h2>
+    <ol>
+      <li><strong>Install and grant access.</strong> Install Focus Blocks on an iPhone or iPad running iOS 18 or later, open it, and approve Screen Time access when prompted.</li>
+      <li><strong>Choose a small set of distractions.</strong> Add a block and use Apple's picker to select the apps or categories you want to restrict. Leave essential communication and work apps outside the selection.</li>
+      <li><strong>Choose one rule.</strong> For a work session, block during a schedule. If you want an app available only at lunch, allow it only during that window. For a daily allowance, choose a budget.</li>
+      <li><strong>Save and verify.</strong> Enable the block on this device. During an active scheduled period, open one of the selected apps and confirm that its blocking screen appears.</li>
+    </ol>
+    <h2>Which rule should you choose?</h2>
+    <p>A schedule answers "When can I use this app?" A daily budget answers "How much can I use it today?" Start with the one that matches your problem. For example, a weekday 09:00-12:00 block keeps feeds out of a morning work session; a ten-minute daily budget leaves a short allowance without opening the whole afternoon.</p>
+    <p>Blocking the YouTube app and blocking its website are separate choices. If you also watch in a browser, configure the website selection too. The <a href="/block-youtube-iphone/">YouTube blocking guide</a> covers that distinction, and the <a href="/screen-time-limit-app/">daily limits guide</a> explains budgets.</p>
+    <h2>Check protection before adding Lock-in</h2>
+    <p>Start with a short scheduled block so you can check the selection and timing. Once it behaves as expected, you can add a Lock-in setup window to restrict when you edit the rule. Choose a window when you will be able to review your settings.</p>
+    <p>If a selected app still opens, check Screen Time access, whether the block is enabled on this device, and whether its schedule is active. A synced rule still needs a local app selection on every iPhone or iPad. Follow the <a href="/support/#ios-setup">iPhone setup checklist</a> before changing the rule.</p>
     <h2>Private by default</h2>
     <p>There is no Focus Blocks account, analytics SDK, ad SDK, or backend. Rules can sync through your own iCloud account, while Screen Time app selections stay device-local.</p>
     <p>For setup help, use <a href="/support/">Focus Blocks support</a> to check Screen Time permission, daily budgets, synced rules, and per-device app selections.</p>

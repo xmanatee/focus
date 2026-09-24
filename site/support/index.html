@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Support - Focus Blocks</title>
-<meta name="description" content="Focus Blocks support for iOS Screen Time, Android Accessibility blocking, schedules, daily budgets, local app selections, and troubleshooting.">
+<title>Focus Blocks Support: Setup and Blocking Help</title>
+<meta name="description" content="Set up Focus Blocks on iPhone or Android. Check Screen Time permission, local app selections, schedules, and Android installation or Accessibility issues.">
 <meta name="theme-color" content="#F8F2E8" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1A1510" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://focus.nemi.love/support/">
@@ -48,7 +48,7 @@
 
   <main id="main" class="doc-page">
     <p class="eyebrow">Support</p>
-    <h1>Help with Focus Blocks.</h1>
+    <h1>Set up and troubleshoot Focus Blocks.</h1>
     <p class="lede">Have a question, hit a bug, or want to suggest something? Email <a href="mailto:support@nemi.love">support@nemi.love</a>.</p>
 
     <div class="doc-card">
@@ -56,7 +56,23 @@
       <p>Tell us what you were trying to do, what happened instead, your device model and OS version, and which block rule you configured. Do not include app names unless you want to.</p>
     </div>
 
-    <h2>Common questions</h2>
+    <nav aria-label="Support topics" class="link-grid">
+      <a href="#ios-setup">iPhone and iPad setup</a>
+      <a href="#android-install">Android installation</a>
+      <a href="#blocking-help">Blocking and permissions</a>
+    </nav>
+
+    <h2 id="ios-setup">iPhone and iPad setup checklist</h2>
+    <ol>
+      <li><strong>Grant Screen Time access.</strong> Open Focus Blocks and complete the permission step. Without access, the app cannot apply system blocking screens.</li>
+      <li><strong>Create a block.</strong> Choose the apps or categories on this device, then set a schedule or daily budget and save the rule.</li>
+      <li><strong>Enable it locally.</strong> If a rule arrived through iCloud, confirm its app selection and enable it separately on this iPhone or iPad.</li>
+      <li><strong>Check when the rule applies.</strong> For a scheduled block, verify the selected day and time. For a budget, the allowance must be used before blocking begins.</li>
+      <li><strong>Try a selected app.</strong> During an active scheduled block, opening that app should show the blocking screen. If it does not, check permission, local selection, and activation before adding stricter settings.</li>
+    </ol>
+    <p>For worked examples, see <a href="/iphone-app-blocker/">blocking apps on iPhone</a>, <a href="/block-youtube-iphone/">blocking YouTube</a>, or <a href="/digital-detox-iphone/">planning an evening digital detox</a>.</p>
+
+    <h2 id="blocking-help">Blocking and permissions</h2>
 
     <h3>Why does Focus Blocks need Screen Time permission?</h3>
     <p>Focus Blocks uses Apple's Screen Time frameworks to shield the apps, sites, and categories you choose. iOS requires this permission before any app can apply those shields.</p>
