@@ -20,6 +20,7 @@ const screenshots = {
   APP_IPAD_PRO_129: screenshotPaths('iPad-12.9'),
 };
 
+const marketingUrl = 'https://focus.nemi.love/';
 const supportUrl = 'https://focus.nemi.love/support/';
 const privacyPolicyUrl = 'https://focus.nemi.love/privacy/';
 
@@ -44,6 +45,7 @@ const englishInfo = {
   releaseNotes:
     'Improves Lock-in reliability, local block activation, and setup clarity for each device.',
   supportUrl,
+  marketingUrl,
   title: 'Focus Blocks: App Blocker',
   subtitle: 'Screen time app limits',
   privacyPolicyUrl,
@@ -69,6 +71,7 @@ const russianInfo = {
   releaseNotes:
     'Улучшена надежность Lock-in, локальная активация блоков и понятность настройки на каждом устройстве.',
   supportUrl,
+  marketingUrl,
   title: 'Focus Blocks: блок приложений',
   subtitle: 'Фокус без отвлечений',
   privacyPolicyUrl,
