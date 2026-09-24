@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const METADATA_UPLOAD_ERROR_PATTERNS = [
   /Store configuration upload encountered \d+ errors?\b/i,
@@ -22,12 +23,15 @@ export function metadataPushOutputHasUploadErrors(output) {
 }
 
 function runEasMetadataPush() {
+  const { cli } = JSON.parse(
+    readFileSync(new URL('../eas.json', import.meta.url), 'utf8'),
+  );
   const command = 'npm';
   const args = [
     'exec',
     '--yes',
     '--package',
-    'eas-cli',
+    `eas-cli@${cli.version}`,
     '--',
     'eas',
     'metadata:push',

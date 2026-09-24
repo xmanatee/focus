@@ -30,7 +30,9 @@ jobs:
         run: npm ci
 
       - name: Validate metadata
-        run: npm exec --yes --package eas-cli -- eas metadata:lint
+        run: |
+          EAS_CLI_VERSION=$(node -p 'require("./eas.json").cli.version')
+          npm exec --yes --package "eas-cli@$EAS_CLI_VERSION" -- eas metadata:lint
 
       - name: Push metadata to App Store Connect
         env:
