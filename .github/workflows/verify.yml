@@ -1,74 +1,32 @@
-name: Verify
-
-on:
-  pull_request:
+name: CI
+'on':
   push:
-    branches: [main]
-
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: null
+permissions:
+  contents: read
 concurrency:
-  group: verify-${{ github.ref }}
-  cancel-in-progress: true
-
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          node-version: 22
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '22'
           cache: npm
-
-      - name: Install dependencies
+      - name: Install exact dependencies
         run: npm ci
-
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Line-length cap
-        run: npm run check-lines
-
-      - name: Anti-patterns
-        run: npm run check-antipatterns
-
-      - name: Native structure
-        run: npm run check-native
-
-      - name: Release distribution
-        run: npm run check-release
-
-      - name: Knip
-        run: npm run check-unused
-
-      - name: Tests
-        run: npm test
-
-  android:
-    needs: verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 22
-          cache: npm
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - uses: gradle/actions/setup-gradle@v5
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify Android release
-        run: npm run android:verify
+      - name: Check
+        run: npm run check
+      - name: Build
+        run: npm run build

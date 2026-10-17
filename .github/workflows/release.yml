@@ -55,14 +55,8 @@ jobs:
       - name: Validate release source
         if: steps.release.outputs.should_release == 'true'
         run: |
-          npm run typecheck
-          npm run lint
-          npm run check-lines
-          npm run check-antipatterns
-          npm run check-native
-          npm run check-release
-          npm run check-unused
-          npm test
+          npm run check
+          npm run build
 
       - name: Create release tag
         if: steps.release.outputs.should_release == 'true'

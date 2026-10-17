@@ -12,7 +12,11 @@
       "ios/**",
       "android/**",
       "expo-env.d.ts",
-      "targets/**/expo-target.config.js"
+      "targets/**/expo-target.config.js",
+      ".agents",
+      ".codex",
+      ".gemini",
+      ".mcp.json"
     ]
   },
   "organizeImports": {
