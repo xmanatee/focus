@@ -11,7 +11,7 @@ describe('resolveQuickStartPhase', () => {
         },
         blockCount: 0,
         missingDeviceSelectionCount: 0,
-        unsupportedEnabledBlockCount: 0,
+        missingRuntimeAccessCount: 0,
       }),
     ).toBe('prepareRestrictedSettings');
   });
@@ -25,7 +25,7 @@ describe('resolveQuickStartPhase', () => {
         },
         blockCount: 0,
         missingDeviceSelectionCount: 0,
-        unsupportedEnabledBlockCount: 0,
+        missingRuntimeAccessCount: 0,
       }),
     ).toBe('grantAccess');
   });
@@ -39,7 +39,7 @@ describe('resolveQuickStartPhase', () => {
         },
         blockCount: 0,
         missingDeviceSelectionCount: 0,
-        unsupportedEnabledBlockCount: 0,
+        missingRuntimeAccessCount: 0,
       }),
     ).toBe('openSettings');
   });
@@ -53,7 +53,7 @@ describe('resolveQuickStartPhase', () => {
         },
         blockCount: 0,
         missingDeviceSelectionCount: 0,
-        unsupportedEnabledBlockCount: 0,
+        missingRuntimeAccessCount: 0,
       }),
     ).toBe('createFirstBlock');
   });
@@ -67,12 +67,12 @@ describe('resolveQuickStartPhase', () => {
         },
         blockCount: 2,
         missingDeviceSelectionCount: 1,
-        unsupportedEnabledBlockCount: 0,
+        missingRuntimeAccessCount: 0,
       }),
     ).toBe('finishDevice');
   });
 
-  it('routes unsupported enabled synced blocks through device setup', () => {
+  it('routes blocks with missing runtime access through device setup', () => {
     expect(
       resolveQuickStartPhase({
         authorization: {
@@ -81,7 +81,7 @@ describe('resolveQuickStartPhase', () => {
         },
         blockCount: 2,
         missingDeviceSelectionCount: 0,
-        unsupportedEnabledBlockCount: 1,
+        missingRuntimeAccessCount: 1,
       }),
     ).toBe('finishDevice');
   });
@@ -95,7 +95,7 @@ describe('resolveQuickStartPhase', () => {
         },
         blockCount: 1,
         missingDeviceSelectionCount: 0,
-        unsupportedEnabledBlockCount: 0,
+        missingRuntimeAccessCount: 0,
       }),
     ).toBeNull();
   });

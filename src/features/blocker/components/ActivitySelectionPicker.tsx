@@ -36,17 +36,40 @@ type ApplicationLoadState =
     }
   | { readonly kind: 'error'; readonly message: string };
 
+type StoredSelectionState =
+  | {
+      readonly kind: 'ready';
+      readonly applications: readonly SelectableApplication[];
+    }
+  | { readonly kind: 'error'; readonly message: string };
+
+function readStoredSelection(slotId: SelectionSlotId): StoredSelectionState {
+  try {
+    return {
+      applications: parseSelectedApplications(
+        BlockerBridge.getSelectionSlotValue(slotId),
+      ),
+      kind: 'ready',
+    };
+  } catch (error) {
+    return {
+      kind: 'error',
+      message: `Saved app selection could not load: ${errorMessage(error)}`,
+    };
+  }
+}
+
 export function ActivitySelectionPicker({
   familyActivitySelectionId,
   onDismissRequest,
   onSelectionChange,
 }: ActivitySelectionPickerProps): React.JSX.Element {
   const colors = useThemeColors();
-  const [storedApplications] = useState<readonly SelectableApplication[]>(() =>
-    parseSelectedApplications(
-      BlockerBridge.getSelectionSlotValue(familyActivitySelectionId),
-    ),
+  const [storedSelection, setStoredSelection] = useState<StoredSelectionState>(
+    () => readStoredSelection(familyActivitySelectionId),
   );
+  const storedApplications =
+    storedSelection.kind === 'ready' ? storedSelection.applications : [];
   const [loadState, setLoadState] = useState<ApplicationLoadState>({
     kind: 'loading',
   });
@@ -137,6 +160,12 @@ export function ActivitySelectionPicker({
     onDismissRequest();
   };
 
+  const resetStoredSelection = (): void => {
+    BlockerBridge.setSelectionSlotValue(familyActivitySelectionId, undefined);
+    setSelectedIds(new Set());
+    setStoredSelection({ kind: 'ready', applications: [] });
+  };
+
   const renderItem: ListRenderItem<SelectableApplication> = ({ item }) => {
     const isSelected = selectedIds.has(item.id);
     const isAvailable = availableApplicationIds.has(item.id);
@@ -165,7 +194,12 @@ export function ActivitySelectionPicker({
   };
 
   return (
-    <Modal animationType="slide" presentationStyle="pageSheet" visible>
+    <Modal
+      animationType="slide"
+      onRequestClose={onDismissRequest}
+      presentationStyle="pageSheet"
+      visible
+    >
       <View
         className="flex-1 px-4 pt-6 pb-8 gap-4"
         style={{ backgroundColor: colors.surface }}
@@ -223,6 +257,19 @@ export function ActivitySelectionPicker({
           />
         </Card>
 
+        {storedSelection.kind === 'error' ? (
+          <View className="gap-2">
+            <Typography variant="body" tone="signal">
+              {storedSelection.message}
+            </Typography>
+            <Button
+              title="Reset app selection"
+              variant="ghost"
+              onPress={resetStoredSelection}
+            />
+          </View>
+        ) : null}
+
         {loadState.kind === 'error' ? (
           <Button
             title="Try again"
@@ -233,7 +280,9 @@ export function ActivitySelectionPicker({
         <Button
           title="Save apps"
           variant="commit"
-          disabled={loadState.kind !== 'ready'}
+          disabled={
+            loadState.kind !== 'ready' || storedSelection.kind === 'error'
+          }
           onPress={commit}
         />
       </View>

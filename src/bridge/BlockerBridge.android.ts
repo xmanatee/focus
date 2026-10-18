@@ -1,20 +1,24 @@
-import { AppState, NativeModules } from 'react-native';
+import { AppState } from 'react-native';
 import type { RuntimeFocusBlock } from '../features/schedule/types';
+import { androidBlockerNativeModule } from './AndroidBlockerNative';
 import {
+  parseBlockerAccessState,
   parseBlockingAuthorizationState,
   parseNativeSelectableApplications,
   parseNativeSelectionSlotValue,
   parseSelectedApplications,
 } from './BlockerBridge.shared';
 import type {
-  AndroidBlockerModule,
+  AuthorizationStatus,
+  BlockerAccessState,
   BlockingAuthorizationState,
   BlockingCapabilities,
   DeviceActivityModule,
   IBlockerBridge,
-  NativeActivityEventRecord,
+  RuntimeAccessKind,
   SelectableApplication,
 } from './BlockerBridge.types';
+import { serializeAndroidRuntimePlan } from './androidRuntimePlan';
 
 export type {
   BlockingAuthorizationState,
@@ -40,50 +44,37 @@ const CAPABILITIES: BlockingCapabilities = {
   deniedAuthorizationAction: 'authorizationSettings',
   deniedAuthorizationDetail: 'Accessibility access is off',
   finishDeviceBody:
-    'Rules and app selections stay on this Android device. Pick apps for each block and replace any unsupported rule before enabling it here.',
+    'Rules stay available on this device, while Android app selections are local. Pick apps once for each block before enabling it here.',
+  lockInConfigurationBody:
+    'The setup window is stored locally, and this device decides whether to enforce it.',
   maxScheduledMonitors: null,
-  maxWebDomains: 0,
   restrictedSettingsSetup: {
     action: 'Open app info',
     body: 'Android restricts Accessibility for apps installed outside an app store. In App info, tap the three-dot menu, choose Allow restricted settings if shown, confirm, then return to Focus Blocks.',
     title: 'Allow APK access',
   },
-  runtimeKind: 'androidAccessibility',
+  runtimeAccessDisclosure: {
+    dailyBudgets: {
+      body: 'Focus Blocks uses Android Usage Access only to measure time spent in the apps selected for a daily budget. Usage data stays on this device and is never sold or shared.',
+      cancelAction: 'Not now',
+      continueAction: 'Open Usage Access',
+      title: 'Allow usage measurement?',
+    },
+    websiteBlocking: {
+      body: 'Focus Blocks creates an on-device local VPN that checks domain names against your active website blocks. Website rules stay on this device. Android allows only one VPN at a time, so enabling this replaces another active VPN. Apps that bypass Android DNS may not be filtered.',
+      cancelAction: 'Not now',
+      continueAction: 'Allow local VPN',
+      title: 'Allow website blocking?',
+    },
+  },
   selectionTitle: 'Apps',
+  strictModeBody:
+    'Active strict blocks cannot be edited or disabled inside Focus Blocks until they end. Android can still revoke Accessibility access or uninstall the app from system settings.',
+  strictModeEnableBody:
+    'Review the timing and blocked apps carefully. While this block is active, its in-app controls stay locked until it ends. This does not prevent Android settings from disabling access or uninstalling Focus Blocks.',
   supportsAppCategories: false,
-  supportsDailyBudgets: false,
-  supportsScheduleNotifications: false,
-  supportsTamperProtection: false,
-  supportsWebsiteBlocking: false,
+  supportsSystemTamperProtection: false,
 };
-
-function nativeModule(): AndroidBlockerModule {
-  const module = NativeModules.FocusAndroidBlocker as
-    | AndroidBlockerModule
-    | undefined;
-  if (module === undefined) {
-    throw new Error('FocusAndroidBlocker native module is not linked.');
-  }
-  return module;
-}
-
-function runtimePayload(blocks: readonly RuntimeFocusBlock[]): string {
-  return JSON.stringify({
-    blocks: blocks
-      .filter((block) => block.isEnabled)
-      .map((block) => ({
-        days: block.days,
-        endTime: block.endTime,
-        id: block.id,
-        name: block.name,
-        ruleKind: block.rule.kind,
-        selectedPackageIds: parseSelectedApplications(
-          BlockerBridge.getSelectionSlotValue(`block.${block.id}`),
-        ).map((app) => app.id),
-        startTime: block.startTime,
-      })),
-  });
-}
 
 class AndroidBlockerBridge implements IBlockerBridge {
   readonly capabilities = CAPABILITIES;
@@ -94,35 +85,43 @@ class AndroidBlockerBridge implements IBlockerBridge {
 
   async requestAuthorization(): Promise<BlockingAuthorizationState> {
     return parseBlockingAuthorizationState(
-      await nativeModule().requestAuthorization(),
+      await androidBlockerNativeModule().requestAuthorization(),
     );
   }
 
-  readInitialAuthorizationState(): BlockingAuthorizationState {
-    return parseBlockingAuthorizationState(
-      nativeModule().initialAuthorizationState,
+  async requestRuntimeAuthorization(
+    kind: RuntimeAccessKind,
+  ): Promise<AuthorizationStatus> {
+    const value =
+      await androidBlockerNativeModule().requestRuntimeAuthorization(kind);
+    return parseBlockerAccessState(value).runtimeAccess[kind];
+  }
+
+  readInitialAccessState(): BlockerAccessState {
+    return parseBlockerAccessState(
+      androidBlockerNativeModule().initialAccessState,
     );
   }
 
-  subscribeToAuthorizationState(
-    listener: (state: BlockingAuthorizationState) => void,
+  subscribeToAccessState(
+    listener: (state: BlockerAccessState) => void,
   ): () => void {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state !== 'active') return;
       listener(
-        parseBlockingAuthorizationState(nativeModule().getAuthorizationState()),
+        parseBlockerAccessState(androidBlockerNativeModule().getAccessState()),
       );
     });
     return () => subscription.remove();
   }
 
-  getActivityEvents(): readonly NativeActivityEventRecord[] {
-    throw new Error('DeviceActivity events are not available on Android.');
+  isBudgetThresholdReached(activityName: string): boolean {
+    return androidBlockerNativeModule().isBudgetThresholdReached(activityName);
   }
 
   getSelectionSlotValue(slotId: string): string | undefined {
     return parseNativeSelectionSlotValue(
-      nativeModule().getSelectionSlotValue(slotId),
+      androidBlockerNativeModule().getSelectionSlotValue(slotId),
     );
   }
 
@@ -130,18 +129,22 @@ class AndroidBlockerBridge implements IBlockerBridge {
     readonly SelectableApplication[]
   > {
     return parseNativeSelectableApplications(
-      await nativeModule().listSelectableApplications(),
+      await androidBlockerNativeModule().listSelectableApplications(),
     );
   }
 
   async reconcileRuntimeBlocks(
     blocks: readonly RuntimeFocusBlock[],
   ): Promise<void> {
-    await nativeModule().reconcileRuntimeBlocks(runtimePayload(blocks));
+    await androidBlockerNativeModule().reconcileRuntimeBlocks(
+      serializeAndroidRuntimePlan(blocks, (slotId) =>
+        this.getSelectionSlotValue(slotId),
+      ),
+    );
   }
 
   setSelectionSlotValue(slotId: string, value: string | undefined): void {
-    nativeModule().setSelectionSlotValue(slotId, value ?? '');
+    androidBlockerNativeModule().setSelectionSlotValue(slotId, value ?? '');
   }
 }
 

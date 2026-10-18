@@ -9,8 +9,11 @@ export function useSetupActionHandler(): (
   action: SetupVerificationAction,
 ) => void {
   const router = useRouter();
-  const authorization = useBlockerStore((s) => s.authorization);
+  const authorization = useBlockerStore((s) => s.access.authorization);
   const requestPermissions = useBlockerStore((s) => s.requestPermissions);
+  const requestRuntimePermissions = useBlockerStore(
+    (s) => s.requestRuntimePermissions,
+  );
 
   return useCallback(
     (action: SetupVerificationAction) => {
@@ -26,6 +29,12 @@ export function useSetupActionHandler(): (
             void requestPermissions();
           }
           return;
+        case 'requestDailyBudgetAccess':
+          void requestRuntimePermissions('dailyBudgets');
+          return;
+        case 'requestWebsiteBlockingAccess':
+          void requestRuntimePermissions('websiteBlocking');
+          return;
         case 'finishDeviceSetup':
           router.push('/finish-device');
           return;
@@ -40,6 +49,6 @@ export function useSetupActionHandler(): (
           return;
       }
     },
-    [authorization, requestPermissions, router],
+    [authorization, requestPermissions, requestRuntimePermissions, router],
   );
 }

@@ -154,4 +154,25 @@ describe('ActivitySelectionPicker', () => {
     expect(blocker.listSelectableApplications).toHaveBeenCalledTimes(2);
     expect(button(tree, 'Save apps').props.disabled).toBe(false);
   });
+
+  it('lets the user reset an invalid stored selection instead of crashing', async () => {
+    blocker.getSelectionSlotValue.mockReturnValue('{invalid');
+    blocker.listSelectableApplications.mockResolvedValue([
+      { id: 'com.example.app', name: 'Example' },
+    ]);
+
+    const tree = await renderPicker();
+    expect(button(tree, 'Save apps').props.disabled).toBe(true);
+
+    await act(async () => {
+      button(tree, 'Reset app selection').props.onPress();
+      await Promise.resolve();
+    });
+
+    expect(blocker.setSelectionSlotValue).toHaveBeenCalledWith(
+      'block.test',
+      undefined,
+    );
+    expect(button(tree, 'Save apps').props.disabled).toBe(false);
+  });
 });

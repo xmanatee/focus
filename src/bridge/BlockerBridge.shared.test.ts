@@ -1,10 +1,51 @@
 import { describe, expect, it } from 'vitest';
 import {
+  parseBlockerAccessState,
   parseNativeSelectableApplications,
   parseNativeSelectionSlotValue,
 } from './BlockerBridge.shared';
 
 describe('Android blocker native boundary', () => {
+  it('validates independent blocking, budget, and website access', () => {
+    expect(
+      parseBlockerAccessState({
+        authorization: {
+          setupStep: 'authorizationSettings',
+          status: 'authorized',
+        },
+        runtimeAccess: {
+          dailyBudgets: 'denied',
+          websiteBlocking: 'notDetermined',
+        },
+      }),
+    ).toEqual({
+      authorization: {
+        setupStep: 'authorizationSettings',
+        status: 'authorized',
+      },
+      runtimeAccess: {
+        dailyBudgets: 'denied',
+        websiteBlocking: 'notDetermined',
+      },
+    });
+  });
+
+  it.each([
+    null,
+    {},
+    {
+      authorization: {
+        setupStep: 'authorizationSettings',
+        status: 'authorized',
+      },
+      runtimeAccess: { dailyBudgets: 'granted', websiteBlocking: 'denied' },
+    },
+  ])('rejects an invalid access-state payload: %j', (value) => {
+    expect(() => parseBlockerAccessState(value)).toThrow(
+      'Blocking access state is invalid.',
+    );
+  });
+
   it('maps a missing native selection slot to the domain absence value', () => {
     expect(parseNativeSelectionSlotValue(null)).toBeUndefined();
   });

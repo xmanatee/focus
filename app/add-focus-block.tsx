@@ -6,6 +6,7 @@ import { ActivitySelectionPicker } from '../src/features/blocker/components/Acti
 import { BlockingCard } from '../src/features/blocker/components/BlockingCard';
 import { parseBlockedDomain } from '../src/features/blocker/domain';
 import { EMPTY_BLOCK_SELECTION } from '../src/features/blocker/types';
+import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { BlockFormCard } from '../src/features/schedule/components/BlockFormCard';
 import { FormActions } from '../src/features/schedule/components/FormActions';
@@ -14,9 +15,13 @@ import { PresetRow } from '../src/features/schedule/components/PresetRow';
 import { RuleCard } from '../src/features/schedule/components/RuleCard';
 import { StrictModeCard } from '../src/features/schedule/components/StrictModeCard';
 import { resolveEditPolicy } from '../src/features/schedule/editPolicy';
-import { activitySelectionNeedsLocalSlot } from '../src/features/schedule/localActivitySelection';
+import {
+  activitySelectionNeedsLocalSlot,
+  focusBlockNeedsLocalSelection,
+} from '../src/features/schedule/localActivitySelection';
 import { focusBlockRunnableLocally } from '../src/features/schedule/localRuntime';
 import { PRESETS, type PresetKind } from '../src/features/schedule/presets';
+import { missingRuntimeAccess } from '../src/features/schedule/runtimeAccess';
 import { confirmStrictModeOn } from '../src/features/schedule/strictModeConfirm';
 import { useActivitySelection } from '../src/features/schedule/useActivitySelection';
 import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
@@ -50,26 +55,28 @@ export default function AddFocusBlockScreen(): React.JSX.Element {
     useState<PresetKind | null>(null);
 
   const { state: adminState, now } = useAdminState();
-  const effectiveAdminState = BlockerBridge.capabilities
-    .supportsTamperProtection
-    ? adminState
-    : { kind: 'unlocked' as const, reason: 'always' as const };
   const setupBlock = useSettingsStore((s) => s.setupBlock);
   const isSetupBlockEnabledOnDevice = useSetupBlockDeviceStore(
     (s) => s.isEnabledOnDevice,
   );
-  const tamperReady = useProtectionPosture().score === 'full';
+  const tamperPosture = useProtectionPosture();
+  const tamperReady =
+    !BlockerBridge.capabilities.supportsSystemTamperProtection ||
+    tamperPosture.score === 'full';
   const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
+  const runtimeAccess = useBlockerStore((s) => s.access.runtimeAccess);
   const existingOnThisDevice =
     existing === null
       ? null
       : focusBlockRunnableLocally(
           existing,
           enabledBlockIds.includes(existing.id),
+          !focusBlockNeedsLocalSelection(existing),
+          missingRuntimeAccess(existing, runtimeAccess).length === 0,
         );
 
   const policy = resolveEditPolicy(
-    effectiveAdminState,
+    adminState,
     isEditing ? existingOnThisDevice : null,
     now,
   );
@@ -89,8 +96,6 @@ export default function AddFocusBlockScreen(): React.JSX.Element {
     selection.activitySelection,
   );
   const usesScheduleWindow = form.rule.kind !== 'dailyBudget';
-  const supportsScheduleNotifications =
-    BlockerBridge.capabilities.supportsScheduleNotifications;
 
   const { error, isPending, run, save, requestDelete } = useFocusBlockSave({
     editId,
@@ -105,22 +110,12 @@ export default function AddFocusBlockScreen(): React.JSX.Element {
         activitySelection: selection.activitySelection,
         webDomains: form.webDomains,
       },
-      notifyOnStart:
-        usesScheduleWindow && supportsScheduleNotifications
-          ? form.notifyOnStart
-          : false,
-      notifyOnEnd:
-        usesScheduleWindow && supportsScheduleNotifications
-          ? form.notifyOnEnd
-          : false,
+      notifyOnStart: usesScheduleWindow ? form.notifyOnStart : false,
+      notifyOnEnd: usesScheduleWindow ? form.notifyOnEnd : false,
       strict: form.strict,
     }),
     markSelectionSaved: selection.markSaved,
-    setupBlockForThisDevice:
-      BlockerBridge.capabilities.supportsTamperProtection &&
-      isSetupBlockEnabledOnDevice
-        ? setupBlock
-        : null,
+    setupBlockForThisDevice: isSetupBlockEnabledOnDevice ? setupBlock : null,
     dismiss,
   });
 
@@ -159,6 +154,7 @@ export default function AddFocusBlockScreen(): React.JSX.Element {
       return;
     }
     confirmStrictModeOn({
+      enableBody: BlockerBridge.capabilities.strictModeEnableBody,
       tamperReady,
       onConfirm: () => form.setStrict(true),
       onSetUpFirst: () => router.push('/protection'),
@@ -231,15 +227,15 @@ export default function AddFocusBlockScreen(): React.JSX.Element {
           disabled={readOnly}
         />
 
-        {setupBlock === null &&
-          BlockerBridge.capabilities.supportsTamperProtection && (
-            <StrictModeCard
-              value={form.strict}
-              onChange={handleStrictChange}
-              tamperReady={tamperReady}
-              disabled={readOnly}
-            />
-          )}
+        {setupBlock === null && (
+          <StrictModeCard
+            body={BlockerBridge.capabilities.strictModeBody}
+            value={form.strict}
+            onChange={handleStrictChange}
+            tamperReady={tamperReady}
+            disabled={readOnly}
+          />
+        )}
 
         {templatePromptKind !== null ? (
           <Typography variant="caption" tone="muted">
@@ -248,7 +244,7 @@ export default function AddFocusBlockScreen(): React.JSX.Element {
           </Typography>
         ) : null}
 
-        {usesScheduleWindow && supportsScheduleNotifications && (
+        {usesScheduleWindow && (
           <NotificationsCard
             notifyOnStart={form.notifyOnStart}
             notifyOnEnd={form.notifyOnEnd}

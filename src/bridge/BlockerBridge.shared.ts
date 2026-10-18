@@ -1,8 +1,36 @@
 import { isRecord } from '../shared/validation';
 import type {
+  AuthorizationStatus,
+  BlockerAccessState,
   BlockingAuthorizationState,
   SelectableApplication,
 } from './BlockerBridge.types';
+
+function parseAuthorizationStatus(value: unknown): AuthorizationStatus {
+  if (
+    value !== 'authorized' &&
+    value !== 'denied' &&
+    value !== 'notDetermined'
+  ) {
+    throw new Error('Blocking access state is invalid.');
+  }
+  return value;
+}
+
+export function parseBlockerAccessState(value: unknown): BlockerAccessState {
+  if (!isRecord(value) || !isRecord(value.runtimeAccess)) {
+    throw new Error('Blocking access state is invalid.');
+  }
+  return {
+    authorization: parseBlockingAuthorizationState(value.authorization),
+    runtimeAccess: {
+      dailyBudgets: parseAuthorizationStatus(value.runtimeAccess.dailyBudgets),
+      websiteBlocking: parseAuthorizationStatus(
+        value.runtimeAccess.websiteBlocking,
+      ),
+    },
+  };
+}
 
 export function parseBlockingAuthorizationState(
   value: unknown,

@@ -39,8 +39,6 @@ export function BlockingCard({
   const colors = useThemeColors();
   const capabilities = BlockerBridge.capabilities;
   const hasReachedWebsiteLimit = webDomains.length >= MAX_WEB_DOMAINS;
-  const showWebsiteCard =
-    capabilities.supportsWebsiteBlocking || webDomains.length > 0;
   const showsUnsupportedCategories =
     activitySelection.status === 'saved' &&
     activitySelection.categoryCount > 0 &&
@@ -77,91 +75,79 @@ export function BlockingCard({
         </Typography>
       )}
 
-      {showWebsiteCard && (
-        <Card>
-          <View className="flex-row items-center gap-4">
-            <Icon name="globe" size={24} tone="muted" />
-            <Typography variant="body-md" tone="ink" className="flex-1">
-              Blocked Websites
-            </Typography>
-            {capabilities.supportsWebsiteBlocking && (
-              <Typography variant="caption" tone="muted">
-                {webDomains.length}/{MAX_WEB_DOMAINS}
-              </Typography>
-            )}
+      <Card>
+        <View className="flex-row items-center gap-4">
+          <Icon name="globe" size={24} tone="muted" />
+          <Typography variant="body-md" tone="ink" className="flex-1">
+            Blocked Websites
+          </Typography>
+          <Typography variant="caption" tone="muted">
+            {webDomains.length}/{MAX_WEB_DOMAINS}
+          </Typography>
+        </View>
+
+        {!disabled && (
+          <View className="flex-row gap-2">
+            <TextInput
+              accessibilityLabel="Website domain"
+              placeholder="example.com"
+              placeholderTextColor={colors.inkFaint}
+              value={newDomain}
+              onChangeText={onNewDomainChange}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              editable={!hasReachedWebsiteLimit}
+              className="flex-1 bg-surface-sunken rounded-xl px-4 py-3"
+              style={{ color: colors.ink }}
+            />
+            <Pressable
+              accessibilityLabel="Add website"
+              accessibilityRole="button"
+              accessibilityState={{ disabled: hasReachedWebsiteLimit }}
+              onPress={onAddDomain}
+              disabled={hasReachedWebsiteLimit}
+              className={`bg-signal w-12 h-12 items-center justify-center rounded-xl ${
+                hasReachedWebsiteLimit ? 'opacity-40' : ''
+              }`}
+            >
+              <Icon name="plus" size={20} tone="surface" />
+            </Pressable>
           </View>
+        )}
 
-          {!capabilities.supportsWebsiteBlocking && (
-            <Typography variant="caption" tone="signal">
-              Website blocking is not available with{' '}
-              {capabilities.authorizationAccessName}. Remove these sites or edit
-              them on a supported device.
-            </Typography>
-          )}
+        {hasReachedWebsiteLimit ? (
+          <Typography variant="caption" tone="signal">
+            Focus Blocks supports up to {MAX_WEB_DOMAINS} blocked websites per
+            block.
+          </Typography>
+        ) : null}
 
-          {!disabled && capabilities.supportsWebsiteBlocking && (
-            <View className="flex-row gap-2">
-              <TextInput
-                accessibilityLabel="Website domain"
-                placeholder="example.com"
-                placeholderTextColor={colors.inkFaint}
-                value={newDomain}
-                onChangeText={onNewDomainChange}
-                autoCapitalize="none"
-                autoCorrect={false}
-                keyboardType="url"
-                editable={!hasReachedWebsiteLimit}
-                className="flex-1 bg-surface-sunken rounded-xl px-4 py-3"
-                style={{ color: colors.ink }}
-              />
-              <Pressable
-                accessibilityLabel="Add website"
-                accessibilityRole="button"
-                accessibilityState={{ disabled: hasReachedWebsiteLimit }}
-                onPress={onAddDomain}
-                disabled={hasReachedWebsiteLimit}
-                className={`bg-signal w-12 h-12 items-center justify-center rounded-xl ${
-                  hasReachedWebsiteLimit ? 'opacity-40' : ''
-                }`}
+        {webDomains.length > 0 && (
+          <View className="gap-2">
+            {webDomains.map((domain) => (
+              <View
+                key={domain}
+                className="flex-row justify-between items-center bg-surface-sunken/40 px-4 py-3 rounded-xl border border-divider/5"
               >
-                <Icon name="plus" size={20} tone="surface" />
-              </Pressable>
-            </View>
-          )}
-
-          {hasReachedWebsiteLimit && capabilities.supportsWebsiteBlocking ? (
-            <Typography variant="caption" tone="signal">
-              Focus Blocks supports up to {MAX_WEB_DOMAINS} blocked websites per
-              block.
-            </Typography>
-          ) : null}
-
-          {webDomains.length > 0 && (
-            <View className="gap-2">
-              {webDomains.map((domain) => (
-                <View
-                  key={domain}
-                  className="flex-row justify-between items-center bg-surface-sunken/40 px-4 py-3 rounded-xl border border-divider/5"
-                >
-                  <Typography variant="body" tone="ink">
-                    {domain}
-                  </Typography>
-                  {!disabled && (
-                    <Pressable
-                      accessibilityLabel={`Remove ${domain}`}
-                      accessibilityRole="button"
-                      hitSlop={12}
-                      onPress={() => onRemoveDomain(domain)}
-                    >
-                      <Icon name="xmark.circle.fill" size={18} tone="faint" />
-                    </Pressable>
-                  )}
-                </View>
-              ))}
-            </View>
-          )}
-        </Card>
-      )}
+                <Typography variant="body" tone="ink">
+                  {domain}
+                </Typography>
+                {!disabled && (
+                  <Pressable
+                    accessibilityLabel={`Remove ${domain}`}
+                    accessibilityRole="button"
+                    hitSlop={12}
+                    onPress={() => onRemoveDomain(domain)}
+                  >
+                    <Icon name="xmark.circle.fill" size={18} tone="faint" />
+                  </Pressable>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+      </Card>
     </Section>
   );
 }

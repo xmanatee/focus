@@ -12,7 +12,7 @@ import type { DiagnosticsInput } from './diagnostics';
 type DiagnosticsSnapshot = Omit<DiagnosticsInput, 'generatedAt' | 'now'>;
 
 export function useDiagnosticsSnapshot(): DiagnosticsSnapshot {
-  const authorization = useBlockerStore((s) => s.authorization);
+  const access = useBlockerStore((s) => s.access);
   const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const posture = useProtectionPosture();
@@ -31,7 +31,8 @@ export function useDiagnosticsSnapshot(): DiagnosticsSnapshot {
   }, [focusBlocks]);
 
   return {
-    authorization,
+    authorization: access.authorization,
+    runtimeAccess: access.runtimeAccess,
     enabledBlockIds,
     focusBlocks,
     populatedSelectionSlots,

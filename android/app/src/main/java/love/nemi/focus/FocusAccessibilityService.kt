@@ -11,9 +11,13 @@ class FocusAccessibilityService : AccessibilityService() {
   private val handler = Handler(Looper.getMainLooper())
   private var lastForegroundPackage: String? = null
   private val protectedPackages by lazy { protectedBlockingPackageIds() }
+  private val usageTracker by lazy { AndroidUsageTracker(this) }
 
   private val guard = object : Runnable {
     override fun run() {
+      FocusBlockerStorage.notifyBudgetWarnings(
+        this@FocusAccessibilityService, Calendar.getInstance(), usageTracker,
+      )
       lastForegroundPackage?.let(::blockIfNeeded)
       handler.postDelayed(this, millisUntilNextMinute())
     }
@@ -45,6 +49,7 @@ class FocusAccessibilityService : AccessibilityService() {
       this,
       packageName,
       Calendar.getInstance(),
+      usageTracker,
     ) ?: return
 
     if (BlockedActivity.ownsForeground) return

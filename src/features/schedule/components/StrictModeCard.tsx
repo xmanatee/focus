@@ -5,6 +5,7 @@ import { Section } from '../../../shared/components/Section';
 import { protectionCopy } from '../../protection/copy';
 
 interface StrictModeCardProps {
+  readonly body: string;
   readonly value: boolean;
   readonly onChange: (next: boolean) => void;
   readonly tamperReady: boolean;
@@ -12,6 +13,7 @@ interface StrictModeCardProps {
 }
 
 export function StrictModeCard({
+  body,
   value,
   onChange,
   tamperReady,
@@ -22,7 +24,7 @@ export function StrictModeCard({
       <Card>
         <NotifyRow
           title={protectionCopy.strictMode.title}
-          subtitle={protectionCopy.strictMode.body}
+          subtitle={body}
           value={value}
           onChange={onChange}
           disabled={disabled}

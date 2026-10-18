@@ -1,9 +1,12 @@
 import { useRouter } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import { BlockerBridge } from '../src/bridge/BlockerBridge';
+import type { RuntimeAccessKind } from '../src/bridge/BlockerBridge.types';
 import { summarizeActivitySelection } from '../src/features/blocker/types';
+import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
+import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
 import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
-import { focusBlockUnsupportedReason } from '../src/features/schedule/runtimeSupport';
+import { missingRuntimeAccess } from '../src/features/schedule/runtimeAccess';
 import type { FocusBlock } from '../src/features/schedule/types';
 import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
@@ -18,15 +21,15 @@ import { useDismiss } from '../src/shared/hooks/useDismiss';
 function DeviceBlockRow({
   block,
   needsSelection,
-  unsupportedReason,
+  missingAccess,
   onPress,
 }: {
   readonly block: FocusBlock;
   readonly needsSelection: boolean;
-  readonly unsupportedReason: string | null;
+  readonly missingAccess: readonly RuntimeAccessKind[];
   readonly onPress: () => void;
 }): React.JSX.Element {
-  const needsAction = needsSelection || unsupportedReason !== null;
+  const needsAction = needsSelection || missingAccess.length > 0;
   return (
     <Card onPress={onPress}>
       <View className="flex-row items-start justify-between gap-3">
@@ -51,15 +54,17 @@ function DeviceBlockRow({
           <Typography variant="caption" tone={needsAction ? 'signal' : 'muted'}>
             {needsSelection
               ? 'Needs apps here'
-              : unsupportedReason !== null
-                ? 'Unsupported here'
+              : missingAccess.length > 0
+                ? 'Needs access'
                 : 'Ready'}
           </Typography>
         </View>
       </View>
-      {unsupportedReason !== null ? (
+      {missingAccess.length > 0 ? (
         <Typography variant="caption" tone="signal">
-          {unsupportedReason}
+          {missingAccess.includes('dailyBudgets')
+            ? 'Allow Usage Access for budget measurement.'
+            : 'Allow the local VPN for website blocking.'}
         </Typography>
       ) : null}
     </Card>
@@ -70,12 +75,14 @@ export default function FinishDeviceScreen(): React.JSX.Element {
   const router = useRouter();
   const dismiss = useDismiss();
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
+  const runtimeAccess = useBlockerStore((s) => s.access.runtimeAccess);
+  const handleSetupAction = useSetupActionHandler();
   const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
   const unfinishedBlocks = focusBlocks.filter(
     (block) =>
       enabledBlockIds.includes(block.id) &&
       (focusBlockNeedsLocalSelection(block) ||
-        focusBlockUnsupportedReason(block) !== null),
+        missingRuntimeAccess(block, runtimeAccess).length > 0),
   );
 
   const editBlock = (block: FocusBlock): void => {
@@ -115,8 +122,8 @@ export default function FinishDeviceScreen(): React.JSX.Element {
                   This device is ready
                 </Typography>
                 <Typography variant="body" tone="muted">
-                  Every enabled block has local app selection data and uses
-                  features this device can enforce.
+                  Every enabled block has local app selection data and uses the
+                  required access on this device.
                 </Typography>
               </View>
             </View>
@@ -129,8 +136,19 @@ export default function FinishDeviceScreen(): React.JSX.Element {
                 key={block.id}
                 block={block}
                 needsSelection={focusBlockNeedsLocalSelection(block)}
-                unsupportedReason={focusBlockUnsupportedReason(block)}
-                onPress={() => editBlock(block)}
+                missingAccess={missingRuntimeAccess(block, runtimeAccess)}
+                onPress={() => {
+                  if (focusBlockNeedsLocalSelection(block)) {
+                    editBlock(block);
+                    return;
+                  }
+                  const missing = missingRuntimeAccess(block, runtimeAccess);
+                  handleSetupAction(
+                    missing[0] === 'dailyBudgets'
+                      ? 'requestDailyBudgetAccess'
+                      : 'requestWebsiteBlockingAccess',
+                  );
+                }}
               />
             ))}
           </Section>

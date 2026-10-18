@@ -10,7 +10,6 @@ import {
   selectionHasBlockedTargets,
 } from '../blocker/types';
 import { MAX_DAILY_BUDGET_MINUTES, MIN_DAILY_BUDGET_MINUTES } from './budget';
-import { focusBlockUnsupportedReason } from './runtimeSupport';
 import type { FocusBlockInput, FocusBlockRule } from './types';
 
 const MAX_NAME_LENGTH = 50;
@@ -111,9 +110,7 @@ export function validateFocusBlockStructure(input: FocusBlockInput): void {
       throw new Error('Daily budget must be between 1 minute and 23h 59m.');
     }
     if (!hasSavedActivitySelection(input.selection.activitySelection)) {
-      throw new Error(
-        'Daily budgets require apps, categories, or domains from the Screen Time picker.',
-      );
+      throw new Error('Daily budgets require a saved app selection.');
     }
   }
   if (input.strict && !selectionHasBlockedTargets(input.selection)) {
@@ -123,6 +120,4 @@ export function validateFocusBlockStructure(input: FocusBlockInput): void {
 
 export function validateFocusBlockInput(input: FocusBlockInput): void {
   validateFocusBlockStructure(input);
-  const unsupportedReason = focusBlockUnsupportedReason(input);
-  if (unsupportedReason !== null) throw new Error(unsupportedReason);
 }

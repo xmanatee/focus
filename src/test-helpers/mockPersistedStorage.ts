@@ -31,6 +31,6 @@ vi.mock('../shared/storage', () => ({
       storageMap.delete(key);
     },
   })),
-  attachCloudSync: () => () => {},
+  attachPersistedStorageSync: () => () => {},
   newId: () => 'test-id',
 }));

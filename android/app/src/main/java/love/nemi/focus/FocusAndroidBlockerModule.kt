@@ -1,34 +1,74 @@
 package love.nemi.focus
 
-import android.accessibilityservice.AccessibilityServiceInfo
-import android.content.ComponentName
+import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageInstaller
+import android.net.VpnService
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
-import android.view.accessibility.AccessibilityManager
 import androidx.core.content.edit
 import com.facebook.react.bridge.Arguments
+import com.facebook.react.bridge.BaseActivityEventListener
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
 import com.facebook.react.module.annotations.ReactModule
+import java.util.Calendar
 
 @ReactModule(name = FocusAndroidBlockerModule.NAME)
 class FocusAndroidBlockerModule(
   private val reactContext: ReactApplicationContext,
 ) : ReactContextBaseJavaModule(reactContext) {
+  private var pendingRuntimePromise: Promise? = null
+  private var pendingRuntimeRequestCode: Int? = null
+  private val usageTracker by lazy { AndroidUsageTracker(reactContext) }
+  private val authorizationStore by lazy {
+    FocusAuthorizationState(reactContext)
+  }
+
+  private val activityListener = object : BaseActivityEventListener() {
+    override fun onActivityResult(
+      activity: Activity,
+      requestCode: Int,
+      resultCode: Int,
+      data: Intent?,
+    ) {
+      if (requestCode != pendingRuntimeRequestCode) return
+      try {
+        FocusVpnController.reconcile(reactContext)
+        pendingRuntimePromise?.resolve(accessState())
+      } catch (error: Exception) {
+        pendingRuntimePromise?.reject("E_RUNTIME_ACCESS", error.message, error)
+      } finally {
+        pendingRuntimePromise = null
+        pendingRuntimeRequestCode = null
+      }
+    }
+  }
+
+  init {
+    reactContext.addActivityEventListener(activityListener)
+  }
+
   override fun getName() = NAME
 
+  override fun invalidate() {
+    reactContext.removeActivityEventListener(activityListener)
+    pendingRuntimePromise?.reject("E_MODULE_CLOSED", "Blocking access request was interrupted.")
+    pendingRuntimePromise = null
+    pendingRuntimeRequestCode = null
+    super.invalidate()
+  }
+
   override fun getConstants(): MutableMap<String, Any> =
-    mutableMapOf("initialAuthorizationState" to authorizationState())
+    mutableMapOf(
+      "initialAccessState" to accessState(),
+      "scheduleNotificationChannelId" to SCHEDULE_NOTIFICATION_CHANNEL_ID,
+    )
 
   @ReactMethod
   fun requestAuthorization(promise: Promise) {
-    val prefs = FocusBlockerStorage.prefs(reactContext)
-    val step = currentAuthorizationSetupStep()
+    val step = authorizationStore.currentSetupStep()
     val intent = when (step) {
       AuthorizationSetupStep.RESTRICTED_SETTINGS -> {
         Intent(
@@ -50,35 +90,100 @@ class FocusAndroidBlockerModule(
     }
     when (step) {
       AuthorizationSetupStep.RESTRICTED_SETTINGS ->
-        prefs.edit { putBoolean(APP_INFO_OPENED_KEY, true) }
-      AuthorizationSetupStep.ACCESSIBILITY_SETTINGS -> {
-        val accessibilityEverEnabled = prefs.getBoolean(
-          ACCESSIBILITY_EVER_ENABLED_KEY,
-          false,
-        )
-        prefs.edit {
-          putBoolean(AUTHORIZATION_REQUESTED_KEY, true)
-          if (!accessibilityEverEnabled) remove(APP_INFO_OPENED_KEY)
-        }
-      }
+        authorizationStore.markAppInfoOpened()
+      AuthorizationSetupStep.ACCESSIBILITY_SETTINGS ->
+        authorizationStore.markAccessibilityRequested()
     }
     val activity = reactContext.currentActivity
-    if (activity != null) {
-      activity.startActivity(intent)
-    } else {
-      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      reactContext.startActivity(intent)
+    try {
+      if (activity != null) {
+        activity.startActivity(intent)
+      } else {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        reactContext.startActivity(intent)
+      }
+      promise.resolve(authorizationState())
+    } catch (error: Exception) {
+      promise.reject("E_SETTINGS_UNAVAILABLE", error.message, error)
     }
-    promise.resolve(authorizationState())
   }
 
   @ReactMethod(isBlockingSynchronousMethod = true)
-  fun getAuthorizationState() = authorizationState()
+  fun getAccessState() = accessState()
+
+  @ReactMethod
+  fun requestRuntimeAuthorization(kindValue: String, promise: Promise) {
+    if (pendingRuntimePromise != null) {
+      promise.reject(
+        "E_ACCESS_REQUEST_ACTIVE",
+        "Another Android access request is already active.",
+      )
+      return
+    }
+    val kind = try {
+      RuntimeAccessKind.fromWireValue(kindValue)
+    } catch (error: IllegalArgumentException) {
+      promise.reject("E_ACCESS_KIND", error.message, error)
+      return
+    }
+    val intent = when (kind) {
+      RuntimeAccessKind.DAILY_BUDGETS ->
+        Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+          data = Uri.fromParts("package", reactContext.packageName, null)
+        }
+      RuntimeAccessKind.WEBSITE_BLOCKING -> VpnService.prepare(reactContext)
+    }
+    if (intent == null) {
+      promise.resolve(accessState())
+      return
+    }
+    val activity = reactContext.currentActivity
+    if (activity == null) {
+      promise.reject(
+        "E_ACTIVITY_UNAVAILABLE",
+        "Android cannot request access without an active screen.",
+      )
+      return
+    }
+    if (intent.resolveActivity(reactContext.packageManager) == null) {
+      promise.reject(
+        "E_SETTINGS_UNAVAILABLE",
+        "Android could not open the required system settings page.",
+      )
+      return
+    }
+
+    val requestCode = when (kind) {
+      RuntimeAccessKind.DAILY_BUDGETS -> USAGE_ACCESS_REQUEST_CODE
+      RuntimeAccessKind.WEBSITE_BLOCKING -> VPN_ACCESS_REQUEST_CODE
+    }
+    FocusBlockerStorage.prefs(reactContext).edit {
+      putBoolean(runtimeAccessRequestedKey(kind), true)
+    }
+    pendingRuntimePromise = promise
+    pendingRuntimeRequestCode = requestCode
+    try {
+      activity.startActivityForResult(intent, requestCode)
+    } catch (error: Exception) {
+      pendingRuntimePromise = null
+      pendingRuntimeRequestCode = null
+      promise.reject("E_SETTINGS_UNAVAILABLE", error.message, error)
+    }
+  }
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   fun getSelectionSlotValue(slotId: String): String? =
     FocusBlockerStorage.prefs(reactContext)
       .getString(FocusBlockerStorage.slotKey(slotId), null)
+
+  @ReactMethod(isBlockingSynchronousMethod = true)
+  fun isBudgetThresholdReached(activityName: String): Boolean =
+    FocusBlockerStorage.budgetThresholdReached(
+      reactContext,
+      activityName,
+      Calendar.getInstance(),
+      usageTracker,
+    )
 
   @ReactMethod(isBlockingSynchronousMethod = true)
   fun setSelectionSlotValue(slotId: String, value: String): Boolean {
@@ -94,101 +199,72 @@ class FocusAndroidBlockerModule(
 
   @ReactMethod
   fun listSelectableApplications(promise: Promise) {
-    val packageManager = reactContext.packageManager
-    val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-    val protectedPackages = reactContext.protectedBlockingPackageIds()
-    val seenPackages = mutableSetOf<String>()
-    val apps = packageManager
-      .queryIntentActivities(intent, 0)
-      .mapNotNull { info ->
-        val packageName = info.activityInfo.packageName
-        if (
-          !isPackageBlockable(packageName, protectedPackages) ||
-          !seenPackages.add(packageName)
-        ) {
-          return@mapNotNull null
-        }
-        val label = info.loadLabel(packageManager).toString().trim()
-        val app = Arguments.createMap()
-        app.putString("id", packageName)
-        app.putString("name", if (label.isEmpty()) packageName else label)
-        app
-      }
-      .sortedBy { it.getString("name") }
-
-    val result = Arguments.createArray()
-    for (app in apps) result.pushMap(app)
-    promise.resolve(result)
+    try {
+      promise.resolve(querySelectableApplications(reactContext))
+    } catch (error: Exception) {
+      promise.reject(
+        "E_APPLICATION_QUERY",
+        "Android could not read the installed app list.",
+        error,
+      )
+    }
   }
 
   @ReactMethod
   fun reconcileRuntimeBlocks(payload: String, promise: Promise) {
-    FocusBlockerStorage.saveRuntimePlan(reactContext, payload)
-    promise.resolve(null)
+    try {
+      FocusBlockerStorage.saveRuntimePlan(reactContext, payload)
+      reactContext.ensureScheduleNotificationChannel()
+      FocusVpnController.reconcile(reactContext)
+      promise.resolve(null)
+    } catch (error: Exception) {
+      promise.reject(
+        "E_RUNTIME_PLAN",
+        "Android could not apply the blocking plan.",
+        error,
+      )
+    }
   }
+
+  private fun accessState() = Arguments.createMap().apply {
+    putMap("authorization", authorizationState())
+    putMap("runtimeAccess", Arguments.createMap().apply {
+      putString(
+        RuntimeAccessKind.DAILY_BUDGETS.wireValue,
+        runtimeAuthorizationStatus(RuntimeAccessKind.DAILY_BUDGETS).wireValue,
+      )
+      putString(
+        RuntimeAccessKind.WEBSITE_BLOCKING.wireValue,
+        runtimeAuthorizationStatus(RuntimeAccessKind.WEBSITE_BLOCKING).wireValue,
+      )
+    })
+  }
+
+  private fun runtimeAuthorizationStatus(
+    kind: RuntimeAccessKind,
+  ): RuntimeAuthorizationStatus {
+    val granted = when (kind) {
+      RuntimeAccessKind.DAILY_BUDGETS -> reactContext.hasUsageAccess()
+      RuntimeAccessKind.WEBSITE_BLOCKING ->
+        reactContext.hasWebsiteBlockingAccess()
+    }
+    val requested = FocusBlockerStorage.prefs(reactContext)
+      .getBoolean(runtimeAccessRequestedKey(kind), false)
+    return resolveRuntimeAuthorizationStatus(granted, requested)
+  }
+
+  private fun runtimeAccessRequestedKey(kind: RuntimeAccessKind): String =
+    "runtimeAccessRequested.${kind.wireValue}"
 
   private fun authorizationState() = Arguments.createMap().apply {
-    val prefs = FocusBlockerStorage.prefs(reactContext)
-    val accessibilityEnabled = isAccessibilityEnabled()
-    val wasAccessibilityEverEnabled = prefs.getBoolean(
-      ACCESSIBILITY_EVER_ENABLED_KEY,
-      false,
-    )
-    val accessibilityEverEnabled = accessibilityEnabled ||
-      wasAccessibilityEverEnabled
-    if (accessibilityEnabled && !wasAccessibilityEverEnabled) {
-      prefs.edit {
-        putBoolean(ACCESSIBILITY_EVER_ENABLED_KEY, true)
-        remove(APP_INFO_OPENED_KEY)
-      }
-    }
-    val status = when {
-      accessibilityEnabled -> "authorized"
-      prefs.getBoolean(AUTHORIZATION_REQUESTED_KEY, false) -> "denied"
-      else -> "notDetermined"
-    }
-    val setupStep = resolveAuthorizationSetupStep(
-      restrictedSettingsRequired = restrictedSettingsRequired(),
-      accessibilityEverEnabled = accessibilityEverEnabled,
-      appInfoOpened = prefs.getBoolean(APP_INFO_OPENED_KEY, false),
-    )
-    putString("status", status)
-    putString("setupStep", setupStep.wireValue)
-  }
-
-  private fun currentAuthorizationSetupStep(): AuthorizationSetupStep {
-    val prefs = FocusBlockerStorage.prefs(reactContext)
-    return resolveAuthorizationSetupStep(
-      restrictedSettingsRequired = restrictedSettingsRequired(),
-      accessibilityEverEnabled = isAccessibilityEnabled() || prefs.getBoolean(
-        ACCESSIBILITY_EVER_ENABLED_KEY,
-        false,
-      ),
-      appInfoOpened = prefs.getBoolean(APP_INFO_OPENED_KEY, false),
-    )
-  }
-
-  private fun restrictedSettingsRequired(): Boolean =
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-      reactContext.packageManager
-        .getInstallSourceInfo(reactContext.packageName)
-        .packageSource != PackageInstaller.PACKAGE_SOURCE_STORE
-
-  private fun isAccessibilityEnabled(): Boolean {
-    val expected = ComponentName(reactContext, FocusAccessibilityService::class.java)
-    val manager = reactContext.getSystemService(AccessibilityManager::class.java)
-    return manager
-      .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-      .any { service ->
-        val info = service.resolveInfo.serviceInfo
-        ComponentName(info.packageName, info.name) == expected
-      }
+    val current = authorizationStore.current()
+    putString("status", current.status.wireValue)
+    putString("setupStep", current.setupStep.wireValue)
   }
 
   companion object {
     const val NAME = "FocusAndroidBlocker"
-    private const val ACCESSIBILITY_EVER_ENABLED_KEY = "accessibilityEverEnabled"
-    private const val APP_INFO_OPENED_KEY = "appInfoOpened"
-    private const val AUTHORIZATION_REQUESTED_KEY = "authorizationRequested"
+    private const val USAGE_ACCESS_REQUEST_CODE = 6_201
+    private const val VPN_ACCESS_REQUEST_CODE = 6_202
   }
 }

@@ -2,11 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { focusBlockInput } from '../../test-helpers/focusBlockFixtures';
 import type { ProtectionPosture } from '../protection/types';
 import type { FocusBlock } from '../schedule/types';
-import {
-  buildDiagnosticsReport,
-  evaluateSetupVerification,
-  setupActionForCheck,
-} from './diagnostics';
+import { evaluateSetupVerification, setupActionForCheck } from './diagnostics';
+import { buildDiagnosticsReport } from './diagnosticsReport';
 
 const FULL_POSTURE: ProtectionPosture = {
   completedAt: 100,
@@ -43,6 +40,10 @@ describe('evaluateSetupVerification', () => {
         setupStep: 'restrictedSettings',
         status: 'notDetermined',
       },
+      runtimeAccess: {
+        dailyBudgets: 'authorized',
+        websiteBlocking: 'authorized',
+      },
       enabledBlockIds: [],
       focusBlocks: [],
       now: new Date('2026-06-05T10:00:00'),
@@ -66,6 +67,10 @@ describe('evaluateSetupVerification', () => {
       authorization: {
         setupStep: 'authorizationSettings',
         status: 'authorized',
+      },
+      runtimeAccess: {
+        dailyBudgets: 'authorized',
+        websiteBlocking: 'authorized',
       },
       enabledBlockIds: ['one'],
       focusBlocks: [block('one')],
@@ -92,6 +97,10 @@ describe('evaluateSetupVerification', () => {
         setupStep: 'authorizationSettings',
         status: 'authorized',
       },
+      runtimeAccess: {
+        dailyBudgets: 'authorized',
+        websiteBlocking: 'authorized',
+      },
       enabledBlockIds: [],
       focusBlocks: [block('one')],
       now: new Date('2026-06-05T10:00:00'),
@@ -116,6 +125,10 @@ describe('evaluateSetupVerification', () => {
         setupStep: 'authorizationSettings',
         status: 'authorized',
       },
+      runtimeAccess: {
+        dailyBudgets: 'authorized',
+        websiteBlocking: 'authorized',
+      },
       enabledBlockIds: ['one'],
       focusBlocks: [block('one')],
       now: new Date('2026-06-05T10:00:00'),
@@ -132,7 +145,12 @@ describe('evaluateSetupVerification', () => {
   it('maps failed setup checks to concrete repair actions', () => {
     expect(setupActionForCheck('blockingAccess')).toBe('requestBlockingAccess');
     expect(setupActionForCheck('deviceSelections')).toBe('finishDeviceSetup');
-    expect(setupActionForCheck('runtimeSupport')).toBe('finishDeviceSetup');
+    expect(setupActionForCheck('dailyBudgetAccess')).toBe(
+      'requestDailyBudgetAccess',
+    );
+    expect(setupActionForCheck('websiteBlockingAccess')).toBe(
+      'requestWebsiteBlockingAccess',
+    );
     expect(setupActionForCheck('protection')).toBe('openProtection');
     expect(setupActionForCheck('blocks')).toBe('addBlock');
     expect(setupActionForCheck('activeNow')).toBe('openDiagnostics');
@@ -146,6 +164,10 @@ describe('buildDiagnosticsReport', () => {
       authorization: {
         setupStep: 'authorizationSettings',
         status: 'authorized',
+      },
+      runtimeAccess: {
+        dailyBudgets: 'authorized',
+        websiteBlocking: 'authorized',
       },
       enabledBlockIds: ['one'],
       focusBlocks: [block('one', { name: 'Secret YouTube Block' })],

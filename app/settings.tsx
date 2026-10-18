@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { BlockerBridge } from '../src/bridge/BlockerBridge';
+import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { DiagnosticsCard } from '../src/features/diagnostics/components/DiagnosticsCard';
 import { protectionCopy } from '../src/features/protection/copy';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
@@ -78,35 +79,6 @@ export default function SettingsScreen(): React.JSX.Element {
   const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
   const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
 
-  if (!BlockerBridge.capabilities.supportsTamperProtection) {
-    return (
-      <Screen padded={false} edges={['bottom']} edgeEffect="soft">
-        <ScrollView
-          className="flex-1"
-          contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingBottom: 60,
-            paddingTop: 32,
-            gap: 20,
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="gap-3">
-            <Typography variant="display-md" tone="ink">
-              Lock-in is not available here.
-            </Typography>
-            <Typography variant="body" tone="muted">
-              {BlockerBridge.capabilities.authorizationAccessName} keeps block
-              enforcement local to this device. You can still create, edit, and
-              enable schedule-based app blocks.
-            </Typography>
-          </View>
-          <DiagnosticsCard />
-        </ScrollView>
-      </Screen>
-    );
-  }
-
   const toggleDay = (day: DayOfWeek): void => {
     setSelectedDays((current) =>
       current.includes(day)
@@ -137,7 +109,11 @@ export default function SettingsScreen(): React.JSX.Element {
     const performSave = async (): Promise<void> => {
       const success = await run(async () => {
         assertRuntimeMonitorCapacity(
-          focusBlocksRunnableLocally(focusBlocks, enabledBlockIds),
+          focusBlocksRunnableLocally(
+            focusBlocks,
+            enabledBlockIds,
+            useBlockerStore.getState().access.runtimeAccess,
+          ),
           shouldEnableOnDevice ? nextBlock : null,
         );
         if (shouldEnableOnDevice && nextBlock.notifyOnStart) {
@@ -226,31 +202,32 @@ export default function SettingsScreen(): React.JSX.Element {
             Configure Lock-in.
           </Typography>
           <Typography variant="body" tone="muted">
-            The setup window syncs through iCloud, but each device decides for
-            itself when to enforce it.
+            {BlockerBridge.capabilities.lockInConfigurationBody}
           </Typography>
         </View>
 
-        <Card onPress={() => router.push('/protection')}>
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-3 flex-1">
-              <Icon
-                name="shield.fill"
-                size={22}
-                tone={posture.score === 'none' ? 'muted' : 'signal'}
-              />
-              <View className="flex-1 gap-0.5">
-                <Typography variant="body-md" tone="ink">
-                  {protectionCopy.settingsRow.title}
-                </Typography>
-                <Typography variant="caption" tone="muted">
-                  {protectionSubtitle}
-                </Typography>
+        {BlockerBridge.capabilities.supportsSystemTamperProtection ? (
+          <Card onPress={() => router.push('/protection')}>
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center gap-3 flex-1">
+                <Icon
+                  name="shield.fill"
+                  size={22}
+                  tone={posture.score === 'none' ? 'muted' : 'signal'}
+                />
+                <View className="flex-1 gap-0.5">
+                  <Typography variant="body-md" tone="ink">
+                    {protectionCopy.settingsRow.title}
+                  </Typography>
+                  <Typography variant="caption" tone="muted">
+                    {protectionSubtitle}
+                  </Typography>
+                </View>
               </View>
+              <Icon name="chevron.right" size={16} tone="faint" />
             </View>
-            <Icon name="chevron.right" size={16} tone="faint" />
-          </View>
-        </Card>
+          </Card>
+        ) : null}
 
         <SetupBlockEditorCard
           endDate={endDate}

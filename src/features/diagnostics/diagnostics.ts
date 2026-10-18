@@ -2,13 +2,17 @@ import {
   BlockerBridge,
   type BlockingAuthorizationState,
 } from '../../bridge/BlockerBridge';
+import type { RuntimeAccessState } from '../../bridge/BlockerBridge.types';
 import type { ProtectionPosture } from '../protection/types';
 import { focusBlockSelectionReadyInSlots } from '../schedule/localActivitySelection';
 import { focusBlockRunnableLocally } from '../schedule/localRuntime';
+import {
+  missingRuntimeAccess,
+  runtimeAccessRequirements,
+} from '../schedule/runtimeAccess';
 import { getFocusBlockRuntimeStatus } from '../schedule/runtimeStatus';
-import { focusBlockUnsupportedReason } from '../schedule/runtimeSupport';
 import type { FocusBlock } from '../schedule/types';
-import { type SetupBlock, resolveAdminState } from '../settings/adminState';
+import type { SetupBlock } from '../settings/adminState';
 
 export type SetupVerificationLevel = 'ready' | 'attention' | 'blocked';
 export type SetupVerificationStatus = 'pass' | 'warn' | 'fail';
@@ -17,14 +21,17 @@ export type SetupVerificationAction =
   | 'finishDeviceSetup'
   | 'openDiagnostics'
   | 'openProtection'
-  | 'requestBlockingAccess';
+  | 'requestBlockingAccess'
+  | 'requestDailyBudgetAccess'
+  | 'requestWebsiteBlockingAccess';
 
 export interface SetupVerificationCheck {
   readonly id:
     | 'blockingAccess'
     | 'blocks'
     | 'deviceSelections'
-    | 'runtimeSupport'
+    | 'dailyBudgetAccess'
+    | 'websiteBlockingAccess'
     | 'protection'
     | 'activeNow';
   readonly title: string;
@@ -38,13 +45,15 @@ export function setupActionForCheck(
   switch (id) {
     case 'blockingAccess':
       return 'requestBlockingAccess';
+    case 'dailyBudgetAccess':
+      return 'requestDailyBudgetAccess';
+    case 'websiteBlockingAccess':
+      return 'requestWebsiteBlockingAccess';
     case 'activeNow':
       return 'openDiagnostics';
     case 'blocks':
       return 'addBlock';
     case 'deviceSelections':
-      return 'finishDeviceSetup';
-    case 'runtimeSupport':
       return 'finishDeviceSetup';
     case 'protection':
       return 'openProtection';
@@ -53,6 +62,7 @@ export function setupActionForCheck(
 
 export interface DiagnosticsInput {
   readonly authorization: BlockingAuthorizationState;
+  readonly runtimeAccess: RuntimeAccessState;
   readonly enabledBlockIds: readonly string[];
   readonly focusBlocks: readonly FocusBlock[];
   readonly now: Date;
@@ -62,18 +72,13 @@ export interface DiagnosticsInput {
   readonly setupBlockEnabledOnDevice: boolean;
 }
 
-interface DiagnosticsReportInput extends DiagnosticsInput {
-  readonly appVersion: string;
-  readonly generatedAt: Date;
-}
-
 export interface SetupVerification {
   readonly activeBlockCount: number;
   readonly blockCount: number;
   readonly checks: readonly SetupVerificationCheck[];
   readonly level: SetupVerificationLevel;
   readonly missingDeviceSelectionCount: number;
-  readonly unsupportedEnabledBlockCount: number;
+  readonly missingRuntimeAccessCount: number;
   readonly summary: string;
   readonly title: string;
 }
@@ -99,7 +104,7 @@ function summaryFor(level: SetupVerificationLevel): string {
   if (level === 'attention') {
     return 'Core blocking can work, but one setup item would make it stronger.';
   }
-  return `${BlockerBridge.capabilities.authorizationAccessName} and local app selections look ready.`;
+  return `${BlockerBridge.capabilities.authorizationAccessName} and local selections look ready.`;
 }
 
 function missingSelectionDetail(count: number): string {
@@ -109,32 +114,49 @@ function missingSelectionDetail(count: number): string {
   } apps picked here`;
 }
 
+function accessDetail(
+  status: RuntimeAccessState[keyof RuntimeAccessState],
+): string {
+  if (status === 'authorized') return 'Authorized';
+  if (status === 'denied') return 'Access is off in system settings';
+  return 'Access has not been granted yet';
+}
+
 export function evaluateSetupVerification(
   input: DiagnosticsInput,
 ): SetupVerification {
-  const missingDeviceSelectionCount = input.focusBlocks.filter(
+  const locallyEnabled = input.focusBlocks.filter((block) =>
+    input.enabledBlockIds.includes(block.id),
+  );
+  const missingDeviceSelectionCount = locallyEnabled.filter(
     (block) =>
-      input.enabledBlockIds.includes(block.id) &&
       !focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
   ).length;
-  const unsupportedEnabledBlockCount = input.focusBlocks.filter(
-    (block) =>
-      input.enabledBlockIds.includes(block.id) &&
-      focusBlockUnsupportedReason(block) !== null,
+  const missingRuntimeAccessCount = locallyEnabled.filter(
+    (block) => missingRuntimeAccess(block, input.runtimeAccess).length > 0,
   ).length;
-  const runnable = input.focusBlocks.map((block) =>
-    focusBlockRunnableLocally(
+  const runnable = input.focusBlocks.map((block) => {
+    const selectionReady = focusBlockSelectionReadyInSlots(
       block,
-      input.enabledBlockIds.includes(block.id) &&
-        focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots) &&
-        focusBlockUnsupportedReason(block) === null,
-      focusBlockSelectionReadyInSlots(block, input.populatedSelectionSlots),
-    ),
-  );
+      input.populatedSelectionSlots,
+    );
+    return focusBlockRunnableLocally(
+      block,
+      input.enabledBlockIds.includes(block.id),
+      selectionReady,
+      missingRuntimeAccess(block, input.runtimeAccess).length === 0,
+    );
+  });
   const enabled = runnable.filter((block) => block.isEnabled);
   const activeBlockCount = enabled.filter(
     (block) => getFocusBlockRuntimeStatus(block, input.now).kind === 'active',
   ).length;
+  const requiresBudgetAccess = locallyEnabled.some((block) =>
+    runtimeAccessRequirements(block).includes('dailyBudgets'),
+  );
+  const requiresWebsiteAccess = locallyEnabled.some((block) =>
+    runtimeAccessRequirements(block).includes('websiteBlocking'),
+  );
 
   const checks: SetupVerificationCheck[] = [
     {
@@ -154,10 +176,10 @@ export function evaluateSetupVerification(
       id: 'blocks',
       title: 'Enabled blocks',
       detail:
-        enabled.length === 0
+        locallyEnabled.length === 0
           ? 'No blocks are enabled on this device'
-          : `${enabled.length} enabled on this device`,
-      status: enabled.length === 0 ? 'warn' : 'pass',
+          : `${locallyEnabled.length} enabled on this device`,
+      status: locallyEnabled.length === 0 ? 'warn' : 'pass',
     },
     {
       id: 'deviceSelections',
@@ -165,27 +187,36 @@ export function evaluateSetupVerification(
       detail: missingSelectionDetail(missingDeviceSelectionCount),
       status: missingDeviceSelectionCount === 0 ? 'pass' : 'fail',
     },
-    {
-      id: 'runtimeSupport',
-      title: 'Supported rules',
-      detail:
-        unsupportedEnabledBlockCount === 0
-          ? 'Enabled blocks match this device'
-          : `${unsupportedEnabledBlockCount} enabled ${
-              unsupportedEnabledBlockCount === 1 ? 'block uses' : 'blocks use'
-            } unavailable options here`,
-      status: unsupportedEnabledBlockCount === 0 ? 'pass' : 'fail',
-    },
+  ];
+  if (requiresBudgetAccess) {
+    checks.push({
+      id: 'dailyBudgetAccess',
+      title: 'Usage measurement',
+      detail: accessDetail(input.runtimeAccess.dailyBudgets),
+      status:
+        input.runtimeAccess.dailyBudgets === 'authorized' ? 'pass' : 'fail',
+    });
+  }
+  if (requiresWebsiteAccess) {
+    checks.push({
+      id: 'websiteBlockingAccess',
+      title: 'Website filtering',
+      detail: accessDetail(input.runtimeAccess.websiteBlocking),
+      status:
+        input.runtimeAccess.websiteBlocking === 'authorized' ? 'pass' : 'fail',
+    });
+  }
+  checks.push(
     {
       id: 'protection',
       title: 'Lock-in defenses',
-      detail: BlockerBridge.capabilities.supportsTamperProtection
+      detail: BlockerBridge.capabilities.supportsSystemTamperProtection
         ? input.posture.score === 'full'
           ? 'Deletion and access defenses confirmed'
-          : 'Optional defenses are not fully confirmed'
-        : 'Not used by this blocking method',
+          : 'Optional system defenses are not fully confirmed'
+        : 'In-app edit protection is available',
       status:
-        !BlockerBridge.capabilities.supportsTamperProtection ||
+        !BlockerBridge.capabilities.supportsSystemTamperProtection ||
         input.posture.score === 'full'
           ? 'pass'
           : 'warn',
@@ -199,7 +230,7 @@ export function evaluateSetupVerification(
           : `${activeBlockCount} block should be shielding now`,
       status: 'pass',
     },
-  ];
+  );
 
   const level = statusLevel(checks);
   return {
@@ -208,83 +239,8 @@ export function evaluateSetupVerification(
     checks,
     level,
     missingDeviceSelectionCount,
-    unsupportedEnabledBlockCount,
+    missingRuntimeAccessCount,
     summary: summaryFor(level),
     title: titleFor(level),
   };
-}
-
-function diagnosticsLockInState(input: DiagnosticsInput): string {
-  if (input.setupBlock === null) return 'notConfigured';
-
-  const state = resolveAdminState(
-    input.setupBlock,
-    input.setupBlockEnabledOnDevice,
-    input.now,
-  );
-
-  if (state.kind === 'locked') return 'locked';
-  if (state.reason === 'inside-block') return 'editableWindow';
-  if (state.reason === 'disabled-on-device') return 'offOnThisDevice';
-  return 'editableAlways';
-}
-
-export function buildDiagnosticsReport(input: DiagnosticsReportInput): string {
-  const verification = evaluateSetupVerification(input);
-  const lines = [
-    'Focus Blocks Diagnostics',
-    `Generated: ${input.generatedAt.toISOString()}`,
-    `Version: ${input.appVersion}`,
-    `${BlockerBridge.capabilities.authorizationAccessName}: ${input.authorization.status}`,
-    `Blocking access setup: ${input.authorization.setupStep}`,
-    `Protection: ${input.posture.score}`,
-    `Lock-in: ${diagnosticsLockInState(input)}`,
-    `Blocks: ${verification.blockCount}`,
-    `Missing device selections: ${verification.missingDeviceSelectionCount}`,
-    `Unsupported enabled blocks: ${verification.unsupportedEnabledBlockCount}`,
-    '',
-    'Setup checks:',
-    ...verification.checks.map(
-      (check) => `- ${check.title}: ${check.status} (${check.detail})`,
-    ),
-    '',
-    'Blocks:',
-  ];
-
-  input.focusBlocks.forEach((block, index) => {
-    const activity = block.selection.activitySelection;
-    const selectionReady = focusBlockSelectionReadyInSlots(
-      block,
-      input.populatedSelectionSlots,
-    );
-    const unsupportedReason = focusBlockUnsupportedReason(block);
-    const runnableBlock = focusBlockRunnableLocally(
-      block,
-      input.enabledBlockIds.includes(block.id) &&
-        selectionReady &&
-        unsupportedReason === null,
-      selectionReady,
-    );
-    const runtime = getFocusBlockRuntimeStatus(runnableBlock, input.now);
-    lines.push(
-      [
-        `Block ${index + 1}:`,
-        `enabledHere=${runnableBlock.isEnabled}`,
-        `localActivation=${input.enabledBlockIds.includes(block.id)}`,
-        `rule=${block.rule.kind}`,
-        `days=${block.days.length}`,
-        `schedule=${block.startTime}-${block.endTime}`,
-        `apps=${activity.status === 'saved' ? activity.applicationCount : 0}`,
-        `categories=${
-          activity.status === 'saved' ? activity.categoryCount : 0
-        }`,
-        `webDomains=${block.selection.webDomains.length}`,
-        `deviceSelection=${selectionReady}`,
-        `unsupported=${unsupportedReason ?? 'none'}`,
-        `runtime=${runtime.kind}`,
-      ].join(' '),
-    );
-  });
-
-  return `${lines.join('\n')}\n`;
 }

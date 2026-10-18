@@ -1,4 +1,5 @@
 import { Pressable, View } from 'react-native';
+import type { RuntimeAccessState } from '../../../bridge/BlockerBridge.types';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
@@ -6,8 +7,8 @@ import { Section } from '../../../shared/components/Section';
 import { Typography } from '../../../shared/components/Typography';
 import { focusBlockNeedsLocalSelection } from '../localActivitySelection';
 import { focusBlockRunnableLocally } from '../localRuntime';
+import { missingRuntimeAccess } from '../runtimeAccess';
 import { getFocusBlockRuntimeStatus } from '../runtimeStatus';
-import { focusBlockUnsupportedReason } from '../runtimeSupport';
 import type { FocusBlock } from '../types';
 import { FocusBlockRow } from './FocusBlockRow';
 
@@ -17,6 +18,7 @@ interface FocusBlockListSectionProps {
   readonly hasBlockingAccess: boolean;
   readonly isAdminLocked: boolean;
   readonly now: Date;
+  readonly runtimeAccess: RuntimeAccessState;
   readonly onAdd: () => void;
   readonly onEdit: (blockId: string) => void;
   readonly onToggle: (blockId: string, nextIsEnabled: boolean) => void;
@@ -28,6 +30,7 @@ export function FocusBlockListSection({
   hasBlockingAccess,
   isAdminLocked,
   now,
+  runtimeAccess,
   onAdd,
   onEdit,
   onToggle,
@@ -61,11 +64,17 @@ export function FocusBlockListSection({
       ) : (
         focusBlocks.map((block) => {
           const isEnabled = enabledBlockIds.includes(block.id);
-          const runnableBlock = focusBlockRunnableLocally(block, isEnabled);
+          const needsDeviceSelection = focusBlockNeedsLocalSelection(block);
+          const needsRuntimeAccess =
+            missingRuntimeAccess(block, runtimeAccess).length > 0;
+          const runnableBlock = focusBlockRunnableLocally(
+            block,
+            isEnabled,
+            !needsDeviceSelection,
+            !needsRuntimeAccess,
+          );
           const status = getFocusBlockRuntimeStatus(runnableBlock, now);
           const isActive = status.kind === 'active';
-          const needsDeviceSelection = focusBlockNeedsLocalSelection(block);
-          const unsupportedReason = focusBlockUnsupportedReason(block);
           return (
             <FocusBlockRow
               key={block.id}
@@ -73,14 +82,11 @@ export function FocusBlockListSection({
               isEnabled={isEnabled}
               isActive={isActive}
               needsDeviceSelection={needsDeviceSelection}
-              unsupportedReason={unsupportedReason}
+              needsRuntimeAccess={needsRuntimeAccess}
               toggleDisabled={
                 (isActive && block.strict) ||
                 (isAdminLocked && runnableBlock.isEnabled) ||
-                (!isEnabled &&
-                  (!hasBlockingAccess ||
-                    needsDeviceSelection ||
-                    unsupportedReason !== null))
+                (!isEnabled && (!hasBlockingAccess || needsDeviceSelection))
               }
               onPress={() => onEdit(block.id)}
               onToggle={(next) => onToggle(block.id, next)}

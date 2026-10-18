@@ -5,4 +5,13 @@
   <string name="blocked_title">Blocked</string>
   <string name="blocked_message">&quot;%1$s&quot; is active right now.</string>
   <string name="back_to_focus">Back to Focus Blocks</string>
+  <string name="dns_notification_channel">Website blocking</string>
+  <string name="schedule_notification_channel">Focus schedules</string>
+  <string name="budget_warning_title">Budget Almost Used</string>
+  <plurals name="budget_warning_message">
+    <item quantity="one">&quot;%1$s&quot; has %2$d minute left before it is blocked.</item>
+    <item quantity="other">&quot;%1$s&quot; has %2$d minutes left before it is blocked.</item>
+  </plurals>
+  <string name="dns_notification_title">Focus Blocks is filtering websites</string>
+  <string name="dns_notification_message">Only domains in active focus blocks are filtered.</string>
 </resources>

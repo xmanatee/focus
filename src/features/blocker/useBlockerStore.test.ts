@@ -31,9 +31,15 @@ describe('useBlockerStore', () => {
     nativeAuthorization.status = 0;
     nativeAuthorization.throwsOnRequest = false;
     useBlockerStore.setState({
-      authorization: {
-        setupStep: 'authorizationSettings',
-        status: 'notDetermined',
+      access: {
+        authorization: {
+          setupStep: 'authorizationSettings',
+          status: 'notDetermined',
+        },
+        runtimeAccess: {
+          dailyBudgets: 'notDetermined',
+          websiteBlocking: 'notDetermined',
+        },
       },
       busyState: 'idle',
     });
@@ -46,7 +52,9 @@ describe('useBlockerStore', () => {
     const granted = await useBlockerStore.getState().requestPermissions();
 
     expect(granted).toBe(true);
-    expect(useBlockerStore.getState().authorization.status).toBe('authorized');
+    expect(useBlockerStore.getState().access.authorization.status).toBe(
+      'authorized',
+    );
   });
 
   it('reports native authorization failure and returns to idle', async () => {
@@ -56,5 +64,17 @@ describe('useBlockerStore', () => {
 
     expect(granted).toBe(false);
     expect(useBlockerStore.getState().busyState).toBe('idle');
+  });
+
+  it('treats iOS budget and website access as part of Screen Time access', async () => {
+    const budgetGranted = await useBlockerStore
+      .getState()
+      .requestRuntimePermissions('dailyBudgets');
+    const websiteGranted = await useBlockerStore
+      .getState()
+      .requestRuntimePermissions('websiteBlocking');
+
+    expect(budgetGranted).toBe(true);
+    expect(websiteGranted).toBe(true);
   });
 });

@@ -1,32 +1,11 @@
 import fs from 'node:fs';
-
-const read = (path) => fs.readFileSync(path, 'utf8');
-
-function expectIncludes(content, value, label) {
-  if (!content.includes(value)) {
-    throw new Error(`${label} is missing "${value}".`);
-  }
-}
-
-function expectExcludes(content, value, label) {
-  if (content.includes(value)) {
-    throw new Error(`${label} must not contain "${value}".`);
-  }
-}
-
-function expectMatch(content, pattern, label) {
-  const match = content.match(pattern);
-  if (!match) {
-    throw new Error(`${label} is missing.`);
-  }
-  return match[1];
-}
-
-function expectEqual(actual, expected, label) {
-  if (actual !== expected) {
-    throw new Error(`${label} is "${actual}", expected "${expected}".`);
-  }
-}
+import {
+  expectEqual,
+  expectExcludes,
+  expectIncludes,
+  expectMatch,
+  read,
+} from './native-structure-assertions.mjs';
 
 function plistString(content, key, label) {
   return expectMatch(
@@ -150,22 +129,22 @@ function checkAndroid() {
   );
   expectIncludes(
     blockerModule,
-    'fun getAuthorizationState() = authorizationState()',
+    'fun getAccessState() = accessState()',
     'FocusAndroidBlockerModule',
   );
   for (const requirement of [
     'ACTION_APPLICATION_DETAILS_SETTINGS',
     'ACTION_ACCESSIBILITY_SETTINGS',
-    'getInstallSourceInfo',
-    'PACKAGE_SOURCE_STORE',
   ]) {
     expectIncludes(blockerModule, requirement, 'FocusAndroidBlockerModule');
   }
-  expectIncludes(
-    authorizationSetup,
+  for (const requirement of [
     'resolveAuthorizationSetupStep',
-    'AuthorizationSetup',
-  );
+    'getInstallSourceInfo',
+    'PACKAGE_SOURCE_STORE',
+  ]) {
+    expectIncludes(authorizationSetup, requirement, 'AuthorizationSetup');
+  }
   expectIncludes(styles, 'parent="Theme.SplashScreen"', 'Android splash theme');
   expectIncludes(styles, '@drawable/splashscreen_logo', 'Android splash theme');
 
@@ -175,9 +154,28 @@ function checkAndroid() {
     'Android manifest',
   );
   expectIncludes(manifest, 'android:scheme="focusblocks"', 'Android manifest');
-  for (const permission of ['POST_NOTIFICATIONS', 'QUERY_ALL_PACKAGES']) {
-    expectExcludes(manifest, permission, 'Android manifest');
+  expectExcludes(manifest, 'QUERY_ALL_PACKAGES', 'Android manifest');
+  for (const permission of [
+    'ACCESS_NETWORK_STATE',
+    'FOREGROUND_SERVICE_SPECIAL_USE',
+    'PACKAGE_USAGE_STATS',
+    'POST_NOTIFICATIONS',
+    'RECEIVE_BOOT_COMPLETED',
+  ]) {
+    expectIncludes(manifest, permission, 'Android manifest');
   }
+  for (const component of [
+    'FocusAccessibilityService',
+    'FocusDnsVpnService',
+    'FocusRuntimeReceiver',
+  ]) {
+    expectIncludes(manifest, component, 'Android manifest');
+  }
+  expectIncludes(
+    manifest,
+    'android.permission.BIND_VPN_SERVICE',
+    'Android manifest',
+  );
   for (const permission of [
     'READ_EXTERNAL_STORAGE',
     'WRITE_EXTERNAL_STORAGE',

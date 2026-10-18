@@ -6,11 +6,13 @@ import {
 } from './BlockerBridge.shared';
 import type {
   AuthorizationStatus,
+  BlockerAccessState,
   BlockingAuthorizationState,
   BlockingCapabilities,
   DeviceActivityModule,
   IBlockerBridge,
   NativeActivityEventRecord,
+  RuntimeAccessKind,
   SelectableApplication,
 } from './BlockerBridge.types';
 
@@ -31,16 +33,21 @@ const CAPABILITIES: BlockingCapabilities = {
   deniedAuthorizationDetail: 'Denied in iOS Settings',
   finishDeviceBody:
     'Rules sync with iCloud, but iOS keeps app selections private to each iPhone and iPad. Pick apps once on this device before those app blocks can apply here.',
+  lockInConfigurationBody:
+    'The setup window syncs through iCloud, but each device decides for itself when to enforce it.',
   maxScheduledMonitors: 20,
-  maxWebDomains: 50,
   restrictedSettingsSetup: null,
-  runtimeKind: 'deviceActivity',
+  runtimeAccessDisclosure: {
+    dailyBudgets: null,
+    websiteBlocking: null,
+  },
   selectionTitle: 'Apps & Categories',
+  strictModeBody:
+    'Mark this as a high-stakes block and pair it with iOS tamper protection. Active blocks are read-only until they end.',
+  strictModeEnableBody:
+    'Strict blocks should be paired with iOS tamper protection. Please review the timing and blocked apps before you turn this on.',
   supportsAppCategories: true,
-  supportsDailyBudgets: true,
-  supportsScheduleNotifications: true,
-  supportsTamperProtection: true,
-  supportsWebsiteBlocking: true,
+  supportsSystemTamperProtection: true,
 };
 
 function loadDeviceActivityModule(): DeviceActivityModule {
@@ -71,32 +78,62 @@ class ScreenTimeBlockerBridge implements IBlockerBridge {
     };
   }
 
-  readInitialAuthorizationState(): BlockingAuthorizationState {
-    return parseBlockingAuthorizationState({
+  async requestRuntimeAuthorization(): Promise<AuthorizationStatus> {
+    return (await this.requestAuthorization()).status;
+  }
+
+  readInitialAccessState(): BlockerAccessState {
+    const authorization = parseBlockingAuthorizationState({
       setupStep: 'authorizationSettings',
       status: mapAuthorizationStatus(
         this.deviceActivity.getAuthorizationStatus(),
       ),
     });
+    return {
+      authorization,
+      runtimeAccess: {
+        dailyBudgets: authorization.status,
+        websiteBlocking: authorization.status,
+      },
+    };
   }
 
-  subscribeToAuthorizationState(
-    listener: (state: BlockingAuthorizationState) => void,
+  subscribeToAccessState(
+    listener: (state: BlockerAccessState) => void,
   ): () => void {
     const subscription = this.deviceActivity.onAuthorizationStatusChange(
-      (event) =>
-        listener({
+      (event) => {
+        const authorization: BlockingAuthorizationState = {
           setupStep: 'authorizationSettings',
           status: mapAuthorizationStatus(event.authorizationStatus),
-        }),
+        };
+        listener({
+          authorization,
+          runtimeAccess: {
+            dailyBudgets: authorization.status,
+            websiteBlocking: authorization.status,
+          },
+        });
+      },
     );
     return () => subscription.remove();
   }
 
-  getActivityEvents(
-    activityName: string,
-  ): readonly NativeActivityEventRecord[] {
-    return this.deviceActivity.getEvents(activityName);
+  isBudgetThresholdReached(activityName: string): boolean {
+    const events = this.deviceActivity.getEvents(activityName);
+    const threshold = events.find(
+      (event) =>
+        event.callbackName === 'eventDidReachThreshold' &&
+        event.eventName === 'limit',
+    );
+    const intervalStart = events.find(
+      (event) => event.callbackName === 'intervalDidStart',
+    );
+    return (
+      threshold !== undefined &&
+      intervalStart !== undefined &&
+      threshold.lastCalledAt > intervalStart.lastCalledAt
+    );
   }
 
   getSelectionSlotValue(slotId: string): string | undefined {

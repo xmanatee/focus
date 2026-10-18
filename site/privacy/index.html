@@ -34,11 +34,11 @@
   <main id="main" class="doc-page">
     <p class="eyebrow">Privacy Policy</p>
     <h1>Private by default.</h1>
-    <p class="lede">Effective date: 2026-07-23</p>
+    <p class="lede">Effective date: 2026-10-18</p>
 
     <div class="doc-card">
       <strong>Summary</strong>
-      <p>Focus Blocks does not collect, transmit, sell, or share personal data. There is no account, analytics, advertising, or Focus Blocks backend.</p>
+      <p>The developer does not collect, sell, or share personal data. There is no account, analytics, advertising, or Focus Blocks backend. Android usage measurement and website filtering run on your device; allowed DNS queries use your network's DNS resolver as described below.</p>
     </div>
 
     <h2>What data is handled</h2>
@@ -56,8 +56,11 @@
       <li><strong>Selected applications</strong>, including the package identifiers and labels you choose from the launchable apps installed on the device.</li>
       <li><strong>Rules</strong> you create, including names, schedules, selected days, and whether each rule is enabled locally.</li>
       <li><strong>Foreground application identifiers</strong> delivered by Android Accessibility window-change events. Focus Blocks compares the current identifier with your enabled rules on the device and opens its blocked screen when a rule applies.</li>
+      <li><strong>Selected-app usage</strong>, read from Android usage events after you grant Usage Access, to calculate budget consumption locally. Usage event history is not retained or uploaded. A local marker prevents repeat warnings within a budget window.</li>
+      <li><strong>Website domain names</strong>, checked against your active rules after you consent to an on-device DNS VPN. Blocked queries receive a local negative response. Allowed queries are forwarded to your current network's DNS resolver; no browsing history is stored and no remote Focus Blocks VPN server is involved.</li>
     </ul>
     <p>The Android Accessibility service cannot retrieve window content and does not read screen text, inspect the view hierarchy, capture keystrokes, take screenshots, perform gestures, or transmit Accessibility data. It uses foreground application identifiers only for the app-blocking action you configure. You can disable the service at any time in Android Accessibility settings.</p>
+    <p>You can also revoke Usage Access or disconnect the local VPN in Android Settings. Website filtering does not inspect page content or decrypt HTTPS traffic.</p>
 
     <h3>Optional iCloud sync on iOS</h3>
     <ul>
@@ -73,7 +76,7 @@
       <li>Does not create an account or require one.</li>
       <li>Does not include analytics, crash-reporting, or advertising SDKs.</li>
       <li>Does not send data to our servers. There are no servers.</li>
-      <li>Does not monitor or log which apps you use, when, or for how long.</li>
+      <li>Does not retain or upload a history of which apps or websites you use. Android reads selected-app usage locally only to enforce your budgets.</li>
       <li>Does not manage other people's devices. Focus Blocks is self-directed, not parental control.</li>
     </ul>
 

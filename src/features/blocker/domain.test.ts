@@ -21,6 +21,10 @@ describe('parseBlockedDomain', () => {
     'example..com',
     '.example.com',
     'exa mple.com',
+    '-example.com',
+    'example-.com',
+    'example_site.com',
+    `${'a'.repeat(64)}.com`,
   ])('rejects invalid input %s', (input) => {
     expect(parseBlockedDomain(input)).toBeNull();
   });

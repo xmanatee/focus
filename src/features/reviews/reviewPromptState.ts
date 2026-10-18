@@ -64,7 +64,7 @@ export function shouldShowReviewPrompt(
     verification.activeBlockCount === 0 &&
     completedScheduledWindowCount >= MINIMUM_COMPLETED_WINDOWS &&
     verification.missingDeviceSelectionCount === 0 &&
-    verification.unsupportedEnabledBlockCount === 0
+    verification.missingRuntimeAccessCount === 0
   );
 }
 

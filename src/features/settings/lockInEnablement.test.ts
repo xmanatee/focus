@@ -4,6 +4,11 @@ import { slotStore } from '../../test-helpers/mockDeviceActivity';
 import type { FocusBlock, FocusBlockInput } from '../schedule/types';
 import { resolveLockInEnablement } from './lockInEnablement';
 
+const RUNTIME_ACCESS = {
+  dailyBudgets: 'authorized',
+  websiteBlocking: 'authorized',
+} as const;
+
 function block(
   id: string,
   overrides: Partial<FocusBlockInput> = {},
@@ -20,10 +25,12 @@ describe('resolveLockInEnablement', () => {
   });
 
   it('blocks Lock-in enablement before any locally enabled runnable block is ready', () => {
-    expect(resolveLockInEnablement([], []).kind).toBe('blocked');
-    expect(resolveLockInEnablement([block('synced-block')], []).kind).toBe(
+    expect(resolveLockInEnablement([], [], RUNTIME_ACCESS).kind).toBe(
       'blocked',
     );
+    expect(
+      resolveLockInEnablement([block('synced-block')], [], RUNTIME_ACCESS).kind,
+    ).toBe('blocked');
   });
 
   it('blocks Lock-in enablement when an armed app block still needs local selection', () => {
@@ -44,6 +51,7 @@ describe('resolveLockInEnablement', () => {
           }),
         ],
         ['missing-selection'],
+        RUNTIME_ACCESS,
       ).kind,
     ).toBe('blocked');
   });
@@ -68,7 +76,17 @@ describe('resolveLockInEnablement', () => {
           }),
         ],
         ['ready'],
+        RUNTIME_ACCESS,
       ).kind,
     ).toBe('allowed');
+  });
+
+  it('requires runtime access before treating an enabled website rule as ready', () => {
+    expect(
+      resolveLockInEnablement([block('website')], ['website'], {
+        dailyBudgets: 'authorized',
+        websiteBlocking: 'denied',
+      }).kind,
+    ).toBe('blocked');
   });
 });

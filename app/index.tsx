@@ -15,6 +15,7 @@ import { ProgressCard } from '../src/features/schedule/components/ProgressCard';
 import { SchedulerErrorCard } from '../src/features/schedule/components/SchedulerErrorCard';
 import { focusBlocksRunnableLocally } from '../src/features/schedule/localRuntime';
 import { buildFocusProgress } from '../src/features/schedule/progress';
+import { missingRuntimeAccess } from '../src/features/schedule/runtimeAccess';
 import { assertRuntimeMonitorCapacity } from '../src/features/schedule/runtimeCapacity';
 import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
 import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
@@ -31,17 +32,26 @@ import { errorMessage } from '../src/shared/errors';
 
 export default function MainFeedScreen(): React.JSX.Element {
   const router = useRouter();
-  const authorization = useBlockerStore((s) => s.authorization);
+  const access = useBlockerStore((s) => s.access);
+  const authorization = access.authorization;
   const busyState = useBlockerStore((s) => s.busyState);
   const requestPermissions = useBlockerStore((s) => s.requestPermissions);
+  const requestRuntimePermissions = useBlockerStore(
+    (s) => s.requestRuntimePermissions,
+  );
   const hasPermissions = authorization.status === 'authorized';
 
   const focusBlocks = useFocusBlockStore((s) => s.focusBlocks);
   const enabledBlockIds = useBlockActivationStore((s) => s.enabledBlockIds);
   const setBlockEnabled = useBlockActivationStore((s) => s.setBlockEnabled);
   const runnableBlocks = useMemo(
-    () => focusBlocksRunnableLocally(focusBlocks, enabledBlockIds),
-    [enabledBlockIds, focusBlocks],
+    () =>
+      focusBlocksRunnableLocally(
+        focusBlocks,
+        enabledBlockIds,
+        access.runtimeAccess,
+      ),
+    [access.runtimeAccess, enabledBlockIds, focusBlocks],
   );
   const { active, activeBlocks, now } = useActiveBlock(runnableBlocks);
 
@@ -50,24 +60,19 @@ export default function MainFeedScreen(): React.JSX.Element {
     state: adminState,
     now: adminNow,
   } = useAdminState();
-  const supportsTamperProtection =
-    BlockerBridge.capabilities.supportsTamperProtection;
+  const supportsSystemTamperProtection =
+    BlockerBridge.capabilities.supportsSystemTamperProtection;
   const canReconcileRuntime =
     hasPermissions ||
     BlockerBridge.capabilities.canReconcileWithoutAuthorization;
-  const isAdminLocked =
-    supportsTamperProtection && adminState.kind === 'locked';
+  const isAdminLocked = adminState.kind === 'locked';
   const setupBlock = useSettingsStore((s) => s.setupBlock);
   const setupBlockForThisDevice =
-    supportsTamperProtection &&
-    setupBlock !== null &&
-    isSetupBlockEnabledOnDevice
-      ? setupBlock
-      : null;
+    setupBlock !== null && isSetupBlockEnabledOnDevice ? setupBlock : null;
 
   const posture = useProtectionPosture();
   const showProtectionCard =
-    supportsTamperProtection && posture.score !== 'full';
+    supportsSystemTamperProtection && posture.score !== 'full';
   const setupVerification = useSetupVerification();
   const handleSetupAction = useSetupActionHandler();
   const [schedulerError, setSchedulerError] = useState<string | null>(null);
@@ -76,8 +81,7 @@ export default function MainFeedScreen(): React.JSX.Element {
     authorization,
     blockCount: focusBlocks.length,
     missingDeviceSelectionCount: setupVerification.missingDeviceSelectionCount,
-    unsupportedEnabledBlockCount:
-      setupVerification.unsupportedEnabledBlockCount,
+    missingRuntimeAccessCount: setupVerification.missingRuntimeAccessCount,
   });
   const showAdvancedConfiguration = quickStartPhase === null;
 
@@ -110,15 +114,38 @@ export default function MainFeedScreen(): React.JSX.Element {
     await requestPermissions();
   };
 
-  const handleToggle = (blockId: string, nextIsEnabled: boolean): void => {
+  const handleToggle = async (
+    blockId: string,
+    nextIsEnabled: boolean,
+  ): Promise<void> => {
     if (nextIsEnabled) {
+      const block = focusBlocks.find((item) => item.id === blockId);
+      if (block === undefined) {
+        setSchedulerError('Focus block not found.');
+        return;
+      }
+      for (const kind of missingRuntimeAccess(block, access.runtimeAccess)) {
+        const granted = await requestRuntimePermissions(kind);
+        if (!granted) {
+          setSchedulerError(
+            kind === 'dailyBudgets'
+              ? 'Usage Access is required for this budget.'
+              : 'Local VPN access is required for website blocking.',
+          );
+          return;
+        }
+      }
       const nextEnabledBlockIds = [
         ...enabledBlockIds.filter((id) => id !== blockId),
         blockId,
       ];
       try {
         assertRuntimeMonitorCapacity(
-          focusBlocksRunnableLocally(focusBlocks, nextEnabledBlockIds),
+          focusBlocksRunnableLocally(
+            focusBlocks,
+            nextEnabledBlockIds,
+            useBlockerStore.getState().access.runtimeAccess,
+          ),
           setupBlockForThisDevice,
         );
       } catch (error) {
@@ -163,7 +190,7 @@ export default function MainFeedScreen(): React.JSX.Element {
     (showAdvancedConfiguration &&
       (progress.enabledBlockCount > 0 ||
         showProtectionCard ||
-        supportsTamperProtection));
+        setupBlock !== null));
 
   return (
     <Screen padded={false} edgeEffect="soft">
@@ -193,7 +220,7 @@ export default function MainFeedScreen(): React.JSX.Element {
                 isPrimaryLoading={
                   (quickStartPhase === 'prepareRestrictedSettings' ||
                     quickStartPhase === 'grantAccess') &&
-                  busyState === 'authorizing'
+                  busyState === 'authorization'
                 }
                 onPrimary={handleQuickStartPrimary}
               />
@@ -223,8 +250,7 @@ export default function MainFeedScreen(): React.JSX.Element {
               />
             ) : null}
 
-            {supportsTamperProtection &&
-            (showAdvancedConfiguration || isAdminLocked) ? (
+            {showAdvancedConfiguration || isAdminLocked ? (
               <LockInSettingsCard
                 now={adminNow}
                 state={adminState}
@@ -242,6 +268,7 @@ export default function MainFeedScreen(): React.JSX.Element {
             enabledBlockIds={enabledBlockIds}
             isAdminLocked={isAdminLocked}
             now={now}
+            runtimeAccess={access.runtimeAccess}
             onAdd={() => {
               void haptic.select();
               router.push('/add-focus-block');

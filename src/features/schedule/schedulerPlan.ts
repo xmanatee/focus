@@ -1,4 +1,5 @@
 import { iosWeekday, minutesOf, nextIosWeekday } from '../../shared/days';
+import { scheduleNotification } from './scheduleNotification';
 import {
   BUDGET_ACTIVITY_PREFIX,
   DAY_BY_IOS_WEEKDAY,
@@ -74,8 +75,7 @@ export function materializeFocusBlock(
       startActions.push({
         type: 'sendNotification',
         payload: {
-          title: 'Focus Block Started',
-          body: `"${block.name}" is now active. Distractions are blocked.`,
+          ...scheduleNotification(block, 'start'),
           sound: 'default',
           interruptionLevel: 'active',
         },
@@ -86,8 +86,7 @@ export function materializeFocusBlock(
       endActions.push({
         type: 'sendNotification',
         payload: {
-          title: 'Focus Block Ended',
-          body: `"${block.name}" has finished.`,
+          ...scheduleNotification(block, 'end'),
           sound: 'default',
         },
       });

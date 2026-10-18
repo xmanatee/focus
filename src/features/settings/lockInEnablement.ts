@@ -1,3 +1,4 @@
+import type { RuntimeAccessState } from '../../bridge/BlockerBridge.types';
 import { focusBlocksRunnableLocally } from '../schedule/localRuntime';
 import type { FocusBlock } from '../schedule/types';
 
@@ -8,8 +9,13 @@ type LockInEnablement =
 export function resolveLockInEnablement(
   focusBlocks: readonly FocusBlock[],
   enabledBlockIds: readonly string[],
+  runtimeAccess: RuntimeAccessState,
 ): LockInEnablement {
-  const runnable = focusBlocksRunnableLocally(focusBlocks, enabledBlockIds);
+  const runnable = focusBlocksRunnableLocally(
+    focusBlocks,
+    enabledBlockIds,
+    runtimeAccess,
+  );
   if (runnable.some((block) => block.isEnabled)) {
     return { kind: 'allowed' };
   }

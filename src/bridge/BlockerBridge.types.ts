@@ -8,6 +8,10 @@ import type {
 import type { RuntimeFocusBlock } from '../features/schedule/types';
 
 export type AuthorizationStatus = 'authorized' | 'denied' | 'notDetermined';
+export type RuntimeAccessKind = 'dailyBudgets' | 'websiteBlocking';
+export type RuntimeAccessState = Readonly<
+  Record<RuntimeAccessKind, AuthorizationStatus>
+>;
 export type AuthorizationSetupStep =
   | 'authorizationSettings'
   | 'restrictedSettings';
@@ -16,6 +20,11 @@ export type DeviceActivityAction = Action;
 export interface BlockingAuthorizationState {
   readonly setupStep: AuthorizationSetupStep;
   readonly status: AuthorizationStatus;
+}
+
+export interface BlockerAccessState {
+  readonly authorization: BlockingAuthorizationState;
+  readonly runtimeAccess: RuntimeAccessState;
 }
 
 interface NativeEventSubscription {
@@ -48,16 +57,17 @@ export interface BlockingCapabilities {
   readonly deniedAuthorizationDetail: string;
   readonly deniedAuthorizationAction: 'appSettings' | 'authorizationSettings';
   readonly finishDeviceBody: string;
+  readonly lockInConfigurationBody: string;
   readonly maxScheduledMonitors: number | null;
   readonly selectionTitle: string;
-  readonly runtimeKind: 'deviceActivity' | 'androidAccessibility';
+  readonly strictModeBody: string;
+  readonly strictModeEnableBody: string;
   readonly supportsAppCategories: boolean;
-  readonly supportsDailyBudgets: boolean;
-  readonly supportsScheduleNotifications: boolean;
-  readonly supportsTamperProtection: boolean;
-  readonly supportsWebsiteBlocking: boolean;
-  readonly maxWebDomains: number;
+  readonly supportsSystemTamperProtection: boolean;
   readonly restrictedSettingsSetup: BlockingAccessSetupCopy | null;
+  readonly runtimeAccessDisclosure: Readonly<
+    Record<RuntimeAccessKind, BlockingAccessDisclosure | null>
+  >;
 }
 
 export type NativeActivityEventRecord = Pick<
@@ -111,12 +121,17 @@ export interface DeviceActivityModule {
 }
 
 export interface AndroidBlockerModule {
-  readonly initialAuthorizationState: unknown;
-  readonly getAuthorizationState: () => unknown;
+  readonly initialAccessState: unknown;
+  readonly scheduleNotificationChannelId: string;
+  readonly getAccessState: () => unknown;
+  readonly isBudgetThresholdReached: (activityName: string) => boolean;
   readonly getSelectionSlotValue: (slotId: string) => unknown;
   readonly listSelectableApplications: () => Promise<unknown>;
   readonly reconcileRuntimeBlocks: (payload: string) => Promise<void>;
   readonly requestAuthorization: () => Promise<unknown>;
+  readonly requestRuntimeAuthorization: (
+    kind: RuntimeAccessKind,
+  ) => Promise<unknown>;
   readonly setSelectionSlotValue: (slotId: string, value: string) => boolean;
 }
 
@@ -124,11 +139,14 @@ export interface IBlockerBridge {
   readonly capabilities: BlockingCapabilities;
   readonly deviceActivity: DeviceActivityModule;
   requestAuthorization(): Promise<BlockingAuthorizationState>;
-  readInitialAuthorizationState(): BlockingAuthorizationState;
-  subscribeToAuthorizationState(
-    listener: (state: BlockingAuthorizationState) => void,
+  requestRuntimeAuthorization(
+    kind: RuntimeAccessKind,
+  ): Promise<AuthorizationStatus>;
+  readInitialAccessState(): BlockerAccessState;
+  subscribeToAccessState(
+    listener: (state: BlockerAccessState) => void,
   ): () => void;
-  getActivityEvents(activityName: string): readonly NativeActivityEventRecord[];
+  isBudgetThresholdReached(activityName: string): boolean;
   getSelectionSlotValue(slotId: string): string | undefined;
   listSelectableApplications(): Promise<readonly SelectableApplication[]>;
   reconcileRuntimeBlocks(blocks: readonly RuntimeFocusBlock[]): Promise<void>;

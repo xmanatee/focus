@@ -41,12 +41,9 @@ export const protectionCopy = {
   },
   strictMode: {
     title: 'Strict mode',
-    body: 'Mark this as a high-stakes block and pair it with iOS tamper protection. Active blocks are read-only until they end.',
     needsSetup:
       'Set up tamper protection first to make strict blocks meaningful.',
     enableTitle: 'Enable Strict Mode?',
-    enableBody:
-      'Strict blocks should be paired with iOS tamper protection. Please review the timing and blocked apps before you turn this on.',
     enableConfirm: 'Turn on',
     softBlockTitle: 'Tamper protection isn’t set up',
     softBlockBody:

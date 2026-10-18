@@ -11,7 +11,7 @@ interface QuickStartInput {
   readonly authorization: BlockingAuthorizationState;
   readonly blockCount: number;
   readonly missingDeviceSelectionCount: number;
-  readonly unsupportedEnabledBlockCount: number;
+  readonly missingRuntimeAccessCount: number;
 }
 
 export function resolveQuickStartPhase(
@@ -28,7 +28,7 @@ export function resolveQuickStartPhase(
   if (input.blockCount === 0) return 'createFirstBlock';
   if (
     input.missingDeviceSelectionCount > 0 ||
-    input.unsupportedEnabledBlockCount > 0
+    input.missingRuntimeAccessCount > 0
   ) {
     return 'finishDevice';
   }

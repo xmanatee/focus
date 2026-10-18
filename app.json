@@ -59,6 +59,7 @@
         }
       ],
       "@react-native-community/datetimepicker",
+      "expo-notifications",
       "./plugins/with-focusblocks-icloud",
       "expo-font"
     ],

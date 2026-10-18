@@ -126,18 +126,7 @@ function budgetCondition(
 export function budgetEventReachedAfterIntervalStart(
   activityName: string,
 ): boolean {
-  const events = BlockerBridge.getActivityEvents(activityName);
-  const threshold = events.find(
-    (event) =>
-      event.callbackName === 'eventDidReachThreshold' &&
-      event.eventName === BUDGET_EVENT_NAME,
-  );
-  const intervalStart = events.find(
-    (event) => event.callbackName === 'intervalDidStart',
-  );
-  if (threshold === undefined) return false;
-  if (intervalStart === undefined) return false;
-  return threshold.lastCalledAt > intervalStart.lastCalledAt;
+  return BlockerBridge.isBudgetThresholdReached(activityName);
 }
 
 export function budgetOriginDaysAtWeeklyInstant(

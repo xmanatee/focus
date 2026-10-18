@@ -6,7 +6,7 @@ import { Icon } from '../../../shared/components/Icon';
 import { Typography } from '../../../shared/components/Typography';
 import { haptic } from '../../../shared/design/haptics';
 import { errorMessage } from '../../../shared/errors';
-import { buildDiagnosticsReport } from '../diagnostics';
+import { buildDiagnosticsReport } from '../diagnosticsReport';
 import { useDiagnosticsSnapshot } from '../useDiagnosticsSnapshot';
 
 function appVersion(): string {

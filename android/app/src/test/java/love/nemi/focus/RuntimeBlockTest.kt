@@ -5,6 +5,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Calendar
+import java.util.TimeZone
 
 class RuntimeBlockTest {
   private val packageIds = setOf("com.example.app")
@@ -13,20 +15,20 @@ class RuntimeBlockTest {
   fun regularScheduleUsesStartInclusiveAndEndExclusiveBounds() {
     val block = block(start = "09:00", end = "17:00")
 
-    assertFalse(block.isActiveAt(RuntimeDay.MON, 8 * 60 + 59))
-    assertTrue(block.isActiveAt(RuntimeDay.MON, 9 * 60))
-    assertTrue(block.isActiveAt(RuntimeDay.MON, 16 * 60 + 59))
-    assertFalse(block.isActiveAt(RuntimeDay.MON, 17 * 60))
+    assertFalse(block.isBlockingAt(RuntimeDay.MON, 8 * 60 + 59, 0))
+    assertTrue(block.isBlockingAt(RuntimeDay.MON, 9 * 60, 0))
+    assertTrue(block.isBlockingAt(RuntimeDay.MON, 16 * 60 + 59, 0))
+    assertFalse(block.isBlockingAt(RuntimeDay.MON, 17 * 60, 0))
   }
 
   @Test
   fun overnightScheduleCarriesIntoTheFollowingDay() {
     val block = block(start = "22:00", end = "07:00")
 
-    assertTrue(block.isActiveAt(RuntimeDay.MON, 22 * 60))
-    assertTrue(block.isActiveAt(RuntimeDay.TUE, 6 * 60 + 59))
-    assertFalse(block.isActiveAt(RuntimeDay.TUE, 7 * 60))
-    assertFalse(block.isActiveAt(RuntimeDay.SUN, 23 * 60))
+    assertTrue(block.isBlockingAt(RuntimeDay.MON, 22 * 60, 0))
+    assertTrue(block.isBlockingAt(RuntimeDay.TUE, 6 * 60 + 59, 0))
+    assertFalse(block.isBlockingAt(RuntimeDay.TUE, 7 * 60, 0))
+    assertFalse(block.isBlockingAt(RuntimeDay.SUN, 23 * 60, 0))
   }
 
   @Test
@@ -37,9 +39,65 @@ class RuntimeBlockTest {
       ruleKind = RuntimeRuleKind.ALLOW_DURING_SCHEDULE,
     )
 
-    assertTrue(block.isActiveAt(RuntimeDay.MON, 8 * 60))
-    assertFalse(block.isActiveAt(RuntimeDay.MON, 12 * 60))
-    assertTrue(block.isActiveAt(RuntimeDay.MON, 18 * 60))
+    assertTrue(block.isBlockingAt(RuntimeDay.MON, 8 * 60, 0))
+    assertFalse(block.isBlockingAt(RuntimeDay.MON, 12 * 60, 0))
+    assertTrue(block.isBlockingAt(RuntimeDay.MON, 18 * 60, 0))
+  }
+
+  @Test
+  fun dailyBudgetBlocksOnlyOnSelectedDaysAfterTheLimit() {
+    val block = block(
+      start = "09:00",
+      end = "17:00",
+      ruleKind = RuntimeRuleKind.DAILY_BUDGET,
+      budgetMinutes = 30,
+    )
+
+    assertFalse(block.isBlockingAt(RuntimeDay.MON, 12 * 60, 29))
+    assertTrue(block.isBlockingAt(RuntimeDay.MON, 12 * 60, 30))
+    assertFalse(block.isBlockingAt(RuntimeDay.TUE, 12 * 60, 60))
+  }
+
+  @Test
+  fun combinedRuleBlocksOutsideTheWindowAndAfterBudgetInsideIt() {
+    val block = block(
+      start = "09:00",
+      end = "17:00",
+      ruleKind = RuntimeRuleKind.ALLOW_DURING_SCHEDULE_WITH_BUDGET,
+      budgetMinutes = 30,
+    )
+
+    assertTrue(block.isBlockingAt(RuntimeDay.MON, 8 * 60, 0))
+    assertFalse(block.isBlockingAt(RuntimeDay.MON, 12 * 60, 29))
+    assertTrue(block.isBlockingAt(RuntimeDay.MON, 12 * 60, 30))
+  }
+
+  @Test
+  fun overnightCombinedBudgetStartsAtTheOriginDayScheduleBoundary() {
+    val block = block(
+      start = "22:00",
+      end = "07:00",
+      ruleKind = RuntimeRuleKind.ALLOW_DURING_SCHEDULE_WITH_BUDGET,
+      budgetMinutes = 30,
+    )
+    val now = calendar(2026, Calendar.APRIL, 28, 1, 0)
+
+    assertEquals(
+      calendar(2026, Calendar.APRIL, 27, 22, 0).timeInMillis,
+      block.budgetWindowStart(now),
+    )
+  }
+
+  @Test
+  fun combinedBudgetHasNoUsageWindowOutsideItsSchedule() {
+    val block = block(
+      start = "09:00",
+      end = "17:00",
+      ruleKind = RuntimeRuleKind.ALLOW_DURING_SCHEDULE_WITH_BUDGET,
+      budgetMinutes = 30,
+    )
+
+    assertEquals(null, block.budgetWindowStart(calendar(2026, Calendar.APRIL, 27, 18, 0)))
   }
 
   @Test
@@ -78,7 +136,7 @@ class RuntimeBlockTest {
   @Test
   fun runtimePlanRejectsUnsupportedRulesBeforePersistence() {
     assertThrows(IllegalArgumentException::class.java) {
-      RuntimeRuleKind.fromWireValue("dailyBudget")
+      RuntimeRuleKind.fromWireValue("timeLimit")
     }
   }
 
@@ -95,6 +153,7 @@ class RuntimeBlockTest {
     start: String,
     end: String,
     ruleKind: RuntimeRuleKind = RuntimeRuleKind.BLOCK_DURING_SCHEDULE,
+    budgetMinutes: Int? = null,
   ) = RuntimeBlock(
     id = "block-1",
     name = "Test",
@@ -102,6 +161,19 @@ class RuntimeBlockTest {
     endTime = end,
     days = setOf(RuntimeDay.MON),
     ruleKind = ruleKind,
+    budgetMinutes = budgetMinutes,
     selectedPackageIds = packageIds,
+    webDomains = emptySet(),
   )
+
+  private fun calendar(
+    year: Int,
+    month: Int,
+    day: Int,
+    hour: Int,
+    minute: Int,
+  ): Calendar = Calendar.getInstance(TimeZone.getTimeZone("Europe/London")).apply {
+    clear()
+    set(year, month, day, hour, minute)
+  }
 }

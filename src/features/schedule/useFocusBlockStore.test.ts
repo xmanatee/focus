@@ -4,6 +4,7 @@ import {
   focusBlockInput,
 } from '../../test-helpers/focusBlockFixtures';
 import { storageMap } from '../../test-helpers/mockPersistedStorage';
+import { useBlockerStore } from '../blocker/useBlockerStore';
 import { useSetupBlockDeviceStore } from '../settings/setupBlockDeviceStore';
 import { useSettingsStore } from '../settings/useSettingsStore';
 import { useBlockActivationStore } from './useBlockActivationStore';
@@ -11,6 +12,18 @@ import { useFocusBlockStore } from './useFocusBlockStore';
 
 function reset(): void {
   storageMap.clear();
+  useBlockerStore.setState({
+    access: {
+      authorization: {
+        status: 'authorized',
+        setupStep: 'authorizationSettings',
+      },
+      runtimeAccess: {
+        dailyBudgets: 'authorized',
+        websiteBlocking: 'authorized',
+      },
+    },
+  });
   useBlockActivationStore.setState({ enabledBlockIds: [] });
   useFocusBlockStore.setState({ focusBlocks: [] });
   useSetupBlockDeviceStore.setState({
@@ -74,6 +87,30 @@ describe('useFocusBlockStore', () => {
   });
 
   describe('updateFocusBlock', () => {
+    it('allows repairing a block when required access was revoked under Lock-in', () => {
+      useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
+      useBlockActivationStore.getState().setBlockEnabled('id-1', true);
+      useSettingsStore.setState({ setupBlock: SUNDAY_SETUP_BLOCK });
+      useSetupBlockDeviceStore.getState().enableOnDevice();
+      useBlockerStore.setState((state) => ({
+        access: {
+          ...state.access,
+          runtimeAccess: {
+            ...state.access.runtimeAccess,
+            websiteBlocking: 'denied',
+          },
+        },
+      }));
+
+      useFocusBlockStore
+        .getState()
+        .updateFocusBlock('id-1', focusBlockInput({ name: 'Repaired' }));
+
+      expect(useFocusBlockStore.getState().focusBlocks[0].name).toBe(
+        'Repaired',
+      );
+    });
+
     it('rejects when admin is locked', () => {
       useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
       useBlockActivationStore.getState().setBlockEnabled('id-1', true);

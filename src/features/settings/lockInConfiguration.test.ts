@@ -4,6 +4,7 @@ import {
   focusBlockInput,
 } from '../../test-helpers/focusBlockFixtures';
 import { storageMap } from '../../test-helpers/mockPersistedStorage';
+import { useBlockerStore } from '../blocker/useBlockerStore';
 import { useBlockActivationStore } from '../schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../schedule/useFocusBlockStore';
 import {
@@ -15,6 +16,18 @@ import { useSettingsStore } from './useSettingsStore';
 
 function reset(): void {
   storageMap.clear();
+  useBlockerStore.setState({
+    access: {
+      authorization: {
+        status: 'authorized',
+        setupStep: 'authorizationSettings',
+      },
+      runtimeAccess: {
+        dailyBudgets: 'authorized',
+        websiteBlocking: 'authorized',
+      },
+    },
+  });
   useFocusBlockStore.setState({ focusBlocks: [] });
   useBlockActivationStore.setState({ enabledBlockIds: [] });
   useSetupBlockDeviceStore.setState({
@@ -80,6 +93,26 @@ describe('Lock-in configuration', () => {
     });
 
     it('does not partially save when this device is not ready for Lock-in', () => {
+      expect(() => saveLockInConfiguration(SUNDAY_SETUP_BLOCK, true)).toThrow(
+        'Turn on at least one ready focus block',
+      );
+      expect(useSettingsStore.getState().setupBlock).toBeNull();
+      expect(useSetupBlockDeviceStore.getState().isEnabledOnDevice).toBe(false);
+    });
+
+    it('does not enable Lock-in with only a website block missing VPN access', () => {
+      useFocusBlockStore.getState().addFocusBlock('id-1', focusBlockInput());
+      useBlockActivationStore.getState().setBlockEnabled('id-1', true);
+      useBlockerStore.setState((state) => ({
+        access: {
+          ...state.access,
+          runtimeAccess: {
+            ...state.access.runtimeAccess,
+            websiteBlocking: 'denied',
+          },
+        },
+      }));
+
       expect(() => saveLockInConfiguration(SUNDAY_SETUP_BLOCK, true)).toThrow(
         'Turn on at least one ready focus block',
       );

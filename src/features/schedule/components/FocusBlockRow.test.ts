@@ -52,7 +52,7 @@ describe('FocusBlockRow', () => {
         isEnabled: true,
         isActive: false,
         needsDeviceSelection: false,
-        unsupportedReason: null,
+        needsRuntimeAccess: false,
         toggleDisabled: false,
         onPress: vi.fn(),
         onToggle: vi.fn(),
@@ -85,7 +85,7 @@ describe('FocusBlockRow', () => {
         isEnabled: true,
         isActive: false,
         needsDeviceSelection: true,
-        unsupportedReason: null,
+        needsRuntimeAccess: false,
         toggleDisabled: false,
         onPress: vi.fn(),
         onToggle: vi.fn(),
@@ -98,7 +98,7 @@ describe('FocusBlockRow', () => {
     expect(text).toContain('36 apps, 1 category, 4 domains');
   });
 
-  it('marks blocks that cannot run on this device runtime', async () => {
+  it('marks blocks that need additional runtime access', async () => {
     const block = {
       id: 'unsupported',
       ...focusBlockInput(),
@@ -110,13 +110,13 @@ describe('FocusBlockRow', () => {
         isEnabled: true,
         isActive: false,
         needsDeviceSelection: false,
-        unsupportedReason: 'Website blocking is not available here.',
+        needsRuntimeAccess: true,
         toggleDisabled: false,
         onPress: vi.fn(),
         onToggle: vi.fn(),
       }),
     );
 
-    expect(collectText(tree.container)).toContain('Unsupported here');
+    expect(collectText(tree.container)).toContain('Needs access');
   });
 });

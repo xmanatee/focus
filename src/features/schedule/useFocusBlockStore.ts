@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { BlockerBridge } from '../../bridge/BlockerBridge';
 import { persistedStorage } from '../../shared/storage';
 import { isRecord } from '../../shared/validation';
 import { clearSlot } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
+import { useBlockerStore } from '../blocker/useBlockerStore';
 import { assertAdminUnlocked } from '../settings/adminState';
 import { useSetupBlockDeviceStore } from '../settings/setupBlockDeviceStore';
 import { useSettingsStore } from '../settings/useSettingsStore';
+import { focusBlockNeedsLocalSelection } from './localActivitySelection';
 import { focusBlockRunnableLocally } from './localRuntime';
+import { missingRuntimeAccess } from './runtimeAccess';
 import { getFocusBlockRuntimeStatus } from './runtimeStatus';
 import type { FocusBlock, FocusBlockInput, FocusBlockRule } from './types';
 import { useBlockActivationStore } from './useBlockActivationStore';
@@ -30,6 +32,9 @@ function assertEditable(block: FocusBlock): void {
   const blockOnThisDevice = focusBlockRunnableLocally(
     block,
     useBlockActivationStore.getState().isBlockEnabled(block.id),
+    !focusBlockNeedsLocalSelection(block),
+    missingRuntimeAccess(block, useBlockerStore.getState().access.runtimeAccess)
+      .length === 0,
   );
   if (
     block.strict &&
@@ -38,9 +43,6 @@ function assertEditable(block: FocusBlock): void {
     throw new Error('Cannot change a strict block while it is active.');
   }
   if (!blockOnThisDevice.isEnabled) {
-    return;
-  }
-  if (!BlockerBridge.capabilities.supportsTamperProtection) {
     return;
   }
   assertAdminUnlocked(
@@ -52,8 +54,7 @@ function assertEditable(block: FocusBlock): void {
 
 function normalizeInput(input: FocusBlockInput): FocusBlockInput {
   const setupBlock = useSettingsStore.getState().setupBlock;
-  const shouldClearStrict =
-    BlockerBridge.capabilities.supportsTamperProtection && setupBlock !== null;
+  const shouldClearStrict = setupBlock !== null;
   return shouldClearStrict ? { ...input, strict: false } : input;
 }
 

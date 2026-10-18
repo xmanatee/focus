@@ -43,7 +43,9 @@ android {
 
     buildTypes {
         debug {
+            applicationIdSuffix ".debug"
             signingConfig = signingConfigs.debug
+            versionNameSuffix "-debug"
         }
         release {
             shrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false

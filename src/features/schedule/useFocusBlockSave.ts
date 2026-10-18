@@ -1,5 +1,4 @@
 import { Alert } from 'react-native';
-import { BlockerBridge } from '../../bridge/BlockerBridge';
 import { haptic } from '../../shared/design/haptics';
 import {
   type AsyncAction,
@@ -7,6 +6,7 @@ import {
 } from '../../shared/hooks/useAsyncAction';
 import { requestNotificationPermissions } from '../../shared/notifications';
 import { selectionHasBlockedTargets } from '../blocker/types';
+import { useBlockerStore } from '../blocker/useBlockerStore';
 import type { SetupBlock } from '../settings/adminState';
 import { inputUsesBudgetWarning } from './budget';
 import { activitySelectionNeedsLocalSlot } from './localActivitySelection';
@@ -76,24 +76,22 @@ export function useFocusBlockSave({
           block.id === editId ? candidate : block,
         );
         assertRuntimeMonitorCapacity(
-          focusBlocksRunnableLocally(nextFocusBlocks, enabledBlockIds),
+          focusBlocksRunnableLocally(
+            nextFocusBlocks,
+            enabledBlockIds,
+            useBlockerStore.getState().access.runtimeAccess,
+          ),
           setupBlockForThisDevice,
         );
       }
-      if (
-        BlockerBridge.capabilities.supportsScheduleNotifications &&
-        (input.notifyOnStart || input.notifyOnEnd)
-      ) {
+      if (input.notifyOnStart || input.notifyOnEnd) {
         const granted = await requestNotificationPermissions();
         if (!granted) {
           throw new Error(
             'Notifications permission is required for this block. Enable it in Settings or turn off the notification toggles.',
           );
         }
-      } else if (
-        BlockerBridge.capabilities.supportsScheduleNotifications &&
-        inputUsesBudgetWarning(input)
-      ) {
+      } else if (inputUsesBudgetWarning(input)) {
         await requestNotificationPermissions();
       }
       void haptic.commit();

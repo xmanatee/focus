@@ -80,7 +80,7 @@
   "expo": {
     "autolinking": {
       "android": {
-        "exclude": ["@nauverse/expo-cloud-settings", "expo-notifications"]
+        "exclude": ["@nauverse/expo-cloud-settings"]
       }
     },
     "doctor": {

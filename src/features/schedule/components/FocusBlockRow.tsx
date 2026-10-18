@@ -12,7 +12,7 @@ interface FocusBlockRowProps {
   readonly isEnabled: boolean;
   readonly isActive: boolean;
   readonly needsDeviceSelection: boolean;
-  readonly unsupportedReason: string | null;
+  readonly needsRuntimeAccess: boolean;
   readonly toggleDisabled: boolean;
   readonly onPress: () => void;
   readonly onToggle: (next: boolean) => void;
@@ -23,7 +23,7 @@ export function FocusBlockRow({
   isEnabled,
   isActive,
   needsDeviceSelection,
-  unsupportedReason,
+  needsRuntimeAccess,
   toggleDisabled,
   onPress,
   onToggle,
@@ -71,10 +71,10 @@ export function FocusBlockRow({
                 label="Pick apps here"
               />
             )}
-            {unsupportedReason !== null && (
+            {needsRuntimeAccess && (
               <SelectionPill
                 icon="exclamationmark.triangle.fill"
-                label="Unsupported here"
+                label="Needs access"
               />
             )}
             {showsActivitySelectionSummary && (

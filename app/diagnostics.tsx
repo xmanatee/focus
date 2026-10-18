@@ -8,8 +8,8 @@ import { useDiagnosticsSnapshot } from '../src/features/diagnostics/useDiagnosti
 import { useSetupActionHandler } from '../src/features/diagnostics/useSetupActionHandler';
 import { focusBlockSelectionReadyInSlots } from '../src/features/schedule/localActivitySelection';
 import { focusBlockRunnableLocally } from '../src/features/schedule/localRuntime';
+import { missingRuntimeAccess } from '../src/features/schedule/runtimeAccess';
 import { getFocusBlockRuntimeStatus } from '../src/features/schedule/runtimeStatus';
-import { focusBlockUnsupportedReason } from '../src/features/schedule/runtimeSupport';
 import type {
   FocusBlock,
   RuntimeFocusBlock,
@@ -44,10 +44,10 @@ function statusLabel(
   block: RuntimeFocusBlock,
   now: Date,
   selectionReady: boolean,
-  unsupportedReason: string | null,
+  runtimeAccessReady: boolean,
 ): string {
   if (!selectionReady) return 'Needs app selection on this device';
-  if (unsupportedReason !== null) return unsupportedReason;
+  if (!runtimeAccessReady) return 'Needs additional system access';
   const status = getFocusBlockRuntimeStatus(block, now);
   if (!block.isEnabled) return 'Off on this device';
   if (status.kind !== 'active') return 'Not active now';
@@ -60,12 +60,12 @@ function RuleDiagnosticRow({
   block,
   now,
   selectionReady,
-  unsupportedReason,
+  runtimeAccessReady,
 }: {
   readonly block: RuntimeFocusBlock;
   readonly now: Date;
   readonly selectionReady: boolean;
-  readonly unsupportedReason: string | null;
+  readonly runtimeAccessReady: boolean;
 }): React.JSX.Element {
   return (
     <Card>
@@ -78,21 +78,19 @@ function RuleDiagnosticRow({
             {ruleLabel(block)}
           </Typography>
           <Typography variant="caption" tone="muted">
-            {statusLabel(block, now, selectionReady, unsupportedReason)}
+            {statusLabel(block, now, selectionReady, runtimeAccessReady)}
           </Typography>
         </View>
         <View className="items-end gap-1">
           <Typography
             variant="caption"
-            tone={
-              selectionReady && unsupportedReason === null ? 'muted' : 'signal'
-            }
+            tone={selectionReady && runtimeAccessReady ? 'muted' : 'signal'}
           >
-            {selectionReady
-              ? unsupportedReason === null
+            {!selectionReady
+              ? 'Needs apps here'
+              : runtimeAccessReady
                 ? 'Ready here'
-                : 'Unsupported here'
-              : 'Needs apps here'}
+                : 'Needs access'}
           </Typography>
           <Typography
             variant="caption"
@@ -135,11 +133,7 @@ export default function DiagnosticsScreen(): React.JSX.Element {
           </Typography>
           <Typography variant="body" tone="muted">
             Check the exact setup conditions that decide whether Focus Blocks
-            can shield{' '}
-            {BlockerBridge.capabilities.supportsWebsiteBlocking
-              ? 'apps and websites'
-              : 'apps'}{' '}
-            on this device.
+            can shield apps and websites on this device.
           </Typography>
         </View>
 
@@ -158,8 +152,8 @@ export default function DiagnosticsScreen(): React.JSX.Element {
               <Typography variant="body" tone="muted">
                 {BlockerBridge.capabilities.authorizationAccessName} must be
                 authorized, the block must be turned on here, the current time
-                must match the rule, the rule must be supported here, and app
-                selections must be picked locally on this device.
+                must match the rule, required feature access must be granted,
+                and app selections must be picked locally on this device.
               </Typography>
             </View>
           </View>
@@ -183,12 +177,14 @@ export default function DiagnosticsScreen(): React.JSX.Element {
                 block,
                 snapshot.populatedSelectionSlots,
               );
-              const unsupportedReason = focusBlockUnsupportedReason(block);
+              const runtimeAccessReady =
+                missingRuntimeAccess(block, snapshot.runtimeAccess).length ===
+                0;
               const runtimeBlock = focusBlockRunnableLocally(
                 block,
-                snapshot.enabledBlockIds.includes(block.id) &&
-                  selectionReady &&
-                  unsupportedReason === null,
+                snapshot.enabledBlockIds.includes(block.id),
+                selectionReady,
+                runtimeAccessReady,
               );
               return (
                 <RuleDiagnosticRow
@@ -196,7 +192,7 @@ export default function DiagnosticsScreen(): React.JSX.Element {
                   block={runtimeBlock}
                   now={now}
                   selectionReady={selectionReady}
-                  unsupportedReason={unsupportedReason}
+                  runtimeAccessReady={runtimeAccessReady}
                 />
               );
             })

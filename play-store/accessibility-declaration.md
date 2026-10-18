@@ -4,9 +4,8 @@
 
 Focus Blocks uses `AccessibilityService` for deterministic, user-configured app
 blocking. It receives foreground window-change events, compares the foreground
-package identifier with locally stored enabled schedules, sends the user to the
-Home screen, and opens the Focus Blocks blocked screen when a selected package
-is blocked.
+package identifier with locally stored enabled rules, and opens the Focus Blocks
+blocked screen when a selected package is blocked by its schedule or usage budget.
 
 The service is not an accessibility tool for people with disabilities, so
 `isAccessibilityTool` is `false`.
@@ -27,7 +26,7 @@ The service is not an accessibility tool for people with disabilities, so
 Before Android Accessibility Settings opens, Focus Blocks displays a separate
 in-app disclosure that explains the accessed data, exact blocking use,
 non-collection and non-sharing behavior, and that blocking works only while
-access remains enabled. The user must choose `Open Settings`; `Not now` and
+access remains enabled. The user must choose `Open Accessibility`; `Not now` and
 dismissal do not open Settings or enable anything.
 
 ## Review video
@@ -37,7 +36,7 @@ Record one continuous video that shows:
 1. Opening Focus Blocks and triggering blocking-access setup.
 2. Reading the complete in-app disclosure.
 3. Choosing `Not now`, then opening the disclosure again.
-4. Choosing `Open Settings` and enabling `Focus Blocks app blocking`.
+4. Choosing `Open Accessibility` and enabling `Focus Blocks app blocking`.
 5. Creating and explicitly enabling a scheduled block with a selected app.
 6. Opening that app during the schedule and seeing the Focus Blocks blocked
    screen.

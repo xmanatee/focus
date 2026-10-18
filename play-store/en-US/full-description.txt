@@ -6,7 +6,11 @@ SIMPLE SCHEDULED BLOCKING
 
 • Block selected apps during work, study, sleep, or digital-detox hours
 • Allow selected apps only inside a schedule
+• Set daily app budgets or combine a schedule with a usage limit
+• Filter chosen website domains with an on-device DNS VPN
 • Create recurring rules for the days that matter
+• Receive schedule reminders and a warning before a larger budget runs out
+• Protect enabled rules with Strict mode or a Lock-in setup window
 • Keep every block off until you explicitly enable it on this device
 • See whether blocking access, app selection, and enabled rules are ready
 
@@ -28,7 +32,9 @@ The service cannot retrieve window content. Focus Blocks does not read screen te
 
 ANDROID FEATURE SCOPE
 
-The Android version currently supports scheduled blocking for individually selected apps. Daily usage budgets, app-category blocking, website blocking, schedule notifications, iCloud sync, and Lock-in protection are available only where explicitly shown in the app and are not part of Android blocking.
+Daily budgets require Android Usage Access. Focus Blocks measures selected-app usage locally and does not upload usage history. Website filtering requires consent to a local VPN; Android allows one VPN at a time, and apps using their own encrypted DNS may bypass domain filtering. Allowed DNS queries use the current network's resolver.
+
+Strict mode and Lock-in protect controls inside Focus Blocks. Android system settings can still revoke access or uninstall the app. Schedule notifications can be delayed by Android power management. App-category selection and iCloud sync are Apple-only features.
 
 Focus Blocks is self-directed and is not a parental-control or device-management product.
 

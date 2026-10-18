@@ -124,7 +124,7 @@ describe('validateFocusBlockInput', () => {
     ).toThrow(/daily budget/i);
   });
 
-  it('rejects daily budgets without Screen Time selection', () => {
+  it('rejects daily budgets without an app selection', () => {
     expect(() =>
       validateFocusBlockInput(
         baseInput({
@@ -132,7 +132,7 @@ describe('validateFocusBlockInput', () => {
           selection: { ...EMPTY_BLOCK_SELECTION, webDomains: ['example.com'] },
         }),
       ),
-    ).toThrow(/screen time picker/i);
+    ).toThrow(/saved app selection/i);
   });
 
   it('accepts schedule plus daily budget', () => {

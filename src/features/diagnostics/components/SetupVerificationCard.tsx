@@ -24,6 +24,10 @@ function actionLabel(action: SetupVerificationAction): string {
   switch (action) {
     case 'requestBlockingAccess':
       return 'Fix access';
+    case 'requestDailyBudgetAccess':
+      return 'Allow usage';
+    case 'requestWebsiteBlockingAccess':
+      return 'Allow VPN';
     case 'finishDeviceSetup':
       return 'Finish setup';
     case 'openProtection':

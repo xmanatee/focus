@@ -37,7 +37,7 @@ export default function ProtectionWizardScreen(): React.JSX.Element {
 
   const onNext = (): void => setStep((current) => NEXT[current]);
 
-  if (!BlockerBridge.capabilities.supportsTamperProtection) {
+  if (!BlockerBridge.capabilities.supportsSystemTamperProtection) {
     return (
       <Screen padded={false} edges={['bottom']} edgeEffect="soft">
         <ScrollView

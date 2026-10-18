@@ -1,4 +1,5 @@
-import { focusBlockRunnableLocally } from '../schedule/localRuntime';
+import { useBlockerStore } from '../blocker/useBlockerStore';
+import { focusBlocksRunnableLocally } from '../schedule/localRuntime';
 import { getFocusBlockRuntimeStatus } from '../schedule/runtimeStatus';
 import { useBlockActivationStore } from '../schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../schedule/useFocusBlockStore';
@@ -18,16 +19,14 @@ function assertLockInEditable(now: Date): void {
 
 function assertNoActiveStrictBlock(now: Date): void {
   const activation = useBlockActivationStore.getState();
-  const hasActiveStrictBlock = useFocusBlockStore
-    .getState()
-    .focusBlocks.some((block) => {
-      if (!block.strict) return false;
-      const runtimeBlock = focusBlockRunnableLocally(
-        block,
-        activation.isBlockEnabled(block.id),
-      );
-      return getFocusBlockRuntimeStatus(runtimeBlock, now).kind === 'active';
-    });
+  const hasActiveStrictBlock = focusBlocksRunnableLocally(
+    useFocusBlockStore.getState().focusBlocks,
+    activation.enabledBlockIds,
+    useBlockerStore.getState().access.runtimeAccess,
+  ).some(
+    (block) =>
+      block.strict && getFocusBlockRuntimeStatus(block, now).kind === 'active',
+  );
   if (hasActiveStrictBlock) {
     throw new Error('Cannot configure Lock-in while a strict block is active.');
   }
@@ -47,6 +46,7 @@ export function saveLockInConfiguration(
     const enablement = resolveLockInEnablement(
       useFocusBlockStore.getState().focusBlocks,
       activation.enabledBlockIds,
+      useBlockerStore.getState().access.runtimeAccess,
     );
     if (enablement.kind === 'blocked') {
       throw new Error(enablement.message);

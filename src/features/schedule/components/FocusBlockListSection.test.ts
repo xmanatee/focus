@@ -36,6 +36,11 @@ vi.mock('./FocusBlockRow', () => ({
     React.createElement('FocusBlockRow', props),
 }));
 
+const RUNTIME_ACCESS = {
+  dailyBudgets: 'authorized',
+  websiteBlocking: 'authorized',
+} as const;
+
 describe('FocusBlockListSection', () => {
   it('allows enabling a configured block while Lock-in is active when it is off here', async () => {
     const tree = await renderTestRoot(
@@ -50,6 +55,7 @@ describe('FocusBlockListSection', () => {
         hasBlockingAccess: true,
         isAdminLocked: true,
         now: new Date('2026-04-25T15:00:00'),
+        runtimeAccess: RUNTIME_ACCESS,
         onAdd: vi.fn(),
         onEdit: vi.fn(),
         onToggle: vi.fn(),
@@ -88,6 +94,7 @@ describe('FocusBlockListSection', () => {
         hasBlockingAccess: true,
         isAdminLocked: true,
         now: new Date('2026-04-25T15:00:00'),
+        runtimeAccess: RUNTIME_ACCESS,
         onAdd: vi.fn(),
         onEdit: vi.fn(),
         onToggle: vi.fn(),
@@ -119,6 +126,7 @@ describe('FocusBlockListSection', () => {
         hasBlockingAccess: true,
         isAdminLocked: false,
         now: new Date('2026-04-27T12:00:00'),
+        runtimeAccess: RUNTIME_ACCESS,
         onAdd: vi.fn(),
         onEdit: vi.fn(),
         onToggle: vi.fn(),
@@ -151,6 +159,7 @@ describe('FocusBlockListSection', () => {
         hasBlockingAccess: true,
         isAdminLocked: false,
         now: new Date('2026-04-27T12:00:00'),
+        runtimeAccess: RUNTIME_ACCESS,
         onAdd: vi.fn(),
         onEdit: vi.fn(),
         onToggle: vi.fn(),
@@ -178,6 +187,7 @@ describe('FocusBlockListSection', () => {
         hasBlockingAccess: false,
         isAdminLocked: false,
         now: new Date('2026-04-27T12:00:00'),
+        runtimeAccess: RUNTIME_ACCESS,
         onAdd: vi.fn(),
         onEdit: vi.fn(),
         onToggle: vi.fn(),

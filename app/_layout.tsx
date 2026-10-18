@@ -6,16 +6,18 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
 import { useTamperSetupStore } from '../src/features/protection/useTamperSetupStore';
 import { focusBlockNeedsLocalSelection } from '../src/features/schedule/localActivitySelection';
-import { focusBlockUnsupportedReason } from '../src/features/schedule/runtimeSupport';
 import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
 import { useTemplateStore } from '../src/features/schedule/useTemplateStore';
 import { reconcileHydratedLockInConfiguration } from '../src/features/settings/lockInConfiguration';
 import { useSetupBlockDeviceStore } from '../src/features/settings/setupBlockDeviceStore';
 import { useSettingsStore } from '../src/features/settings/useSettingsStore';
+import { configureNotificationPresentation } from '../src/shared/configureNotifications';
 import { useIsDark, useThemeColors } from '../src/shared/design/theme';
 import { errorMessage } from '../src/shared/errors';
 import { attachPersistedStorageSync } from '../src/shared/storage';
+
+configureNotificationPresentation();
 
 interface PersistedStore {
   readonly persist: {
@@ -43,11 +45,7 @@ async function rehydrateAll(): Promise<void> {
   await rehydrateStore('Protection setup', useTamperSetupStore);
   const focusBlocks = useFocusBlockStore.getState().focusBlocks;
   const readyBlockIds = focusBlocks
-    .filter(
-      (block) =>
-        !focusBlockNeedsLocalSelection(block) &&
-        focusBlockUnsupportedReason(block) === null,
-    )
+    .filter((block) => !focusBlockNeedsLocalSelection(block))
     .map((block) => block.id);
   useBlockActivationStore.getState().retainEnabledBlocks(readyBlockIds);
   reconcileHydratedLockInConfiguration();
