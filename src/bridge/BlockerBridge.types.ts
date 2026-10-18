@@ -1,12 +1,3 @@
-import type {
-  Action,
-  CallbackName,
-  DeviceActivityEvent,
-  DeviceActivitySchedule,
-  EventParsed,
-} from 'react-native-device-activity';
-import type { RuntimeFocusBlock } from '../features/schedule/types';
-
 export type AuthorizationStatus = 'authorized' | 'denied' | 'notDetermined';
 export type RuntimeAccessKind = 'dailyBudgets' | 'websiteBlocking';
 export type RuntimeAccessState = Readonly<
@@ -15,8 +6,6 @@ export type RuntimeAccessState = Readonly<
 export type AuthorizationSetupStep =
   | 'authorizationSettings'
   | 'restrictedSettings';
-export type DeviceActivityAction = Action;
-
 export interface BlockingAuthorizationState {
   readonly setupStep: AuthorizationSetupStep;
   readonly status: AuthorizationStatus;
@@ -25,10 +14,6 @@ export interface BlockingAuthorizationState {
 export interface BlockerAccessState {
   readonly authorization: BlockingAuthorizationState;
   readonly runtimeAccess: RuntimeAccessState;
-}
-
-interface NativeEventSubscription {
-  remove(): void;
 }
 
 export interface SelectableApplication {
@@ -70,56 +55,6 @@ export interface BlockingCapabilities {
   >;
 }
 
-export type NativeActivityEventRecord = Pick<
-  EventParsed,
-  'callbackName' | 'eventName' | 'lastCalledAt'
->;
-
-export interface DeviceActivityModule {
-  readonly AuthorizationStatus: {
-    readonly approved: number;
-    readonly denied: number;
-  };
-  readonly blockSelection: (
-    payload: { readonly activitySelectionId: string },
-    triggeredBy?: string,
-  ) => void;
-  readonly cleanUpAfterActivity: (activityName: string) => void;
-  readonly clearWebContentFilterPolicy: (triggeredBy?: string) => void;
-  readonly configureActions: (config: {
-    readonly activityName: string;
-    readonly callbackName: CallbackName;
-    readonly eventName?: string;
-    readonly actions: Action[];
-  }) => void;
-  readonly getActivities: () => string[];
-  readonly getAuthorizationStatus: () => number;
-  readonly getEvents: (activityName: string) => NativeActivityEventRecord[];
-  readonly getFamilyActivitySelectionId: (id: string) => string | undefined;
-  readonly onAuthorizationStatusChange: (
-    listener: (event: {
-      readonly authorizationStatus: number;
-    }) => void,
-  ) => NativeEventSubscription;
-  readonly pollAuthorizationStatus: () => Promise<number>;
-  readonly requestAuthorization: (scope: 'individual') => Promise<void>;
-  readonly resetBlocks: (triggeredBy?: string) => void;
-  readonly setFamilyActivitySelectionId: (payload: {
-    readonly id: string;
-    readonly familyActivitySelection: string;
-  }) => void;
-  readonly setWebContentFilterPolicy: (
-    payload: { readonly type: 'specific'; readonly domains: string[] },
-    triggeredBy?: string,
-  ) => void;
-  readonly startMonitoring: (
-    activityName: string,
-    schedule: DeviceActivitySchedule,
-    events: DeviceActivityEvent[],
-  ) => Promise<void>;
-  readonly stopMonitoring: (activityNames?: string[]) => void;
-}
-
 export interface AndroidBlockerModule {
   readonly initialAccessState: unknown;
   readonly scheduleNotificationChannelId: string;
@@ -137,18 +72,15 @@ export interface AndroidBlockerModule {
 
 export interface IBlockerBridge {
   readonly capabilities: BlockingCapabilities;
-  readonly deviceActivity: DeviceActivityModule;
-  requestAuthorization(): Promise<BlockingAuthorizationState>;
+  requestAuthorization(): Promise<BlockerAccessState>;
   requestRuntimeAuthorization(
     kind: RuntimeAccessKind,
-  ): Promise<AuthorizationStatus>;
+  ): Promise<BlockerAccessState>;
   readInitialAccessState(): BlockerAccessState;
   subscribeToAccessState(
     listener: (state: BlockerAccessState) => void,
   ): () => void;
   isBudgetThresholdReached(activityName: string): boolean;
   getSelectionSlotValue(slotId: string): string | undefined;
-  listSelectableApplications(): Promise<readonly SelectableApplication[]>;
-  reconcileRuntimeBlocks(blocks: readonly RuntimeFocusBlock[]): Promise<void>;
   setSelectionSlotValue(slotId: string, value: string | undefined): void;
 }

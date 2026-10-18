@@ -1,10 +1,10 @@
 import { Ionicons } from '@react-native-vector-icons/ionicons';
-import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { SymbolView } from 'expo-symbols';
 import type { ComponentProps } from 'react';
 import { type ThemeColors, useThemeColors } from '../design/theme';
 
 type IconTone = 'muted' | 'faint' | 'signal' | 'surface';
-export type SymbolName = Extract<SymbolViewProps['name'], string>;
+export type SymbolName = keyof typeof androidNameBySymbolName;
 type FallbackName = ComponentProps<typeof Ionicons>['name'];
 
 interface IconProps {
@@ -13,7 +13,7 @@ interface IconProps {
   readonly tone: IconTone;
 }
 
-const fallbackNameBySymbolName: Partial<Record<SymbolName, FallbackName>> = {
+const androidNameBySymbolName = {
   'app.badge': 'apps',
   'chart.bar.fill': 'bar-chart',
   'checkmark.circle.fill': 'checkmark-circle',
@@ -27,6 +27,7 @@ const fallbackNameBySymbolName: Partial<Record<SymbolName, FallbackName>> = {
   'lock.open.fill': 'lock-open',
   plus: 'add',
   'questionmark.circle': 'help-circle-outline',
+  'shield.fill': 'shield',
   sparkles: 'sparkles',
   'square.grid.2x2.fill': 'grid',
   star: 'star',
@@ -34,7 +35,7 @@ const fallbackNameBySymbolName: Partial<Record<SymbolName, FallbackName>> = {
   stethoscope: 'medical-outline',
   xmark: 'close',
   'xmark.circle.fill': 'close-circle',
-};
+} satisfies Record<string, FallbackName>;
 
 function resolveTone(tone: IconTone, colors: ThemeColors): string {
   switch (tone) {
@@ -52,7 +53,6 @@ function resolveTone(tone: IconTone, colors: ThemeColors): string {
 export function Icon({ name, size, tone }: IconProps): React.JSX.Element {
   const colors = useThemeColors();
   const color = resolveTone(tone, colors);
-  const fallbackName = fallbackNameBySymbolName[name] ?? 'help-circle-outline';
   return (
     <SymbolView
       name={name}
@@ -60,7 +60,7 @@ export function Icon({ name, size, tone }: IconProps): React.JSX.Element {
       tintColor={color}
       fallback={
         <Ionicons
-          name={fallbackName}
+          name={androidNameBySymbolName[name]}
           size={size}
           color={color}
           style={{ height: size, lineHeight: size, width: size }}

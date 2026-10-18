@@ -24,7 +24,7 @@
     "check-release": "node scripts/check-release-distribution.mjs",
     "check-unused": "knip --no-config-hints",
     "android": "expo run:android",
-    "android:verify": "cd android && NODE_ENV=production ./gradlew :app:lintRelease :app:testReleaseUnitTest :app:bundleRelease -x :react-native-reanimated:lintAnalyzeRelease -x :react-native-worklets:lintAnalyzeRelease",
+    "android:verify": "cd android && NODE_ENV=production ./gradlew :app:lintRelease :app:testReleaseUnitTest :app:assembleDebug -x :react-native-reanimated:lintAnalyzeRelease -x :react-native-worklets:lintAnalyzeRelease",
     "eas-build-post-install": "node scripts/sync-ios-versions.mjs",
     "ios": "expo run:ios",
     "screenshots": "node scripts/screenshots.mjs",

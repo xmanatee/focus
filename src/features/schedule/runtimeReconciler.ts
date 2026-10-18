@@ -1,7 +1,5 @@
-import {
-  BlockerBridge,
-  type DeviceActivityAction,
-} from '../../bridge/BlockerBridge';
+import * as DeviceActivity from 'react-native-device-activity';
+import { DAY_BY_DATE_INDEX } from '../../shared/days';
 import type { SetupBlock } from '../settings/adminState';
 import { assertRuntimeMonitorCapacity } from './runtimeCapacity';
 import {
@@ -19,17 +17,17 @@ import {
   materializeFocusBlock,
   materializeSetupBlock,
 } from './schedulerPlan';
-import type { DayOfWeek, RuntimeFocusBlock } from './types';
+import type { RuntimeFocusBlock } from './types';
 import { webDomainsForInstant } from './webDomainsForInstant';
 
 function configuredActions(
   actions: readonly FocusAction[],
-): DeviceActivityAction[] {
-  return [...actions] as DeviceActivityAction[];
+): DeviceActivity.Action[] {
+  return [...actions] as DeviceActivity.Action[];
 }
 
 async function applyPlan(plan: MonitorPlan): Promise<void> {
-  const native = BlockerBridge.deviceActivity;
+  const native = DeviceActivity;
   native.configureActions({
     activityName: plan.activityName,
     callbackName: 'intervalDidStart',
@@ -62,7 +60,7 @@ async function applyPlan(plan: MonitorPlan): Promise<void> {
 async function reconcileMonitoringPlans(
   desired: ReadonlyMap<string, MonitorPlan>,
 ): Promise<void> {
-  const native = BlockerBridge.deviceActivity;
+  const native = DeviceActivity;
   const current = new Set(
     native.getActivities().filter(isFocusBlocksActivityName),
   );
@@ -92,16 +90,6 @@ async function reconcileMonitoringPlans(
   await saveRuntimePlanSignatures(desiredSignatures);
 }
 
-const DAY_BY_DATE_INDEX: readonly DayOfWeek[] = [
-  'sun',
-  'mon',
-  'tue',
-  'wed',
-  'thu',
-  'fri',
-  'sat',
-];
-
 function shouldExecuteNow(action: FocusAction): boolean {
   const condition = action.onlyIfTriggeredAfter;
   return (
@@ -113,18 +101,12 @@ function shouldExecuteNow(action: FocusAction): boolean {
 function executeActionNow(action: FocusAction): void {
   if (!shouldExecuteNow(action)) return;
   if (action.type === 'resetBlocks') {
-    BlockerBridge.deviceActivity.resetBlocks(
-      'focusblocks current-state reconcile',
-    );
+    DeviceActivity.resetBlocks('focusblocks current-state reconcile');
     return;
   }
   if (action.type === 'blockSelection') {
-    const selectionId = action.familyActivitySelectionId;
-    if (typeof selectionId !== 'string') {
-      throw new Error('Block selection action is missing its selection id.');
-    }
-    BlockerBridge.deviceActivity.blockSelection(
-      { activitySelectionId: selectionId },
+    DeviceActivity.blockSelection(
+      { activitySelectionId: action.familyActivitySelectionId },
       'focusblocks current-state reconcile',
     );
   }
@@ -140,11 +122,11 @@ function applyCurrentState(
     executeActionNow(action);
   }
   const webDomains = webDomainsForInstant(blocks, day, minute);
-  BlockerBridge.deviceActivity.clearWebContentFilterPolicy(
+  DeviceActivity.clearWebContentFilterPolicy(
     'focusblocks current-state reconcile',
   );
   if (webDomains.length > 0) {
-    BlockerBridge.deviceActivity.setWebContentFilterPolicy(
+    DeviceActivity.setWebContentFilterPolicy(
       { type: 'specific', domains: [...webDomains] },
       'focusblocks current-state reconcile',
     );

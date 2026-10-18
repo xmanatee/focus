@@ -21,11 +21,10 @@ const blocker = vi.hoisted(() => ({
 
 vi.mock('../../../bridge/BlockerBridge', () => ({
   BlockerBridge: blocker,
-  parseSelectedApplications: (raw: string | undefined) =>
-    raw ? JSON.parse(raw).applications : [],
-  serializeSelectedApplications: (
-    applications: readonly { readonly id: string; readonly name: string }[],
-  ) => JSON.stringify({ applications }),
+}));
+
+vi.mock('../../../bridge/AndroidBlockerNative', () => ({
+  listSelectableApplications: blocker.listSelectableApplications,
 }));
 
 vi.mock('../../../shared/components/Button', () => ({

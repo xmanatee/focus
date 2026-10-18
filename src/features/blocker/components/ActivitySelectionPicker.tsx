@@ -7,12 +7,15 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { listSelectableApplications } from '../../../bridge/AndroidBlockerNative';
 import {
   BlockerBridge,
   type SelectableApplication,
+} from '../../../bridge/BlockerBridge';
+import {
   parseSelectedApplications,
   serializeSelectedApplications,
-} from '../../../bridge/BlockerBridge';
+} from '../../../bridge/BlockerBridge.shared';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
 import { Icon } from '../../../shared/components/Icon';
@@ -81,7 +84,7 @@ export function ActivitySelectionPicker({
   useEffect(() => {
     if (loadState.kind !== 'loading') return;
     let isCurrent = true;
-    void BlockerBridge.listSelectableApplications().then(
+    void listSelectableApplications().then(
       (items) => {
         if (!isCurrent) return;
         setLoadState({ kind: 'ready', applications: items });

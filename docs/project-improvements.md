@@ -9,12 +9,6 @@ Review support messages and store reviews before each release. Group reports by
 setup confusion, missed blocking, scheduling expectations, budgeting behavior,
 and feature requests. Use repeated reports to choose the next product change.
 
-## Diagnostics Export
-
-Add an explicit, user-initiated support export if troubleshooting requires more
-than the in-app diagnostics screen. Exclude selected app names and personal
-content by default. Let the user review exactly what will be shared.
-
 ## Localization
 
 Keep English and Russian complete across the app, stores, screenshots, privacy

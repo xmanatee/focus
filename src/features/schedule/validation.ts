@@ -16,10 +16,6 @@ const MAX_NAME_LENGTH = 50;
 export const MAX_WEB_DOMAINS = 50;
 const MIN_DEVICE_ACTIVITY_INTERVAL_MINUTES = 15;
 
-function ruleUsesScheduleWindow(input: FocusBlockInput): boolean {
-  return input.rule.kind !== 'dailyBudget';
-}
-
 function validateRule(rule: unknown): asserts rule is FocusBlockRule {
   if (!isRecord(rule) || typeof rule.kind !== 'string') {
     throw new Error('Block rule is invalid.');
@@ -76,7 +72,7 @@ function validateSelection(selection: unknown): void {
   }
 }
 
-export function validateFocusBlockStructure(input: FocusBlockInput): void {
+export function validateFocusBlockInput(input: FocusBlockInput): void {
   validateRule(input.rule);
   validateSelection(input.selection);
   const name = input.name.trim();
@@ -89,7 +85,7 @@ export function validateFocusBlockStructure(input: FocusBlockInput): void {
   validateDays(input.days);
   validateTimeRange(input.startTime, input.endTime);
   if (
-    ruleUsesScheduleWindow(input) &&
+    input.rule.kind !== 'dailyBudget' &&
     rangeDurationMinutes(input.startTime, input.endTime) <
       MIN_DEVICE_ACTIVITY_INTERVAL_MINUTES
   ) {
@@ -116,8 +112,4 @@ export function validateFocusBlockStructure(input: FocusBlockInput): void {
   if (input.strict && !selectionHasBlockedTargets(input.selection)) {
     throw new Error('A strict block must block at least one app or site.');
   }
-}
-
-export function validateFocusBlockInput(input: FocusBlockInput): void {
-  validateFocusBlockStructure(input);
 }

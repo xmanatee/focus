@@ -52,9 +52,16 @@ describe('useBlockerStore', () => {
     const granted = await useBlockerStore.getState().requestPermissions();
 
     expect(granted).toBe(true);
-    expect(useBlockerStore.getState().access.authorization.status).toBe(
-      'authorized',
-    );
+    expect(useBlockerStore.getState().access).toEqual({
+      authorization: {
+        setupStep: 'authorizationSettings',
+        status: 'authorized',
+      },
+      runtimeAccess: {
+        dailyBudgets: 'authorized',
+        websiteBlocking: 'authorized',
+      },
+    });
   });
 
   it('reports native authorization failure and returns to idle', async () => {
@@ -76,5 +83,12 @@ describe('useBlockerStore', () => {
 
     expect(budgetGranted).toBe(true);
     expect(websiteGranted).toBe(true);
+    expect(useBlockerStore.getState().access.authorization.status).toBe(
+      'authorized',
+    );
+    expect(useBlockerStore.getState().access.runtimeAccess).toEqual({
+      dailyBudgets: 'authorized',
+      websiteBlocking: 'authorized',
+    });
   });
 });

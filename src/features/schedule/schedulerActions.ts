@@ -1,9 +1,11 @@
+import type { Action } from 'react-native-device-activity';
 import { BlockerBridge } from '../../bridge/BlockerBridge';
 import {
   iosWeekday,
   isOvernightRange,
   minutesOf,
   nextIosWeekday,
+  previousDay,
 } from '../../shared/days';
 import { getSlotValue } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
@@ -42,10 +44,16 @@ type WebDomainAction = {
   readonly domains: readonly string[];
 };
 
-type NativeAction = {
-  readonly type: string;
-  readonly [key: string]: unknown;
-};
+type NativeAction = Extract<
+  Action,
+  {
+    type:
+      | 'blockSelection'
+      | 'resetBlocks'
+      | 'clearWebContentFilterPolicy'
+      | 'sendNotification';
+  }
+>;
 
 export interface DeviceActivityEvent {
   readonly eventName: string;
@@ -149,8 +157,7 @@ export function budgetOriginDaysAtWeeklyInstant(
 
   const originDays: DayOfWeek[] = [];
   if (block.days.includes(day) && minute >= start) originDays.push(day);
-  const previous =
-    DAY_BY_IOS_WEEKDAY[iosWeekday(day) === 1 ? 7 : iosWeekday(day) - 1];
+  const previous = previousDay(day);
   if (block.days.includes(previous) && minute < end) {
     originDays.push(previous);
   }

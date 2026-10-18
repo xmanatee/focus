@@ -1,4 +1,4 @@
-import { nextOccurrenceOf } from '../../shared/days';
+import { DAY_BY_DATE_INDEX, nextOccurrenceOf } from '../../shared/days';
 import { isInsideScheduleWindow, nextStartAfter } from './activeness';
 import {
   budgetActivityName,
@@ -6,17 +6,7 @@ import {
   budgetMinutes,
   budgetOriginDaysAtWeeklyInstant,
 } from './schedulerActions';
-import type { DayOfWeek, RuntimeFocusBlock } from './types';
-
-const DAY_BY_DATE_INDEX: readonly DayOfWeek[] = [
-  'sun',
-  'mon',
-  'tue',
-  'wed',
-  'thu',
-  'fri',
-  'sat',
-];
+import type { RuntimeFocusBlock } from './types';
 
 export type ActiveReason = 'scheduled' | 'outsideSchedule' | 'budget';
 

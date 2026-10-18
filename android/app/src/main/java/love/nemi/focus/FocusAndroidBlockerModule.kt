@@ -102,7 +102,7 @@ class FocusAndroidBlockerModule(
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         reactContext.startActivity(intent)
       }
-      promise.resolve(authorizationState())
+      promise.resolve(accessState())
     } catch (error: Exception) {
       promise.reject("E_SETTINGS_UNAVAILABLE", error.message, error)
     }

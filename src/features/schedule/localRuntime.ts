@@ -9,9 +9,10 @@ export function focusBlockRunnableLocally(
   localSelectionReady: boolean,
   runtimeAccessReady: boolean,
 ): RuntimeFocusBlock {
-  const blockOnThisDevice = { ...block, isEnabled: isLocallyEnabled };
-  if (localSelectionReady && runtimeAccessReady) return blockOnThisDevice;
-  return { ...blockOnThisDevice, isEnabled: false };
+  return {
+    ...block,
+    isEnabled: isLocallyEnabled && localSelectionReady && runtimeAccessReady,
+  };
 }
 
 export function focusBlocksRunnableLocally(

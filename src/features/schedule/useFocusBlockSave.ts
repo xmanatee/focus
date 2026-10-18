@@ -49,8 +49,8 @@ export function useFocusBlockSave({
 
   const save = async (): Promise<void> => {
     const blockId = editId ?? newBlockId;
-    const input = await buildInput();
     const success = await run(async () => {
+      const input = await buildInput();
       if (!selectionHasBlockedTargets(input.selection)) {
         throw new Error('Pick at least one app or site to block.');
       }

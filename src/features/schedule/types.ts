@@ -21,17 +21,8 @@ export type FocusBlockRule =
       readonly minutes: number;
     };
 
-export interface FocusBlock {
+export interface FocusBlock extends FocusBlockInput {
   readonly id: string;
-  readonly name: string;
-  readonly startTime: string;
-  readonly endTime: string;
-  readonly days: readonly DayOfWeek[];
-  readonly rule: FocusBlockRule;
-  readonly selection: BlockSelection;
-  readonly notifyOnStart: boolean;
-  readonly notifyOnEnd: boolean;
-  readonly strict: boolean;
 }
 
 export interface FocusBlockInput {

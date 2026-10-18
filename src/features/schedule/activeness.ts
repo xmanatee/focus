@@ -1,23 +1,14 @@
-import { isOvernightRange, minutesOf } from '../../shared/days';
-import type { DayOfWeek, FocusBlockRule } from './types';
+import { DAY_BY_DATE_INDEX, minutesOf } from '../../shared/days';
+import type { DayOfWeek, RuntimeFocusBlock } from './types';
+import {
+  isActiveAtWeeklyInstant,
+  isInsideScheduleAtWeeklyInstant,
+} from './weeklyInstant';
 
-interface FocusBlockInternal {
-  readonly days: readonly DayOfWeek[];
-  readonly startTime: string;
-  readonly endTime: string;
-  readonly isEnabled: boolean;
-  readonly rule: FocusBlockRule;
-}
-
-const DAY_BY_INDEX: readonly DayOfWeek[] = [
-  'sun',
-  'mon',
-  'tue',
-  'wed',
-  'thu',
-  'fri',
-  'sat',
-];
+type FocusBlockInternal = Pick<
+  RuntimeFocusBlock,
+  'days' | 'startTime' | 'endTime' | 'isEnabled' | 'rule'
+>;
 
 function minuteOfDay(at: Date): number {
   return at.getHours() * 60 + at.getMinutes();
@@ -27,34 +18,22 @@ export function isFocusBlockActiveAt(
   block: FocusBlockInternal,
   at: Date,
 ): boolean {
-  if (!block.isEnabled) return false;
-  const rule = block.rule;
-  if (rule.kind === 'dailyBudget') return false;
-
-  const isInsideSchedule = isInsideScheduleWindow(block, at);
-  if (rule.kind === 'allowDuringSchedule') return !isInsideSchedule;
-  if (rule.kind === 'allowDuringScheduleWithBudget') return !isInsideSchedule;
-  return isInsideSchedule;
+  return isActiveAtWeeklyInstant(
+    block,
+    DAY_BY_DATE_INDEX[at.getDay()],
+    minuteOfDay(at),
+  );
 }
 
 export function isInsideScheduleWindow(
   block: FocusBlockInternal,
   at: Date,
 ): boolean {
-  const current = minuteOfDay(at);
-  const start = minutesOf(block.startTime);
-  const end = minutesOf(block.endTime);
-  const today = DAY_BY_INDEX[at.getDay()];
-
-  if (!isOvernightRange(block.startTime, block.endTime)) {
-    if (!block.days.includes(today)) return false;
-    return current >= start && current < end;
-  }
-
-  if (block.days.includes(today) && current >= start) return true;
-  const yesterdayIndex = (at.getDay() + 6) % 7;
-  const yesterday = DAY_BY_INDEX[yesterdayIndex];
-  return block.days.includes(yesterday) && current < end;
+  return isInsideScheduleAtWeeklyInstant(
+    block,
+    DAY_BY_DATE_INDEX[at.getDay()],
+    minuteOfDay(at),
+  );
 }
 
 interface NextBlock {
@@ -74,7 +53,7 @@ export function nextStartAfter(
 
   for (let offset = 0; offset <= 7; offset++) {
     const idx = (todayIndex + offset) % 7;
-    const dayKey = DAY_BY_INDEX[idx];
+    const dayKey = DAY_BY_DATE_INDEX[idx];
     if (!block.days.includes(dayKey)) continue;
     if (offset === 0 && current >= start) continue;
 

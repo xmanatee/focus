@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   DAY_ORDER,
   dateToTimeString,
@@ -58,8 +58,8 @@ export function useFocusBlockForm(
     existing ? existing.rule : { kind: 'blockDuringSchedule' },
   );
 
-  const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
-  const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
+  const startTime = dateToTimeString(startDate);
+  const endTime = dateToTimeString(endDate);
 
   const toggleDay = (day: DayOfWeek): void => {
     setSelectedDays((current) =>

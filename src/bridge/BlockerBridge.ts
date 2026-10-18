@@ -1,28 +1,15 @@
 import * as DeviceActivity from 'react-native-device-activity';
-import {
-  parseBlockingAuthorizationState,
-  parseSelectedApplications,
-  serializeSelectedApplications,
-} from './BlockerBridge.shared';
 import type {
   AuthorizationStatus,
   BlockerAccessState,
-  BlockingAuthorizationState,
   BlockingCapabilities,
-  DeviceActivityModule,
   IBlockerBridge,
-  NativeActivityEventRecord,
-  RuntimeAccessKind,
-  SelectableApplication,
 } from './BlockerBridge.types';
 
 export type {
   BlockingAuthorizationState,
-  DeviceActivityAction,
   SelectableApplication,
 } from './BlockerBridge.types';
-export { parseSelectedApplications, serializeSelectedApplications };
-
 const CAPABILITIES: BlockingCapabilities = {
   authorizationDisclosure: null,
   authorizationAccessName: 'Screen Time access',
@@ -50,77 +37,54 @@ const CAPABILITIES: BlockingCapabilities = {
   supportsSystemTamperProtection: true,
 };
 
-function loadDeviceActivityModule(): DeviceActivityModule {
-  return DeviceActivity as DeviceActivityModule;
+function mapAuthorizationStatus(status: number): AuthorizationStatus {
+  if (status === DeviceActivity.AuthorizationStatus.approved)
+    return 'authorized';
+  if (status === DeviceActivity.AuthorizationStatus.denied) return 'denied';
+  return 'notDetermined';
 }
 
-function mapAuthorizationStatus(status: number): AuthorizationStatus {
-  const native = loadDeviceActivityModule();
-  if (status === native.AuthorizationStatus.approved) return 'authorized';
-  if (status === native.AuthorizationStatus.denied) return 'denied';
-  return 'notDetermined';
+function accessState(status: number): BlockerAccessState {
+  const authorizationStatus = mapAuthorizationStatus(status);
+  return {
+    authorization: {
+      setupStep: 'authorizationSettings',
+      status: authorizationStatus,
+    },
+    runtimeAccess: {
+      dailyBudgets: authorizationStatus,
+      websiteBlocking: authorizationStatus,
+    },
+  };
 }
 
 class ScreenTimeBlockerBridge implements IBlockerBridge {
   readonly capabilities = CAPABILITIES;
 
-  get deviceActivity(): DeviceActivityModule {
-    return loadDeviceActivityModule();
+  async requestAuthorization(): Promise<BlockerAccessState> {
+    await DeviceActivity.requestAuthorization('individual');
+    return accessState(await DeviceActivity.pollAuthorizationStatus());
   }
 
-  async requestAuthorization(): Promise<BlockingAuthorizationState> {
-    const native = this.deviceActivity;
-    await native.requestAuthorization('individual');
-    const status = await native.pollAuthorizationStatus();
-    return {
-      setupStep: 'authorizationSettings',
-      status: mapAuthorizationStatus(status),
-    };
-  }
-
-  async requestRuntimeAuthorization(): Promise<AuthorizationStatus> {
-    return (await this.requestAuthorization()).status;
+  async requestRuntimeAuthorization(): Promise<BlockerAccessState> {
+    return this.requestAuthorization();
   }
 
   readInitialAccessState(): BlockerAccessState {
-    const authorization = parseBlockingAuthorizationState({
-      setupStep: 'authorizationSettings',
-      status: mapAuthorizationStatus(
-        this.deviceActivity.getAuthorizationStatus(),
-      ),
-    });
-    return {
-      authorization,
-      runtimeAccess: {
-        dailyBudgets: authorization.status,
-        websiteBlocking: authorization.status,
-      },
-    };
+    return accessState(DeviceActivity.getAuthorizationStatus());
   }
 
   subscribeToAccessState(
     listener: (state: BlockerAccessState) => void,
   ): () => void {
-    const subscription = this.deviceActivity.onAuthorizationStatusChange(
-      (event) => {
-        const authorization: BlockingAuthorizationState = {
-          setupStep: 'authorizationSettings',
-          status: mapAuthorizationStatus(event.authorizationStatus),
-        };
-        listener({
-          authorization,
-          runtimeAccess: {
-            dailyBudgets: authorization.status,
-            websiteBlocking: authorization.status,
-          },
-        });
-      },
+    const subscription = DeviceActivity.onAuthorizationStatusChange((event) =>
+      listener(accessState(event.authorizationStatus)),
     );
     return () => subscription.remove();
   }
 
   isBudgetThresholdReached(activityName: string): boolean {
-    const events = this.deviceActivity.getEvents(activityName);
+    const events = DeviceActivity.getEvents(activityName);
     const threshold = events.find(
       (event) =>
         event.callbackName === 'eventDidReachThreshold' &&
@@ -137,21 +101,11 @@ class ScreenTimeBlockerBridge implements IBlockerBridge {
   }
 
   getSelectionSlotValue(slotId: string): string | undefined {
-    return this.deviceActivity.getFamilyActivitySelectionId(slotId);
-  }
-
-  async listSelectableApplications(): Promise<
-    readonly SelectableApplication[]
-  > {
-    throw new Error('Android application listing cannot run on iOS.');
-  }
-
-  async reconcileRuntimeBlocks(): Promise<void> {
-    throw new Error('Android runtime reconciliation cannot run on iOS.');
+    return DeviceActivity.getFamilyActivitySelectionId(slotId);
   }
 
   setSelectionSlotValue(slotId: string, value: string | undefined): void {
-    this.deviceActivity.setFamilyActivitySelectionId({
+    DeviceActivity.setFamilyActivitySelectionId({
       familyActivitySelection: value ?? '',
       id: slotId,
     });

@@ -26,13 +26,6 @@ function confirmAuthorizationDisclosure(
   if (skipDisclosure || disclosure === null) return Promise.resolve(true);
 
   return new Promise((resolve) => {
-    let resolved = false;
-    const resolveOnce = (value: boolean): void => {
-      if (resolved) return;
-      resolved = true;
-      resolve(value);
-    };
-
     Alert.alert(
       disclosure.title,
       disclosure.body,
@@ -40,16 +33,16 @@ function confirmAuthorizationDisclosure(
         {
           text: disclosure.cancelAction,
           style: 'cancel',
-          onPress: () => resolveOnce(false),
+          onPress: () => resolve(false),
         },
         {
           text: disclosure.continueAction,
-          onPress: () => resolveOnce(true),
+          onPress: () => resolve(true),
         },
       ],
       {
         cancelable: true,
-        onDismiss: () => resolveOnce(false),
+        onDismiss: () => resolve(false),
       },
     );
   });
@@ -68,11 +61,9 @@ export const useBlockerStore = create<BlockerState>()((set, get) => ({
       );
       if (!shouldOpenSettings) return false;
 
-      const authorization = await BlockerBridge.requestAuthorization();
-      set((state) => ({
-        access: { ...state.access, authorization },
-      }));
-      return authorization.status === 'authorized';
+      const access = await BlockerBridge.requestAuthorization();
+      set({ access });
+      return access.authorization.status === 'authorized';
     } catch (error) {
       Alert.alert('Could not request blocking access', errorMessage(error));
       return false;
@@ -90,14 +81,9 @@ export const useBlockerStore = create<BlockerState>()((set, get) => ({
       );
       if (!shouldOpenSettings) return false;
 
-      const status = await BlockerBridge.requestRuntimeAuthorization(kind);
-      set((state) => ({
-        access: {
-          ...state.access,
-          runtimeAccess: { ...state.access.runtimeAccess, [kind]: status },
-        },
-      }));
-      return status === 'authorized';
+      const access = await BlockerBridge.requestRuntimeAuthorization(kind);
+      set({ access });
+      return access.runtimeAccess[kind] === 'authorized';
     } catch (error) {
       Alert.alert('Could not request required access', errorMessage(error));
       return false;

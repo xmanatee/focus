@@ -1,35 +1,20 @@
 import { AppState } from 'react-native';
-import type { RuntimeFocusBlock } from '../features/schedule/types';
 import { androidBlockerNativeModule } from './AndroidBlockerNative';
 import {
   parseBlockerAccessState,
-  parseBlockingAuthorizationState,
-  parseNativeSelectableApplications,
   parseNativeSelectionSlotValue,
-  parseSelectedApplications,
 } from './BlockerBridge.shared';
 import type {
-  AuthorizationStatus,
   BlockerAccessState,
-  BlockingAuthorizationState,
   BlockingCapabilities,
-  DeviceActivityModule,
   IBlockerBridge,
   RuntimeAccessKind,
-  SelectableApplication,
 } from './BlockerBridge.types';
-import { serializeAndroidRuntimePlan } from './androidRuntimePlan';
 
 export type {
   BlockingAuthorizationState,
-  DeviceActivityAction,
   SelectableApplication,
 } from './BlockerBridge.types';
-export {
-  parseSelectedApplications,
-  serializeSelectedApplications,
-} from './BlockerBridge.shared';
-
 const CAPABILITIES: BlockingCapabilities = {
   authorizationDisclosure: {
     body: 'Focus Blocks uses Android Accessibility to detect the foreground app, compare it with your enabled blocks, and bring you back to Focus Blocks when a selected app is blocked. It does not read screen content, capture keystrokes, or sell or share Accessibility data. Blocking works only while this access stays enabled.',
@@ -79,22 +64,18 @@ const CAPABILITIES: BlockingCapabilities = {
 class AndroidBlockerBridge implements IBlockerBridge {
   readonly capabilities = CAPABILITIES;
 
-  get deviceActivity(): DeviceActivityModule {
-    throw new Error('DeviceActivity is not available with Android blocking.');
-  }
-
-  async requestAuthorization(): Promise<BlockingAuthorizationState> {
-    return parseBlockingAuthorizationState(
+  async requestAuthorization(): Promise<BlockerAccessState> {
+    return parseBlockerAccessState(
       await androidBlockerNativeModule().requestAuthorization(),
     );
   }
 
   async requestRuntimeAuthorization(
     kind: RuntimeAccessKind,
-  ): Promise<AuthorizationStatus> {
-    const value =
-      await androidBlockerNativeModule().requestRuntimeAuthorization(kind);
-    return parseBlockerAccessState(value).runtimeAccess[kind];
+  ): Promise<BlockerAccessState> {
+    return parseBlockerAccessState(
+      await androidBlockerNativeModule().requestRuntimeAuthorization(kind),
+    );
   }
 
   readInitialAccessState(): BlockerAccessState {
@@ -122,24 +103,6 @@ class AndroidBlockerBridge implements IBlockerBridge {
   getSelectionSlotValue(slotId: string): string | undefined {
     return parseNativeSelectionSlotValue(
       androidBlockerNativeModule().getSelectionSlotValue(slotId),
-    );
-  }
-
-  async listSelectableApplications(): Promise<
-    readonly SelectableApplication[]
-  > {
-    return parseNativeSelectableApplications(
-      await androidBlockerNativeModule().listSelectableApplications(),
-    );
-  }
-
-  async reconcileRuntimeBlocks(
-    blocks: readonly RuntimeFocusBlock[],
-  ): Promise<void> {
-    await androidBlockerNativeModule().reconcileRuntimeBlocks(
-      serializeAndroidRuntimePlan(blocks, (slotId) =>
-        this.getSelectionSlotValue(slotId),
-      ),
     );
   }
 

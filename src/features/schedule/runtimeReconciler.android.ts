@@ -1,5 +1,7 @@
+import { androidBlockerNativeModule } from '../../bridge/AndroidBlockerNative';
 import { BlockerBridge } from '../../bridge/BlockerBridge';
 import { reconcileAndroidNotifications } from '../../bridge/androidNotifications';
+import { serializeAndroidRuntimePlan } from '../../bridge/androidRuntimePlan';
 import type { SetupBlock } from '../settings/adminState';
 import type { RuntimeFocusBlock } from './types';
 
@@ -8,6 +10,8 @@ export async function reconcileRuntimePlatform(
   setupBlock: SetupBlock | null,
   _at: Date,
 ): Promise<void> {
-  await BlockerBridge.reconcileRuntimeBlocks(blocks);
+  await androidBlockerNativeModule().reconcileRuntimeBlocks(
+    serializeAndroidRuntimePlan(blocks, BlockerBridge.getSelectionSlotValue),
+  );
   await reconcileAndroidNotifications(blocks, setupBlock);
 }

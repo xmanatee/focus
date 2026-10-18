@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   parseBlockerAccessState,
-  parseNativeSelectableApplications,
   parseNativeSelectionSlotValue,
+  parseSelectableApplications,
+  parseSelectedApplications,
 } from './BlockerBridge.shared';
 
 describe('Android blocker native boundary', () => {
@@ -58,7 +59,7 @@ describe('Android blocker native boundary', () => {
 
   it('validates, deduplicates, and sorts selectable applications', () => {
     expect(
-      parseNativeSelectableApplications([
+      parseSelectableApplications([
         { id: 'com.example.zeta', name: 'Zeta' },
         { id: 'com.example.alpha', name: 'Alpha' },
         { id: 'com.example.zeta', name: 'Zeta' },
@@ -76,9 +77,22 @@ describe('Android blocker native boundary', () => {
     [{ id: '', name: 'Empty package' }],
     [{ id: 'com.example.app', name: 7 }],
   ])('rejects an invalid selectable-application payload: %j', (value) => {
-    expect(() => parseNativeSelectableApplications(value)).toThrow(
-      'Native Android application list is invalid.',
+    expect(() => parseSelectableApplications(value)).toThrow(
+      'Android application list is invalid.',
     );
+  });
+
+  it.each([
+    null,
+    { id: 'com.example.app', name: 7 },
+    { id: ' com.example.app', name: 'App' },
+    { id: 'com.example.app', name: '' },
+  ])('rejects malformed stored applications: %j', (application) => {
+    expect(() =>
+      parseSelectedApplications(
+        JSON.stringify({ applications: [application] }),
+      ),
+    ).toThrow('Android application list is invalid.');
   });
 
   it.each([undefined, 7, {}])(

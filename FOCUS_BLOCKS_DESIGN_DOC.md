@@ -1,34 +1,37 @@
-# Focus Blocks — Design Doc
+# Focus Blocks Architecture
 
 ## Vision
 
-Focus Blocks is a productivity iOS app that blocks distracting apps and
-websites. It leverages Apple's Screen Time / Family Controls API for
-native-level blocking without VPNs or MDM.
+Focus Blocks shares its React Native interface, rule model, validation, and
+device-local activation policy across iOS and Android. Native adapters own
+permission requests and background enforcement; the interface uses capabilities
+rather than operating-system checks.
 
-Entirely local: no server, no accounts, no sign-in. State syncs across
-the user's iCloud-signed devices via Apple's NSUbiquitousKeyValueStore.
+There is no backend or sign-in. iCloud synchronizes rule definitions and setup
+windows on Apple devices. App selections, enabled blocks, and Lock-in activation
+stay local. A new installation starts with blocking and Lock-in off.
 
-## Competitive landscape
+## Enforcement
 
-| App | Tech | Pros | Cons |
-| :--- | :--- | :--- | :--- |
-| Opal | Native Swift | High polish, deep Screen Time integration. | Subscription heavy, closed source. |
-| Freedom | VPN / Profile | Cross-platform. | VPN instability, privacy concerns. |
-| One Sec | Native Swift | Excellent interception UX. | Very narrow scope. |
+- iOS uses Family Controls, Managed Settings, and Device Activity extensions.
+  Extensions run independently of JavaScript and share state through the App
+  Group. Distribution requires Apple's Family Controls entitlement.
+- Android uses Accessibility for app interception, Usage Access for selected-app
+  budgets, and a local DNS VPN for websites. Enforcement runs natively, without
+  a JavaScript timer. Android permits only one active VPN, and applications
+  that bypass system DNS can bypass DNS filtering.
 
-## Non-obvious constraints
+## Invariants
 
-1. **Entitlements.** `ManagedSettings` access requires the
-   `com.apple.developer.family-controls` distribution entitlement, which
-   Apple grants per bundle ID with a ~1–4 week review.
-2. **Extensions.** System-level blocking runs in Swift extension
-   processes (`DeviceActivityMonitor`, `ShieldAction`, `ShieldConfiguration`);
-   JS never runs there. Shared state goes through the App Group's
-   `UserDefaults`.
-3. **Website blocking** is capped at 50 domains per Apple's web-content
-   filter policy.
-4. **Cross-device sync.** `FamilyActivitySelection` tokens are
-   device-bound. iCloud KV carries metadata only (counts, domains,
-   focus blocks, setup block).
-5. **Privacy budget.** No app-usage telemetry ever leaves the device.
+- Permission requests and permission-change subscriptions publish the same
+  complete access snapshot. A block runs only when its local selection and
+  required runtime permissions are ready.
+- Disabled or unready blocks remain editable. Strict mode protects active
+  blocks; Lock-in protects enabled, runnable blocks outside the setup window.
+  Android cannot prevent system settings from revoking access or uninstalling.
+- Schedule membership uses one shared calculation, including overnight windows
+  and week rollover. Overlapping blocks combine restrictions, not allowances.
+- Persisted data is validated at the storage boundary. Platform adapters use
+  their native APIs directly; shared bridge methods must work on both platforms.
+- Selected-app usage stays on-device. The Android DNS VPN sends allowed DNS
+  queries to the network resolver, not to a Focus Blocks server.

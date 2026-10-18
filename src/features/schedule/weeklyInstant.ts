@@ -1,19 +1,10 @@
-import { isOvernightRange, minutesOf } from '../../shared/days';
-import type { DayOfWeek, FocusBlock, RuntimeFocusBlock } from './types';
+import { isOvernightRange, minutesOf, previousDay } from '../../shared/days';
+import type { DayOfWeek, RuntimeFocusBlock } from './types';
 
-function previousDay(day: DayOfWeek): DayOfWeek {
-  const dayOrder: readonly DayOfWeek[] = [
-    'sun',
-    'mon',
-    'tue',
-    'wed',
-    'thu',
-    'fri',
-    'sat',
-  ];
-  const index = dayOrder.indexOf(day);
-  return dayOrder[(index + 6) % 7];
-}
+type ScheduledBlock = Pick<
+  RuntimeFocusBlock,
+  'days' | 'startTime' | 'endTime' | 'rule' | 'isEnabled'
+>;
 
 export function scheduleTimeComponents(time: string): {
   readonly hour: number;
@@ -23,8 +14,8 @@ export function scheduleTimeComponents(time: string): {
   return { hour, minute };
 }
 
-function isInsideScheduleAtWeeklyInstant(
-  block: FocusBlock,
+export function isInsideScheduleAtWeeklyInstant(
+  block: Pick<ScheduledBlock, 'days' | 'startTime' | 'endTime'>,
   day: DayOfWeek,
   minute: number,
 ): boolean {
@@ -42,16 +33,14 @@ function isInsideScheduleAtWeeklyInstant(
 }
 
 export function isActiveAtWeeklyInstant(
-  block: RuntimeFocusBlock,
+  block: ScheduledBlock,
   day: DayOfWeek,
   minute: number,
 ): boolean {
   if (!block.isEnabled || block.rule.kind === 'dailyBudget') return false;
 
   const isInsideWindow = isInsideScheduleAtWeeklyInstant(block, day, minute);
-  if (block.rule.kind === 'allowDuringSchedule') return !isInsideWindow;
-  if (block.rule.kind === 'allowDuringScheduleWithBudget') {
-    return !isInsideWindow;
-  }
-  return isInsideWindow;
+  return block.rule.kind === 'blockDuringSchedule'
+    ? isInsideWindow
+    : !isInsideWindow;
 }

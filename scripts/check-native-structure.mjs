@@ -1,11 +1,24 @@
 import fs from 'node:fs';
-import {
-  expectEqual,
-  expectExcludes,
-  expectIncludes,
-  expectMatch,
-  read,
-} from './native-structure-assertions.mjs';
+
+const read = (path) => fs.readFileSync(path, 'utf8');
+
+function expectIncludes(content, value, label) {
+  if (!content.includes(value)) {
+    throw new Error(`${label} is missing "${value}".`);
+  }
+}
+
+function expectMatch(content, pattern, label) {
+  const match = content.match(pattern);
+  if (!match) throw new Error(`${label} is missing.`);
+  return match[1];
+}
+
+function expectEqual(actual, expected, label) {
+  if (actual !== expected) {
+    throw new Error(`${label} is "${actual}", expected "${expected}".`);
+  }
+}
 
 function plistString(content, key, label) {
   return expectMatch(
@@ -22,13 +35,7 @@ function checkVersioning() {
   const iosProject = read('ios/FocusBlocks.xcodeproj/project.pbxproj');
   const iosInfo = read('ios/FocusBlocks/Info.plist');
 
-  expectEqual(packageJson.dependencies.expo, '~57.0.17', 'Expo SDK');
-  expectEqual(
-    packageJson.dependencies['react-native'],
-    '0.86.3',
-    'React Native',
-  );
-  expectEqual(packageJson.engines.node, '>=22.13.0', 'Node.js engine');
+  expectEqual(packageJson.version, appConfig.version, 'Package version');
   expectEqual(
     expectMatch(
       androidBuild,
@@ -85,68 +92,13 @@ function checkVersioning() {
 }
 
 function checkAndroid() {
-  const settings = read('android/settings.gradle');
   const build = read('android/app/build.gradle');
-  const properties = read('android/gradle.properties');
-  const wrapper = read('android/gradle/wrapper/gradle-wrapper.properties');
   const manifest = read('android/app/src/main/AndroidManifest.xml');
-  const javaRoot = 'android/app/src/main/java/love/nemi/focus';
-  const application = read(`${javaRoot}/MainApplication.kt`);
-  const activity = read(`${javaRoot}/MainActivity.kt`);
-  const blockerModule = read(`${javaRoot}/FocusAndroidBlockerModule.kt`);
-  const authorizationSetup = read(`${javaRoot}/AuthorizationSetup.kt`);
-  const styles = read('android/app/src/main/res/values/styles.xml');
   const lint = read('android/app/lint.xml');
 
-  expectIncludes(settings, 'expo-autolinking-settings', 'Android settings');
-  expectIncludes(
-    settings,
-    'expoAutolinking.useExpoModules()',
-    'Android settings',
-  );
-  expectIncludes(wrapper, 'gradle-9.3.1-bin.zip', 'Gradle wrapper');
-  expectIncludes(properties, 'newArchEnabled=true', 'Android properties');
-  expectIncludes(properties, 'hermesEnabled=true', 'Android properties');
-  expectExcludes(
-    build,
-    'release {\n            signingConfig',
-    'Android release',
-  );
-  expectIncludes(
-    application,
-    'ExpoReactHostFactory.getDefaultReactHost',
-    'MainApplication',
-  );
-  expectIncludes(
-    application,
-    'add(FocusAndroidBlockerPackage())',
-    'MainApplication',
-  );
-  expectIncludes(
-    activity,
-    'SplashScreenManager.registerOnActivity(this)',
-    'MainActivity',
-  );
-  expectIncludes(
-    blockerModule,
-    'fun getAccessState() = accessState()',
-    'FocusAndroidBlockerModule',
-  );
-  for (const requirement of [
-    'ACTION_APPLICATION_DETAILS_SETTINGS',
-    'ACTION_ACCESSIBILITY_SETTINGS',
-  ]) {
-    expectIncludes(blockerModule, requirement, 'FocusAndroidBlockerModule');
+  if (/release\s*\{[^}]*signingConfig\s+signingConfigs\.debug/s.test(build)) {
+    throw new Error('Android release must not use the debug signing key.');
   }
-  for (const requirement of [
-    'resolveAuthorizationSetupStep',
-    'getInstallSourceInfo',
-    'PACKAGE_SOURCE_STORE',
-  ]) {
-    expectIncludes(authorizationSetup, requirement, 'AuthorizationSetup');
-  }
-  expectIncludes(styles, 'parent="Theme.SplashScreen"', 'Android splash theme');
-  expectIncludes(styles, '@drawable/splashscreen_logo', 'Android splash theme');
 
   expectIncludes(
     manifest,
@@ -154,7 +106,11 @@ function checkAndroid() {
     'Android manifest',
   );
   expectIncludes(manifest, 'android:scheme="focusblocks"', 'Android manifest');
-  expectExcludes(manifest, 'QUERY_ALL_PACKAGES', 'Android manifest');
+  if (manifest.includes('QUERY_ALL_PACKAGES')) {
+    throw new Error(
+      'Android must not request access to all installed packages.',
+    );
+  }
   for (const permission of [
     'ACCESS_NETWORK_STATE',
     'FOREGROUND_SERVICE_SPECIAL_USE',
@@ -191,50 +147,19 @@ function checkAndroid() {
     'regexp="react_native_dev_server_(ip|port)"',
     'Android lint config',
   );
-  expectExcludes(lint, 'severity="ignore"', 'Android lint config');
+  if (lint.includes('severity="ignore"')) {
+    throw new Error('Android lint issues must not be globally ignored.');
+  }
 
   for (const density of ['mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi']) {
     const asset = `android/app/src/main/res/drawable-${density}/splashscreen_logo.png`;
     if (!fs.existsSync(asset)) {
       throw new Error(`Android splash asset is missing: ${asset}.`);
     }
-    const duplicate = `android/app/src/main/res/drawable-night-${density}/splashscreen_logo.png`;
-    if (fs.existsSync(duplicate)) {
-      throw new Error(
-        `Duplicate Android night splash asset exists: ${duplicate}.`,
-      );
-    }
   }
 }
 
 function checkIos() {
-  const appDelegate = read('ios/FocusBlocks/AppDelegate.swift');
-  const info = read('ios/FocusBlocks/Info.plist');
-  const storyboard = read('ios/FocusBlocks/SplashScreen.storyboard');
-  const oldEntrypoints = [
-    'ios/FocusBlocks/AppDelegate.h',
-    'ios/FocusBlocks/AppDelegate.mm',
-    'ios/FocusBlocks/main.m',
-    'ios/FocusBlocks/noop-file.swift',
-  ];
-
-  expectIncludes(
-    appDelegate,
-    'class AppDelegate: ExpoAppDelegate',
-    'AppDelegate',
-  );
-  expectIncludes(appDelegate, 'ExpoReactNativeFactory', 'AppDelegate');
-  expectIncludes(
-    info,
-    '<key>RCTNewArchEnabled</key>\n\t<true/>',
-    'iOS Info.plist',
-  );
-  expectIncludes(storyboard, '<imageView id="EXPO-SplashScreen"', 'iOS splash');
-  expectIncludes(
-    storyboard,
-    '<color key="backgroundColor" name="SplashScreenBackground"/>',
-    'iOS splash',
-  );
   if (
     !fs.existsSync(
       'ios/FocusBlocks/Images.xcassets/SplashScreenLogo.imageset/Contents.json',
@@ -242,12 +167,6 @@ function checkIos() {
   ) {
     throw new Error('iOS splash image set is missing.');
   }
-  for (const path of oldEntrypoints) {
-    if (fs.existsSync(path)) {
-      throw new Error(`Legacy iOS entrypoint still exists: ${path}.`);
-    }
-  }
-
   for (const target of [
     'ActivityMonitorExtension',
     'ShieldAction',

@@ -1,5 +1,19 @@
 import { DAY_OF_WEEK_VALUES, type DayOfWeek } from '../features/schedule/types';
 
+export const DAY_BY_DATE_INDEX: readonly DayOfWeek[] = [
+  'sun',
+  'mon',
+  'tue',
+  'wed',
+  'thu',
+  'fri',
+  'sat',
+];
+
+export function previousDay(day: DayOfWeek): DayOfWeek {
+  return DAY_OF_WEEK_VALUES[(DAY_OF_WEEK_VALUES.indexOf(day) + 6) % 7];
+}
+
 const DAY_LABELS: Record<DayOfWeek, string> = {
   mon: 'Mon',
   tue: 'Tue',

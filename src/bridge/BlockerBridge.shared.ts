@@ -32,35 +32,26 @@ export function parseBlockerAccessState(value: unknown): BlockerAccessState {
   };
 }
 
-export function parseBlockingAuthorizationState(
+function parseBlockingAuthorizationState(
   value: unknown,
 ): BlockingAuthorizationState {
   if (!isRecord(value)) {
     throw new Error('Blocking authorization state is invalid.');
   }
-  const { setupStep, status } = value;
+  const { setupStep } = value;
   if (
-    (setupStep !== 'authorizationSettings' &&
-      setupStep !== 'restrictedSettings') ||
-    (status !== 'authorized' &&
-      status !== 'denied' &&
-      status !== 'notDetermined')
+    setupStep !== 'authorizationSettings' &&
+    setupStep !== 'restrictedSettings'
   ) {
     throw new Error('Blocking authorization state is invalid.');
   }
-  return { setupStep, status };
+  return { setupStep, status: parseAuthorizationStatus(value.status) };
 }
 
 function sortedUniqueApplications(
   applications: readonly SelectableApplication[],
 ): readonly SelectableApplication[] {
-  const byId = new Map<string, SelectableApplication>();
-  for (const app of applications) {
-    if (app.id.trim().length === 0 || app.name.trim().length === 0) {
-      throw new Error('Selectable application is invalid.');
-    }
-    byId.set(app.id, { id: app.id, name: app.name });
-  }
+  const byId = new Map(applications.map((app) => [app.id, app]));
   return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -74,11 +65,11 @@ export function parseNativeSelectionSlotValue(
   return value;
 }
 
-export function parseNativeSelectableApplications(
+export function parseSelectableApplications(
   value: unknown,
 ): readonly SelectableApplication[] {
   if (!Array.isArray(value)) {
-    throw new Error('Native Android application list is invalid.');
+    throw new Error('Android application list is invalid.');
   }
   const applications = value.map((item) => {
     if (
@@ -90,7 +81,7 @@ export function parseNativeSelectableApplications(
       item.name.length === 0 ||
       item.name !== item.name.trim()
     ) {
-      throw new Error('Native Android application list is invalid.');
+      throw new Error('Android application list is invalid.');
     }
     return { id: item.id, name: item.name };
   });
@@ -113,5 +104,5 @@ export function parseSelectedApplications(
   if (!isRecord(parsed) || !Array.isArray(parsed.applications)) {
     throw new Error('Stored Android app selection is invalid.');
   }
-  return sortedUniqueApplications(parsed.applications);
+  return parseSelectableApplications(parsed.applications);
 }

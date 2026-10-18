@@ -38,17 +38,7 @@ internal object FocusBlockerStorage {
       if (!block.selectedPackageIds.contains(packageName)) {
         return@firstOrNull false
       }
-      val windowStart = block.budgetWindowStart(calendar)
-      val usedMinutes = if (windowStart !== null && context.hasUsageAccess()) {
-        usageTracker.usedMinutes(
-          block.selectedPackageIds,
-          windowStart,
-          calendar.timeInMillis,
-        )
-      } else {
-        0
-      }
-      block.isBlockingAt(day, minute, usedMinutes)
+      block.isBlockingAt(day, minute, usedBudgetMinutes(block, calendar, usageTracker))
     }
   }
 
@@ -60,19 +50,8 @@ internal object FocusBlockerStorage {
     val day = dayFromCalendar(calendar)
     val minute = calendar.get(Calendar.HOUR_OF_DAY) * 60 +
       calendar.get(Calendar.MINUTE)
-    val usageAccess = context.hasUsageAccess()
     return runtimeBlocksWithAccess(context).flatMapTo(mutableSetOf()) { block ->
-      val windowStart = block.budgetWindowStart(calendar)
-      val usedMinutes = if (windowStart !== null && usageAccess) {
-        usageTracker.usedMinutes(
-          block.selectedPackageIds,
-          windowStart,
-          calendar.timeInMillis,
-        )
-      } else {
-        0
-      }
-      if (block.isBlockingAt(day, minute, usedMinutes)) {
+      if (block.isBlockingAt(day, minute, usedBudgetMinutes(block, calendar, usageTracker))) {
         block.webDomains
       } else {
         emptySet()
@@ -133,6 +112,17 @@ internal object FocusBlockerStorage {
     val payload = prefs(context).getString(RUNTIME_PLAN_KEY, null)
       ?: return emptyList()
     return runtimeBlocksFromPayload(payload)
+  }
+
+  private fun usedBudgetMinutes(
+    block: RuntimeBlock,
+    calendar: Calendar,
+    usageTracker: AndroidUsageTracker,
+  ): Int {
+    val windowStart = block.budgetWindowStart(calendar) ?: return 0
+    return usageTracker.usedMinutes(
+      block.selectedPackageIds, windowStart, calendar.timeInMillis,
+    )
   }
 
   private fun runtimeBlocksWithAccess(context: Context): List<RuntimeBlock> {

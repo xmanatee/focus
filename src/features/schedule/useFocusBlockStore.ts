@@ -12,12 +12,9 @@ import { focusBlockNeedsLocalSelection } from './localActivitySelection';
 import { focusBlockRunnableLocally } from './localRuntime';
 import { missingRuntimeAccess } from './runtimeAccess';
 import { getFocusBlockRuntimeStatus } from './runtimeStatus';
-import type { FocusBlock, FocusBlockInput, FocusBlockRule } from './types';
+import type { FocusBlock, FocusBlockInput } from './types';
 import { useBlockActivationStore } from './useBlockActivationStore';
-import {
-  validateFocusBlockInput,
-  validateFocusBlockStructure,
-} from './validation';
+import { validateFocusBlockInput } from './validation';
 
 interface FocusBlockState {
   readonly focusBlocks: readonly FocusBlock[];
@@ -58,25 +55,12 @@ function normalizeInput(input: FocusBlockInput): FocusBlockInput {
   return shouldClearStrict ? { ...input, strict: false } : input;
 }
 
-interface PersistedFocusBlock {
-  readonly id: string;
-  readonly name: string;
-  readonly startTime: string;
-  readonly endTime: string;
-  readonly days: FocusBlock['days'];
-  readonly rule: FocusBlockRule;
-  readonly selection: FocusBlock['selection'];
-  readonly notifyOnStart: boolean;
-  readonly notifyOnEnd: boolean;
-  readonly strict: boolean;
-}
-
 function parsePersistedBlock(value: unknown): FocusBlock {
   if (!isRecord(value)) {
     throw new Error('Stored focus block is invalid.');
   }
 
-  const block = value as Partial<PersistedFocusBlock>;
+  const block = value as Partial<FocusBlock>;
   if (
     typeof block.id !== 'string' ||
     block.id.trim().length === 0 ||
@@ -105,7 +89,7 @@ function parsePersistedBlock(value: unknown): FocusBlock {
     notifyOnEnd: block.notifyOnEnd,
     strict: block.strict,
   };
-  validateFocusBlockStructure(parsed);
+  validateFocusBlockInput(parsed);
   return parsed;
 }
 

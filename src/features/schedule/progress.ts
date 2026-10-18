@@ -1,6 +1,10 @@
-import { isOvernightRange, minutesOf } from '../../shared/days';
+import {
+  DAY_BY_DATE_INDEX,
+  isOvernightRange,
+  minutesOf,
+} from '../../shared/days';
 import { getActiveBlockStatuses } from './activeBlocks';
-import type { DayOfWeek, RuntimeFocusBlock } from './types';
+import type { RuntimeFocusBlock } from './types';
 
 export interface FocusProgress {
   readonly activeBlockCount: number;
@@ -10,22 +14,8 @@ export interface FocusProgress {
   readonly strictBlockCount: number;
 }
 
-const DAY_BY_DATE_INDEX: readonly DayOfWeek[] = [
-  'sun',
-  'mon',
-  'tue',
-  'wed',
-  'thu',
-  'fri',
-  'sat',
-];
-
 function hasScheduledWindow(block: RuntimeFocusBlock): boolean {
-  return (
-    block.rule.kind === 'blockDuringSchedule' ||
-    block.rule.kind === 'allowDuringSchedule' ||
-    block.rule.kind === 'allowDuringScheduleWithBudget'
-  );
+  return block.rule.kind !== 'dailyBudget';
 }
 
 function targetCount(block: RuntimeFocusBlock): number {
