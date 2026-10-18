@@ -1,31 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { RuntimeFocusBlock } from '../features/schedule/types';
+import { runtimeBlock } from '../test-helpers/focusBlockFixtures';
 import { androidNotificationPlan } from './androidNotificationPlan';
 
 function block(overrides: Partial<RuntimeFocusBlock> = {}): RuntimeFocusBlock {
-  return {
-    days: ['mon'],
+  return runtimeBlock({
     endTime: '10:00',
     id: 'work',
-    isEnabled: true,
     name: 'Deep Work',
     notifyOnEnd: true,
     notifyOnStart: true,
-    rule: { kind: 'blockDuringSchedule' },
-    selection: {
-      activitySelection: {
-        applicationCount: 1,
-        categoryCount: 0,
-        includeEntireCategory: false,
-        status: 'saved',
-        webDomainCount: 0,
-      },
-      webDomains: ['youtube.com'],
-    },
-    startTime: '09:00',
-    strict: false,
     ...overrides,
-  };
+  });
 }
 
 describe('androidNotificationPlan', () => {
@@ -87,7 +73,7 @@ describe('androidNotificationPlan', () => {
     expect(plan).toEqual([
       expect.objectContaining({
         hour: 10,
-        id: 'setup.sun.start',
+        id: 'focusblocks.setup.sun.start',
         minute: 15,
         weekday: 1,
       }),

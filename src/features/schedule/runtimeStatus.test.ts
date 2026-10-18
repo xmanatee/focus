@@ -1,36 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { runtimeBlock as block } from '../../test-helpers/focusBlockFixtures';
 import {
   eventRecords,
   resetDeviceActivityMock,
 } from '../../test-helpers/mockDeviceActivity';
 import { getFocusBlockRuntimeStatus } from './runtimeStatus';
-import type { RuntimeFocusBlock } from './types';
-
-function block(overrides: Partial<RuntimeFocusBlock> = {}): RuntimeFocusBlock {
-  return {
-    id: 'block',
-    name: 'Block',
-    startTime: '09:00',
-    endTime: '17:00',
-    days: ['mon', 'tue', 'wed', 'thu', 'fri'],
-    isEnabled: true,
-    rule: { kind: 'blockDuringSchedule' },
-    selection: {
-      activitySelection: {
-        status: 'saved',
-        applicationCount: 1,
-        categoryCount: 0,
-        webDomainCount: 0,
-        includeEntireCategory: true,
-      },
-      webDomains: [],
-    },
-    notifyOnStart: false,
-    notifyOnEnd: false,
-    strict: false,
-    ...overrides,
-  };
-}
 
 function at(value: string): Date {
   return new Date(value);
@@ -178,7 +152,10 @@ describe('getFocusBlockRuntimeStatus', () => {
     );
 
     const status = getFocusBlockRuntimeStatus(
-      block({ rule: { kind: 'allowDuringScheduleWithBudget', minutes: 10 } }),
+      block({
+        days: ['mon', 'tue'],
+        rule: { kind: 'allowDuringScheduleWithBudget', minutes: 10 },
+      }),
       at('2026-04-27T10:00:00'),
     );
 

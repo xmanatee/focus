@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { runtimeBlock } from '../../test-helpers/focusBlockFixtures';
 import {
   eventRecords,
   manualActions,
@@ -11,7 +12,6 @@ import {
   BUDGET_WEB_ACTIVITY,
   budgetWebBlock,
   configuredActionsFor,
-  runtimeBlock,
 } from '../../test-helpers/schedulerFixtures';
 import { reconcileFocusBlocks } from './scheduler';
 

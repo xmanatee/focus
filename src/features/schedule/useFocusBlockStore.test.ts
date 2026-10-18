@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   SUNDAY_SETUP_BLOCK,
   focusBlockInput,
+  savedSelection,
 } from '../../test-helpers/focusBlockFixtures';
 import { storageMap } from '../../test-helpers/mockPersistedStorage';
 import { useBlockerStore } from '../blocker/useBlockerStore';
@@ -175,16 +176,7 @@ describe('useFocusBlockStore', () => {
       useFocusBlockStore.getState().addFocusBlock(
         'id-1',
         focusBlockInput({
-          selection: {
-            activitySelection: {
-              applicationCount: 1,
-              categoryCount: 0,
-              includeEntireCategory: true,
-              status: 'saved',
-              webDomainCount: 0,
-            },
-            webDomains: [],
-          },
+          selection: savedSelection(),
         }),
       );
       useSettingsStore.setState({ setupBlock: SUNDAY_SETUP_BLOCK });
@@ -195,16 +187,7 @@ describe('useFocusBlockStore', () => {
         'id-1',
         focusBlockInput({
           name: 'Renamed',
-          selection: {
-            activitySelection: {
-              applicationCount: 1,
-              categoryCount: 0,
-              includeEntireCategory: true,
-              status: 'saved',
-              webDomainCount: 0,
-            },
-            webDomains: [],
-          },
+          selection: savedSelection(),
         }),
       );
 

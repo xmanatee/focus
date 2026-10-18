@@ -64,12 +64,16 @@ export function materializeFocusBlock(
     const endDay = DAY_BY_IOS_WEEKDAY[schedule.intervalEnd.weekday];
     const warningTime = budgetWarningTime(block);
 
-    const startActions = reconcileActionsForInstant(
+    const startActions: FocusAction[] = reconcileActionsForInstant(
       allBlocks,
       day,
       startMinute,
     );
-    const endActions = reconcileActionsForInstant(allBlocks, endDay, endMinute);
+    const endActions: FocusAction[] = reconcileActionsForInstant(
+      allBlocks,
+      endDay,
+      endMinute,
+    );
 
     if (block.notifyOnStart) {
       startActions.push({

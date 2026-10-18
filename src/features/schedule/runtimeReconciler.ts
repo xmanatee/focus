@@ -1,7 +1,7 @@
 import * as DeviceActivity from 'react-native-device-activity';
 import { DAY_BY_DATE_INDEX } from '../../shared/days';
 import type { SetupBlock } from '../settings/adminState';
-import { assertRuntimeMonitorCapacity } from './runtimeCapacity';
+import { assertRuntimeCapacity } from './runtimeCapacity';
 import {
   loadRuntimePlanSignatures,
   saveRuntimePlanSignatures,
@@ -18,7 +18,6 @@ import {
   materializeSetupBlock,
 } from './schedulerPlan';
 import type { RuntimeFocusBlock } from './types';
-import { webDomainsForInstant } from './webDomainsForInstant';
 
 function configuredActions(
   actions: readonly FocusAction[],
@@ -98,36 +97,39 @@ function shouldExecuteNow(action: FocusAction): boolean {
   );
 }
 
-function executeActionNow(action: FocusAction): void {
-  if (!shouldExecuteNow(action)) return;
-  if (action.type === 'resetBlocks') {
-    DeviceActivity.resetBlocks('focusblocks current-state reconcile');
-    return;
-  }
-  if (action.type === 'blockSelection') {
-    DeviceActivity.blockSelection(
-      { activitySelectionId: action.familyActivitySelectionId },
-      'focusblocks current-state reconcile',
-    );
-  }
-}
-
 function applyCurrentState(
   blocks: readonly RuntimeFocusBlock[],
   at: Date,
 ): void {
   const day = DAY_BY_DATE_INDEX[at.getDay()];
   const minute = at.getHours() * 60 + at.getMinutes();
+  const webDomains = new Set<string>();
   for (const action of reconcileActionsForInstant(blocks, day, minute)) {
-    executeActionNow(action);
+    if (!shouldExecuteNow(action)) continue;
+    switch (action.type) {
+      case 'resetBlocks':
+        DeviceActivity.resetBlocks('focusblocks current-state reconcile');
+        break;
+      case 'blockSelection':
+        DeviceActivity.blockSelection(
+          { activitySelectionId: action.familyActivitySelectionId },
+          'focusblocks current-state reconcile',
+        );
+        break;
+      case 'clearWebContentFilterPolicy':
+        webDomains.clear();
+        break;
+      case 'addWebContentFilterDomains':
+        for (const domain of action.domains) webDomains.add(domain);
+        break;
+    }
   }
-  const webDomains = webDomainsForInstant(blocks, day, minute);
   DeviceActivity.clearWebContentFilterPolicy(
     'focusblocks current-state reconcile',
   );
-  if (webDomains.length > 0) {
+  if (webDomains.size > 0) {
     DeviceActivity.setWebContentFilterPolicy(
-      { type: 'specific', domains: [...webDomains] },
+      { type: 'specific', domains: [...webDomains].sort() },
       'focusblocks current-state reconcile',
     );
   }
@@ -138,6 +140,7 @@ export async function reconcileRuntimePlatform(
   setupBlock: SetupBlock | null,
   at: Date,
 ): Promise<void> {
+  assertRuntimeCapacity(blocks, setupBlock);
   const desired = new Map<string, MonitorPlan>();
   for (const block of blocks) {
     for (const plan of materializeFocusBlock(block, blocks)) {
@@ -154,7 +157,6 @@ export async function reconcileRuntimePlatform(
       desired.set(plan.activityName, plan);
     }
   }
-  assertRuntimeMonitorCapacity(blocks, setupBlock);
   await reconcileMonitoringPlans(desired);
   applyCurrentState(blocks, at);
 }

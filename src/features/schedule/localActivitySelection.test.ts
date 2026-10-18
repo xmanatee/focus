@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { runtimeBlock } from '../../test-helpers/focusBlockFixtures';
 import { slotStore } from '../../test-helpers/mockDeviceActivity';
 import { writeSlot } from '../blocker/selectionSlot';
 import { selectionIdForBlock } from '../blocker/types';
@@ -11,28 +12,7 @@ import {
 import type { FocusBlock } from './types';
 
 function block(overrides: Partial<FocusBlock> = {}): FocusBlock {
-  return {
-    id: 'block-a',
-    name: 'Block',
-    startTime: '09:00',
-    endTime: '17:00',
-    days: ['mon'],
-    rule: { kind: 'blockDuringSchedule' },
-    selection: {
-      activitySelection: {
-        status: 'saved',
-        applicationCount: 1,
-        categoryCount: 0,
-        webDomainCount: 0,
-        includeEntireCategory: true,
-      },
-      webDomains: [],
-    },
-    notifyOnStart: false,
-    notifyOnEnd: false,
-    strict: false,
-    ...overrides,
-  };
+  return runtimeBlock({ id: 'block-a', ...overrides });
 }
 
 describe('local activity selection helpers', () => {

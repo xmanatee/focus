@@ -1,29 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import type { RuntimeFocusBlock } from '../features/schedule/types';
-import { focusBlockInput } from '../test-helpers/focusBlockFixtures';
+import {
+  runtimeBlock as createRuntimeBlock,
+  focusBlockInput,
+} from '../test-helpers/focusBlockFixtures';
 import { serializeAndroidRuntimePlan } from './androidRuntimePlan';
 
 function runtimeBlock(
   id: string,
   overrides: Partial<RuntimeFocusBlock> = {},
 ): RuntimeFocusBlock {
-  return {
-    ...focusBlockInput({
-      selection: {
-        activitySelection: {
-          applicationCount: 1,
-          categoryCount: 0,
-          includeEntireCategory: false,
-          status: 'saved',
-          webDomainCount: 0,
-        },
-        webDomains: [],
-      },
-    }),
+  return createRuntimeBlock({
+    ...focusBlockInput(),
     id,
-    isEnabled: true,
     ...overrides,
-  };
+  });
 }
 
 describe('serializeAndroidRuntimePlan', () => {

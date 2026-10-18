@@ -1,8 +1,41 @@
 import { EMPTY_BLOCK_SELECTION } from '../features/blocker/types';
-import type { DayOfWeek, FocusBlockInput } from '../features/schedule/types';
+import type {
+  DayOfWeek,
+  FocusBlockInput,
+  RuntimeFocusBlock,
+} from '../features/schedule/types';
 import type { SetupBlock } from '../features/settings/adminState';
 
 const WEEKDAYS: readonly DayOfWeek[] = ['mon', 'tue', 'wed', 'thu', 'fri'];
+
+export function savedSelection(
+  webDomains: readonly string[] = [],
+): RuntimeFocusBlock['selection'] {
+  return {
+    activitySelection: {
+      status: 'saved',
+      applicationCount: 1,
+      categoryCount: 0,
+      webDomainCount: 0,
+      includeEntireCategory: true,
+    },
+    webDomains,
+  };
+}
+
+export function runtimeBlock(
+  overrides: Partial<RuntimeFocusBlock> = {},
+): RuntimeFocusBlock {
+  return {
+    ...focusBlockInput(),
+    id: 'block',
+    name: 'Block',
+    days: ['mon'],
+    isEnabled: true,
+    selection: savedSelection(),
+    ...overrides,
+  };
+}
 
 export function focusBlockInput(
   overrides: Partial<FocusBlockInput> = {},

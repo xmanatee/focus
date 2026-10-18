@@ -1,16 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { runtimeBlock } from '../../test-helpers/focusBlockFixtures';
 import { buildFocusProgress } from './progress';
 import type { RuntimeFocusBlock } from './types';
 
 function block(overrides: Partial<RuntimeFocusBlock> = {}): RuntimeFocusBlock {
-  return {
-    id: 'block',
-    name: 'Block',
-    startTime: '09:00',
+  return runtimeBlock({
     endTime: '10:00',
     days: ['mon', 'tue', 'wed'],
-    isEnabled: true,
-    rule: { kind: 'blockDuringSchedule' },
     selection: {
       activitySelection: {
         status: 'saved',
@@ -21,11 +17,8 @@ function block(overrides: Partial<RuntimeFocusBlock> = {}): RuntimeFocusBlock {
       },
       webDomains: ['youtube.com'],
     },
-    notifyOnStart: false,
-    notifyOnEnd: false,
-    strict: false,
     ...overrides,
-  };
+  });
 }
 
 describe('buildFocusProgress', () => {

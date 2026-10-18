@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { BlockerBridge } from '../src/bridge/BlockerBridge';
 import { useBlockerStore } from '../src/features/blocker/useBlockerStore';
@@ -7,7 +7,7 @@ import { DiagnosticsCard } from '../src/features/diagnostics/components/Diagnost
 import { protectionCopy } from '../src/features/protection/copy';
 import { useProtectionPosture } from '../src/features/protection/useProtectionPosture';
 import { focusBlocksRunnableLocally } from '../src/features/schedule/localRuntime';
-import { assertRuntimeMonitorCapacity } from '../src/features/schedule/runtimeCapacity';
+import { assertRuntimeCapacity } from '../src/features/schedule/runtimeCapacity';
 import type { DayOfWeek } from '../src/features/schedule/types';
 import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
 import { useFocusBlockStore } from '../src/features/schedule/useFocusBlockStore';
@@ -76,8 +76,8 @@ export default function SettingsScreen(): React.JSX.Element {
     setNotifyOnStart(existing.notifyOnStart);
   }, [existing]);
 
-  const startTime = useMemo(() => dateToTimeString(startDate), [startDate]);
-  const endTime = useMemo(() => dateToTimeString(endDate), [endDate]);
+  const startTime = dateToTimeString(startDate);
+  const endTime = dateToTimeString(endDate);
 
   const toggleDay = (day: DayOfWeek): void => {
     setSelectedDays((current) =>
@@ -108,7 +108,7 @@ export default function SettingsScreen(): React.JSX.Element {
 
     const performSave = async (): Promise<void> => {
       const success = await run(async () => {
-        assertRuntimeMonitorCapacity(
+        assertRuntimeCapacity(
           focusBlocksRunnableLocally(
             focusBlocks,
             enabledBlockIds,
@@ -158,10 +158,11 @@ export default function SettingsScreen(): React.JSX.Element {
         {
           text: 'Turn off',
           style: 'destructive',
-          onPress: () => {
-            void haptic.abandon();
-            turnOffLockIn();
-          },
+          onPress: () =>
+            void run(() => {
+              void haptic.abandon();
+              turnOffLockIn();
+            }, 'Could not turn off Lock-in.'),
         },
       ],
     );
@@ -176,10 +177,11 @@ export default function SettingsScreen(): React.JSX.Element {
         {
           text: 'Remove',
           style: 'destructive',
-          onPress: () => {
-            void haptic.abandon();
-            removeLockInConfiguration();
-          },
+          onPress: () =>
+            void run(() => {
+              void haptic.abandon();
+              removeLockInConfiguration();
+            }, 'Could not remove Lock-in.'),
         },
       ],
     );

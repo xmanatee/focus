@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  runtimeBlock,
+  savedSelection,
+} from '../../test-helpers/focusBlockFixtures';
+import {
   deferNextMonitoringStart,
   manualActions,
   monitoringCalls,
@@ -7,11 +11,7 @@ import {
   slotStore,
 } from '../../test-helpers/mockDeviceActivity';
 import { storageMap } from '../../test-helpers/mockPersistedStorage';
-import {
-  configuredActionsFor,
-  runtimeBlock,
-  savedSelection,
-} from '../../test-helpers/schedulerFixtures';
+import { configuredActionsFor } from '../../test-helpers/schedulerFixtures';
 import { reconcileFocusBlocks } from './scheduler';
 
 describe('reconcileFocusBlocks', () => {

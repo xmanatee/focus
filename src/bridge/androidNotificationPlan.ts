@@ -23,37 +23,25 @@ export function androidNotificationPlan(
 ): readonly AndroidNotificationPlanEntry[] {
   const blockEntries = blocks.flatMap((block) => {
     if (!block.isEnabled || block.rule.kind === 'dailyBudget') return [];
-    const startMinute = minutesOf(block.startTime);
-    const endMinute = minutesOf(block.endTime);
     return block.days.flatMap((day) => {
       const startWeekday = iosWeekday(day);
-      const endWeekday = isOvernightRange(block.startTime, block.endTime)
-        ? nextIosWeekday(startWeekday)
-        : startWeekday;
-      return [
-        ...(block.notifyOnStart
-          ? [
-              {
-                ...scheduleNotification(block, 'start'),
-                hour: Math.floor(startMinute / 60),
-                id: `${block.id}.${day}.start`,
-                minute: startMinute % 60,
-                weekday: startWeekday,
-              },
-            ]
-          : []),
-        ...(block.notifyOnEnd
-          ? [
-              {
-                ...scheduleNotification(block, 'end'),
-                hour: Math.floor(endMinute / 60),
-                id: `${block.id}.${day}.end`,
-                minute: endMinute % 60,
-                weekday: endWeekday,
-              },
-            ]
-          : []),
-      ];
+      return (['start', 'end'] as const).flatMap((boundary) => {
+        const isStart = boundary === 'start';
+        if (!(isStart ? block.notifyOnStart : block.notifyOnEnd)) return [];
+        const time = minutesOf(isStart ? block.startTime : block.endTime);
+        return [
+          {
+            ...scheduleNotification(block, boundary),
+            hour: Math.floor(time / 60),
+            id: `focusblocks.block.${block.id}.${day}.${boundary}`,
+            minute: time % 60,
+            weekday:
+              !isStart && isOvernightRange(block.startTime, block.endTime)
+                ? nextIosWeekday(startWeekday)
+                : startWeekday,
+          },
+        ];
+      });
     });
   });
   if (setupBlock === null || !setupBlock.notifyOnStart) return blockEntries;
@@ -63,7 +51,7 @@ export function androidNotificationPlan(
     ...setupBlock.days.map((day) => ({
       body: 'You can now edit your focus blocks.',
       hour: Math.floor(startMinute / 60),
-      id: `setup.${day}.start`,
+      id: `focusblocks.setup.${day}.start`,
       minute: startMinute % 60,
       title: 'Setup Block Active',
       weekday: iosWeekday(day),

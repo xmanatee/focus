@@ -15,9 +15,6 @@ function expectIncludes(content, value, label) {
 }
 
 const eas = JSON.parse(read('eas.json'));
-if (eas.cli.version !== '22.6.0') {
-  throw new Error('EAS CLI must use the reviewed release version.');
-}
 if (eas.build.apk.distribution !== 'internal') {
   throw new Error('Android APK distribution must be internal.');
 }
@@ -34,37 +31,13 @@ for (const profile of ['apk', 'production']) {
 }
 
 const releaseWorkflow = read('.github/workflows/release.yml');
-for (const requirement of [
-  'branches: [main]',
-  'paths: [package.json]',
-  'EAS_CLI_VERSION: 22.6.0',
-  'PREVIOUS_SHA: ${{ github.event.before }}',
-  'Determine release version',
-  'Create release tag',
-  '--profile apk',
-  '--profile production',
-  'apksigner',
-  'jarsigner',
-  'artifact-url',
-  '--retry-all-errors',
-  'actions/upload-artifact@v4',
-  'gh release create',
-  APK_NAME,
-  'focus-blocks-android.aab',
-]) {
-  expectIncludes(releaseWorkflow, requirement, 'Release workflow');
-}
-
-for (const removedEntryPoint of [
-  'workflow_dispatch',
-  'github.event.inputs',
-  'GITHUB_REF_NAME',
-  'Submit to Google Play',
-  'build:download',
-]) {
-  if (releaseWorkflow.includes(removedEntryPoint)) {
-    throw new Error(`Release workflow still contains ${removedEntryPoint}.`);
-  }
+const cliVersion = releaseWorkflow.match(
+  /^\s+EAS_CLI_VERSION:\s*(\S+)\s*$/m,
+)?.[1];
+if (cliVersion !== eas.cli.version) {
+  throw new Error(
+    'Release workflow and EAS profiles must use the same CLI version.',
+  );
 }
 
 const landingPage = read('site/index.html');

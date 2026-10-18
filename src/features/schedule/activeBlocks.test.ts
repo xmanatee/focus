@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
+import { runtimeBlock } from '../../test-helpers/focusBlockFixtures';
 import {
   eventRecords,
   resetDeviceActivityMock,
@@ -10,29 +11,7 @@ function block(
   id: string,
   overrides: Partial<RuntimeFocusBlock> = {},
 ): RuntimeFocusBlock {
-  return {
-    id,
-    name: id,
-    startTime: '09:00',
-    endTime: '17:00',
-    days: ['mon'],
-    isEnabled: true,
-    rule: { kind: 'blockDuringSchedule' },
-    selection: {
-      activitySelection: {
-        status: 'saved',
-        applicationCount: 1,
-        categoryCount: 0,
-        webDomainCount: 0,
-        includeEntireCategory: true,
-      },
-      webDomains: [],
-    },
-    notifyOnStart: false,
-    notifyOnEnd: false,
-    strict: false,
-    ...overrides,
-  };
+  return runtimeBlock({ id, name: id, ...overrides });
 }
 
 describe('getActiveBlockStatuses', () => {

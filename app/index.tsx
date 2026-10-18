@@ -16,7 +16,7 @@ import { SchedulerErrorCard } from '../src/features/schedule/components/Schedule
 import { focusBlocksRunnableLocally } from '../src/features/schedule/localRuntime';
 import { buildFocusProgress } from '../src/features/schedule/progress';
 import { missingRuntimeAccess } from '../src/features/schedule/runtimeAccess';
-import { assertRuntimeMonitorCapacity } from '../src/features/schedule/runtimeCapacity';
+import { assertRuntimeCapacity } from '../src/features/schedule/runtimeCapacity';
 import { reconcileFocusBlocks } from '../src/features/schedule/scheduler';
 import { useActiveBlock } from '../src/features/schedule/useActiveBlock';
 import { useBlockActivationStore } from '../src/features/schedule/useBlockActivationStore';
@@ -140,7 +140,7 @@ export default function MainFeedScreen(): React.JSX.Element {
         blockId,
       ];
       try {
-        assertRuntimeMonitorCapacity(
+        assertRuntimeCapacity(
           focusBlocksRunnableLocally(
             focusBlocks,
             nextEnabledBlockIds,

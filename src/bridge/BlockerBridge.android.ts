@@ -33,6 +33,7 @@ const CAPABILITIES: BlockingCapabilities = {
   lockInConfigurationBody:
     'The setup window is stored locally, and this device decides whether to enforce it.',
   maxScheduledMonitors: null,
+  maxSimultaneousWebDomains: null,
   restrictedSettingsSetup: {
     action: 'Open app info',
     body: 'Android restricts Accessibility for apps installed outside an app store. In App info, tap the three-dot menu, choose Allow restricted settings if shown, confirm, then return to Focus Blocks.',

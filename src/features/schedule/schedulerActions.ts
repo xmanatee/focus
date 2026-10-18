@@ -66,6 +66,11 @@ export type FocusAction = (NativeAction | WebDomainAction) & {
   readonly onlyIfTriggeredAfter?: TriggeredAfterCondition;
 };
 
+type ReconcileAction = Exclude<
+  FocusAction,
+  { readonly type: 'sendNotification' }
+>;
+
 export interface MonitorPlan {
   activityName: string;
   schedule: {
@@ -165,7 +170,7 @@ export function budgetOriginDaysAtWeeklyInstant(
 }
 
 function addSelectionAction(
-  actions: FocusAction[],
+  actions: ReconcileAction[],
   block: RuntimeFocusBlock,
   condition?: TriggeredAfterCondition,
 ): void {
@@ -178,7 +183,7 @@ function addSelectionAction(
 }
 
 function addWebDomainAction(
-  actions: FocusAction[],
+  actions: ReconcileAction[],
   block: RuntimeFocusBlock,
   condition?: TriggeredAfterCondition,
 ): void {
@@ -194,8 +199,8 @@ export function reconcileActionsForInstant(
   blocks: readonly RuntimeFocusBlock[],
   day: DayOfWeek,
   minute: number,
-): FocusAction[] {
-  const actions: FocusAction[] = [
+): ReconcileAction[] {
+  const actions: ReconcileAction[] = [
     { type: 'resetBlocks' },
     { type: 'clearWebContentFilterPolicy' },
   ];

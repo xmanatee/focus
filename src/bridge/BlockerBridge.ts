@@ -23,6 +23,7 @@ const CAPABILITIES: BlockingCapabilities = {
   lockInConfigurationBody:
     'The setup window syncs through iCloud, but each device decides for itself when to enforce it.',
   maxScheduledMonitors: 20,
+  maxSimultaneousWebDomains: 50,
   restrictedSettingsSetup: null,
   runtimeAccessDisclosure: {
     dailyBudgets: null,

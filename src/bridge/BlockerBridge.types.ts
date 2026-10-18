@@ -44,6 +44,7 @@ export interface BlockingCapabilities {
   readonly finishDeviceBody: string;
   readonly lockInConfigurationBody: string;
   readonly maxScheduledMonitors: number | null;
+  readonly maxSimultaneousWebDomains: number | null;
   readonly selectionTitle: string;
   readonly strictModeBody: string;
   readonly strictModeEnableBody: string;

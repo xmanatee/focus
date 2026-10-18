@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { focusBlockInput } from '../../test-helpers/focusBlockFixtures';
+import {
+  focusBlockInput,
+  savedSelection,
+} from '../../test-helpers/focusBlockFixtures';
 import { slotStore } from '../../test-helpers/mockDeviceActivity';
 import type { FocusBlock, FocusBlockInput } from '../schedule/types';
 import { resolveLockInEnablement } from './lockInEnablement';
@@ -38,16 +41,7 @@ describe('resolveLockInEnablement', () => {
       resolveLockInEnablement(
         [
           block('missing-selection', {
-            selection: {
-              activitySelection: {
-                applicationCount: 1,
-                categoryCount: 0,
-                includeEntireCategory: true,
-                status: 'saved',
-                webDomainCount: 0,
-              },
-              webDomains: [],
-            },
+            selection: savedSelection(),
           }),
         ],
         ['missing-selection'],
@@ -63,16 +57,7 @@ describe('resolveLockInEnablement', () => {
       resolveLockInEnablement(
         [
           block('ready', {
-            selection: {
-              activitySelection: {
-                applicationCount: 1,
-                categoryCount: 0,
-                includeEntireCategory: true,
-                status: 'saved',
-                webDomainCount: 0,
-              },
-              webDomains: [],
-            },
+            selection: savedSelection(),
           }),
         ],
         ['ready'],

@@ -11,7 +11,7 @@ import type { SetupBlock } from '../settings/adminState';
 import { inputUsesBudgetWarning } from './budget';
 import { activitySelectionNeedsLocalSlot } from './localActivitySelection';
 import { focusBlocksRunnableLocally } from './localRuntime';
-import { assertRuntimeMonitorCapacity } from './runtimeCapacity';
+import { assertRuntimeCapacity } from './runtimeCapacity';
 import type { FocusBlockInput } from './types';
 import { useBlockActivationStore } from './useBlockActivationStore';
 import { useFocusBlockStore } from './useFocusBlockStore';
@@ -75,7 +75,7 @@ export function useFocusBlockSave({
         const nextFocusBlocks = currentFocusBlocks.map((block) =>
           block.id === editId ? candidate : block,
         );
-        assertRuntimeMonitorCapacity(
+        assertRuntimeCapacity(
           focusBlocksRunnableLocally(
             nextFocusBlocks,
             enabledBlockIds,
