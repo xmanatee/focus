@@ -39,7 +39,9 @@ function runEasMetadataPush() {
   ];
 
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { env: process.env });
+    const child = spawn(command, args, {
+      env: { ...process.env, EXPO_NO_TELEMETRY: '1', DO_NOT_TRACK: '1' },
+    });
     let output = '';
 
     child.stdout.on('data', (chunk) => {
