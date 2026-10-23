@@ -16,5 +16,6 @@
   "ignoreIssues": {
     "app.json": ["unlisted"]
   },
-  "treatConfigHintsAsErrors": false
+  "treatConfigHintsAsErrors": false,
+  "ignoreBinaries": ["python3"]
 }

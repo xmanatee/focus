@@ -1,0 +1,17 @@
+{
+  "name": "focus-site",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.23.3 <23",
+    "npm": "12.2.0"
+  },
+  "packageManager": "npm@12.2.0",
+  "scripts": {
+    "build": "node ../scripts/build-site.mjs",
+    "deploy": "python3 ../.release/deploy.py",
+    "check": "node ../scripts/check-site.mjs",
+    "check:all": "npm run check && npm run build",
+    "notify:index": "node ../scripts/submit-indexnow.mjs"
+  }
+}

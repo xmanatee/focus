@@ -9,6 +9,7 @@
   "scripts": {
     "start": "expo start",
     "build": "expo export --platform android --platform ios --output-dir dist",
+    "deploy": "python3 .release/deploy.py",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --apply .",

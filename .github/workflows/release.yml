@@ -187,9 +187,18 @@ jobs:
           RELEASE_TAG: ${{ needs.validate.outputs.release_tag }}
         run: |
           if gh release view "$RELEASE_TAG" > /dev/null; then
-            gh release upload "$RELEASE_TAG" dist/focus-blocks-android.apk dist/focus-blocks-android.apk.sha256 --clobber
+            if [[ "$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" --jq '.immutable')" == true ]]; then
+              mkdir -p "$RUNNER_TEMP/existing-apk"
+              gh release download "$RELEASE_TAG" --pattern 'focus-blocks-android.apk*' --dir "$RUNNER_TEMP/existing-apk"
+              (cd "$RUNNER_TEMP/existing-apk" && sha256sum --check focus-blocks-android.apk.sha256)
+              echo 'The complete immutable APK release is already published.'
+              exit 0
+            fi
+            echo 'Inspect the existing mutable release before retrying publication.' >&2
+            exit 1
           else
-            gh release create "$RELEASE_TAG" dist/focus-blocks-android.apk dist/focus-blocks-android.apk.sha256 --verify-tag --generate-notes --latest
+            gh release create "$RELEASE_TAG" dist/focus-blocks-android.apk dist/focus-blocks-android.apk.sha256 --verify-tag --generate-notes --draft --latest=false
+            gh release edit "$RELEASE_TAG" --draft=false --latest
           fi
 
   android_play_bundle:
