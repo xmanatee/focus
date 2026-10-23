@@ -13,12 +13,16 @@
       "ios": {
         "simulator": true,
         "resourceClass": "m-medium"
+      },
+      "env": {
+        "EXPO_NO_TELEMETRY": "1"
       }
     },
     "apk": {
       "distribution": "internal",
       "env": {
-        "SHARP_IGNORE_GLOBAL_LIBVIPS": "true"
+        "SHARP_IGNORE_GLOBAL_LIBVIPS": "true",
+        "EXPO_NO_TELEMETRY": "1"
       },
       "android": {
         "credentialsSource": "remote",
@@ -27,7 +31,8 @@
     },
     "production": {
       "env": {
-        "SHARP_IGNORE_GLOBAL_LIBVIPS": "true"
+        "SHARP_IGNORE_GLOBAL_LIBVIPS": "true",
+        "EXPO_NO_TELEMETRY": "1"
       },
       "android": {
         "credentialsSource": "remote",

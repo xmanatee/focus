@@ -7,6 +7,9 @@ concurrency:
   group: app-store-metadata
   cancel-in-progress: false
 
+env:
+  EXPO_NO_TELEMETRY: '1'
+  DO_NOT_TRACK: '1'
 jobs:
   metadata:
     runs-on: ubuntu-latest

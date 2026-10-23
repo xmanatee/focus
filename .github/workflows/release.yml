@@ -18,6 +18,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  EXPO_NO_TELEMETRY: '1'
+  DO_NOT_TRACK: '1'
   EAS_CLI_VERSION: 22.6.0
 
 jobs:

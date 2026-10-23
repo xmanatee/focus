@@ -7,8 +7,8 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "start": "expo start",
-    "build": "expo export --platform android --platform ios --output-dir dist",
+    "start": "node scripts/expo.mjs start",
+    "build": "node scripts/expo.mjs export --platform android --platform ios --output-dir dist",
     "deploy": "python3 .release/deploy.py",
     "typecheck": "tsc --noEmit",
     "lint": "biome check .",
@@ -24,10 +24,10 @@
     "check-native": "node scripts/check-native-structure.mjs",
     "check-release": "node scripts/check-release-distribution.mjs",
     "check-unused": "knip --no-config-hints",
-    "android": "expo run:android",
+    "android": "node scripts/expo.mjs run:android",
     "android:verify": "cd android && NODE_ENV=production ./gradlew :app:lintRelease :app:testReleaseUnitTest :app:assembleDebug -x :react-native-reanimated:lintAnalyzeRelease -x :react-native-worklets:lintAnalyzeRelease",
     "eas-build-post-install": "node scripts/sync-ios-versions.mjs",
-    "ios": "expo run:ios",
+    "ios": "node scripts/expo.mjs run:ios",
     "screenshots": "node scripts/screenshots.mjs",
     "sync-ios-versions": "node scripts/sync-ios-versions.mjs"
   },
