@@ -3,22 +3,18 @@ name: Native CI
   push:
     branches:
       - main
-    paths-ignore: &website-paths
+    paths-ignore:
       - site/**
       - nginx.conf
       - .release/**
       - scripts/build-site.mjs
       - scripts/check-site.mjs
-  pull_request:
-    branches:
-      - main
-    paths-ignore: *website-paths
   workflow_dispatch: null
 permissions:
   contents: read
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 env:
   EXPO_NO_TELEMETRY: '1'
   DO_NOT_TRACK: '1'
