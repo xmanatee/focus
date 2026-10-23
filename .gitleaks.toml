@@ -4,6 +4,6 @@ useDefault = true
 [[allowlists]]
 description = "Public IndexNow ownership key and explicit submission fixtures"
 condition = "AND"
-paths = ['''^scripts/submit-indexnow(?:\.test)?\.mjs$''']
+paths = ['''(?:^|/)scripts/submit-indexnow(?:\.test)?\.mjs$''']
 regexTarget = "match"
 regexes = ['''(?:8e91ca00fd340d625f5aeddb1f2a4787|1234567890abcdef1234567890abcdef)''']
