@@ -3,6 +3,9 @@ name: Push App Store Metadata
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: app-store-metadata
   cancel-in-progress: false
@@ -22,9 +25,9 @@ jobs:
       APPLE_REVIEW_EMAIL: ${{ secrets.APPLE_REVIEW_EMAIL }}
       APPLE_REVIEW_PHONE: ${{ secrets.APPLE_REVIEW_PHONE }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 22
           cache: npm

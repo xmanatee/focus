@@ -13,6 +13,9 @@ on:
     branches: [main]
     paths: [package.json]
 
+permissions:
+  contents: read
+
 concurrency:
   group: release
   cancel-in-progress: false
@@ -31,12 +34,12 @@ jobs:
       should_release: ${{ steps.release.outputs.should_release }}
       release_tag: ${{ steps.release.outputs.release_tag }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           fetch-depth: 0
           fetch-tags: true
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 22
           cache: npm
@@ -92,9 +95,9 @@ jobs:
       APPLE_REVIEW_EMAIL: ${{ secrets.APPLE_REVIEW_EMAIL }}
       APPLE_REVIEW_PHONE: ${{ secrets.APPLE_REVIEW_PHONE }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 22
           cache: npm
@@ -130,9 +133,9 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 22
           cache: npm
@@ -151,12 +154,12 @@ jobs:
           mkdir -p dist
           curl --fail --location --retry 3 --retry-all-errors --output dist/focus-blocks-android.apk "$artifact_url"
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@v4
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd
         with:
           packages: "platform-tools build-tools;36.0.0"
 
@@ -173,7 +176,7 @@ jobs:
         run: sha256sum focus-blocks-android.apk > focus-blocks-android.apk.sha256
 
       - name: Retain APK workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: focus-blocks-android-${{ needs.validate.outputs.release_tag }}
           path: |
@@ -209,14 +212,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444
         with:
           node-version: 22
           cache: npm
 
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961
         with:
           distribution: temurin
           java-version: 17
@@ -238,7 +241,7 @@ jobs:
           grep -Fq "jar verified." "$RUNNER_TEMP/aab-signature.txt"
 
       - name: Retain Play-ready App Bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: focus-blocks-android-play-${{ needs.validate.outputs.release_tag }}
           path: dist/focus-blocks-android.aab
