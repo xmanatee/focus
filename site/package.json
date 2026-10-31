@@ -11,7 +11,7 @@
     "build": "node ../scripts/build-site.mjs",
     "deploy": "python3 ../.release/deploy.py",
     "check": "node ../scripts/check-site.mjs",
-    "check:all": "npm run check && npm run build",
+    "check:all": "python3 ../../../tools/heavy -- sh -c 'npm run check && npm run build'",
     "notify:index": "node ../scripts/submit-indexnow.mjs"
   }
 }

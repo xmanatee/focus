@@ -5,6 +5,7 @@
   "allowPublicSource": true,
   "workingDirectory": "site",
   "dist": "dist/site",
+  "beforeBuild": [["audit", "--audit-level=high"]],
   "required": [
     "dist/site/index.html",
     "dist/site/privacy/index.html",
