@@ -11,5 +11,13 @@
     "dist/site/privacy/index.html",
     "dist/site/support/index.html",
     "nginx.conf"
+  ],
+  "health": [
+    {
+      "host": "focus.nemi.love",
+      "path": "/",
+      "file": "index.html",
+      "marker": "<title>Focus Blocks: App Blocker for iPhone, iPad, and Android</title>"
+    }
   ]
 }
